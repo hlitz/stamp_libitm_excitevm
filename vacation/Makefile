@@ -47,7 +47,7 @@ OBJS := ${SRCS:.c=.o}
 CFLAGS   += -DSTM -I$(STM)
 CPPFLAGS := $(CFLAGS)
 LDFLAGS  += -L$(STM)
-LIBS     += -ltl2
+LIBS     +=
 
 .PHONY: default
 default: $(PROG)

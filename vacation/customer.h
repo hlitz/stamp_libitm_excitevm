@@ -12,48 +12,48 @@
  *
  * For the license of bayes/sort.h and bayes/sort.c, please see the header
  * of the files.
- * 
+ *
  * ------------------------------------------------------------------------
- * 
+ *
  * For the license of kmeans, please see kmeans/LICENSE.kmeans
- * 
+ *
  * ------------------------------------------------------------------------
- * 
+ *
  * For the license of ssca2, please see ssca2/COPYRIGHT
- * 
+ *
  * ------------------------------------------------------------------------
- * 
+ *
  * For the license of lib/mt19937ar.c and lib/mt19937ar.h, please see the
  * header of the files.
- * 
+ *
  * ------------------------------------------------------------------------
- * 
+ *
  * For the license of lib/rbtree.h and lib/rbtree.c, please see
  * lib/LEGALNOTICE.rbtree and lib/LICENSE.rbtree
- * 
+ *
  * ------------------------------------------------------------------------
- * 
+ *
  * Unless otherwise noted, the following license applies to STAMP files:
- * 
+ *
  * Copyright (c) 2007, Stanford University
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
- * 
+ *
  *     * Redistributions of source code must retain the above copyright
  *       notice, this list of conditions and the following disclaimer.
- * 
+ *
  *     * Redistributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in
  *       the documentation and/or other materials provided with the
  *       distribution.
- * 
+ *
  *     * Neither the name of Stanford University nor the names of its
  *       contributors may be used to endorse or promote products derived
  *       from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY STANFORD UNIVERSITY ``AS IS'' AND ANY
  * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -76,7 +76,6 @@
 
 #include "list.h"
 #include "reservation.h"
-#include "tm.h"
 #include "types.h"
 
 typedef struct customer {
@@ -90,7 +89,7 @@ typedef struct customer {
  * =============================================================================
  */
 customer_t*
-customer_alloc (TM_ARGDECL  long id);
+customer_alloc (long id);
 
 customer_t*
 customer_alloc_seq (long id);
@@ -118,7 +117,7 @@ customer_hash (customer_t* customerPtr);
  * =============================================================================
  */
 void
-customer_free (TM_ARGDECL  customer_t* customerPtr);
+customer_free (customer_t* customerPtr);
 
 
 /* =============================================================================
@@ -126,10 +125,8 @@ customer_free (TM_ARGDECL  customer_t* customerPtr);
  * -- Returns TRUE if success, else FALSE
  * =============================================================================
  */
-TM_CALLABLE
 bool_t
-customer_addReservationInfo (TM_ARGDECL
-                             customer_t* customerPtr,
+customer_addReservationInfo (customer_t* customerPtr,
                              reservation_type_t type, long id, long price);
 
 bool_t
@@ -143,8 +140,7 @@ customer_addReservationInfo_seq (customer_t* customerPtr,
  * =============================================================================
  */
 bool_t
-customer_removeReservationInfo (TM_ARGDECL
-                                customer_t* customerPtr,
+customer_removeReservationInfo (customer_t* customerPtr,
                                 reservation_type_t type, long id);
 
 
@@ -153,24 +149,23 @@ customer_removeReservationInfo (TM_ARGDECL
  * -- Returns total cost of reservations
  * =============================================================================
  */
-TM_CALLABLE
 long
-customer_getBill (TM_ARGDECL  customer_t* customerPtr);
+customer_getBill (customer_t* customerPtr);
 
 long
 customer_getBill_seq (customer_t* customerPtr);
 
 
 #define CUSTOMER_ALLOC(id) \
-    customer_alloc(TM_ARG  id)
+    customer_alloc(id)
 #define CUSTOMER_ADD_RESERVATION_INFO(cust, type, id, price)  \
-    customer_addReservationInfo(TM_ARG  cust, type, id, price)
+    customer_addReservationInfo(cust, type, id, price)
 #define CUSTOMER_REMOVE_RESERVATION_INFO(cust, type, id) \
-    customer_removeReservationInfo(TM_ARG  cust, type, id)
+    customer_removeReservationInfo(cust, type, id)
 #define CUSTOMER_GET_BILL(cust) \
-    customer_getBill(TM_ARG  cust)
+    customer_getBill(cust)
 #define CUSTOMER_FREE(cust) \
-    customer_free(TM_ARG  cust)
+    customer_free(cust)
 
 
 #endif /* CUSTOMER_H */

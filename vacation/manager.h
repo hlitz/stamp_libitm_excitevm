@@ -12,48 +12,48 @@
  *
  * For the license of bayes/sort.h and bayes/sort.c, please see the header
  * of the files.
- * 
+ *
  * ------------------------------------------------------------------------
- * 
+ *
  * For the license of kmeans, please see kmeans/LICENSE.kmeans
- * 
+ *
  * ------------------------------------------------------------------------
- * 
+ *
  * For the license of ssca2, please see ssca2/COPYRIGHT
- * 
+ *
  * ------------------------------------------------------------------------
- * 
+ *
  * For the license of lib/mt19937ar.c and lib/mt19937ar.h, please see the
  * header of the files.
- * 
+ *
  * ------------------------------------------------------------------------
- * 
+ *
  * For the license of lib/rbtree.h and lib/rbtree.c, please see
  * lib/LEGALNOTICE.rbtree and lib/LICENSE.rbtree
- * 
+ *
  * ------------------------------------------------------------------------
- * 
+ *
  * Unless otherwise noted, the following license applies to STAMP files:
- * 
+ *
  * Copyright (c) 2007, Stanford University
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
- * 
+ *
  *     * Redistributions of source code must retain the above copyright
  *       notice, this list of conditions and the following disclaimer.
- * 
+ *
  *     * Redistributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in
  *       the documentation and/or other materials provided with the
  *       distribution.
- * 
+ *
  *     * Neither the name of Stanford University nor the names of its
  *       contributors may be used to endorse or promote products derived
  *       from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY STANFORD UNIVERSITY ``AS IS'' AND ANY
  * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -75,7 +75,6 @@
 
 
 #include "map.h"
-#include "tm.h"
 #include "types.h"
 
 typedef struct manager {
@@ -116,8 +115,7 @@ manager_free (manager_t* managerPtr);
  * =============================================================================
  */
 bool_t
-manager_addCar (TM_ARGDECL
-                manager_t* managerPtr, long carId, long numCar, long price);
+manager_addCar (manager_t* managerPtr, long carId, long numCar, long price);
 
 bool_t
 manager_addCar_seq (manager_t* managerPtr, long carId, long numCar, long price);
@@ -133,7 +131,7 @@ manager_addCar_seq (manager_t* managerPtr, long carId, long numCar, long price);
  * =============================================================================
  */
 bool_t
-manager_deleteCar (TM_ARGDECL  manager_t* managerPtr, long carId, long numCar);
+manager_deleteCar (manager_t* managerPtr, long carId, long numCar);
 
 
 /* =============================================================================
@@ -144,8 +142,7 @@ manager_deleteCar (TM_ARGDECL  manager_t* managerPtr, long carId, long numCar);
  * =============================================================================
  */
 bool_t
-manager_addRoom (TM_ARGDECL
-                 manager_t* managerPtr, long roomId, long numRoom, long price);
+manager_addRoom (manager_t* managerPtr, long roomId, long numRoom, long price);
 
 bool_t
 manager_addRoom_seq (manager_t* managerPtr, long roomId, long numRoom, long price);
@@ -161,7 +158,7 @@ manager_addRoom_seq (manager_t* managerPtr, long roomId, long numRoom, long pric
  * =============================================================================
  */
 bool_t
-manager_deleteRoom (TM_ARGDECL  manager_t* managerPtr, long roomId, long numRoom);
+manager_deleteRoom (manager_t* managerPtr, long roomId, long numRoom);
 
 
 /* =============================================================================
@@ -172,8 +169,7 @@ manager_deleteRoom (TM_ARGDECL  manager_t* managerPtr, long roomId, long numRoom
  * =============================================================================
  */
 bool_t
-manager_addFlight (TM_ARGDECL
-                   manager_t* managerPtr, long flightId, long numSeat, long price);
+manager_addFlight (manager_t* managerPtr, long flightId, long numSeat, long price);
 
 bool_t
 manager_addFlight_seq (manager_t* managerPtr, long flightId, long numSeat, long price);
@@ -187,7 +183,7 @@ manager_addFlight_seq (manager_t* managerPtr, long flightId, long numSeat, long 
  * =============================================================================
  */
 bool_t
-manager_deleteFlight (TM_ARGDECL  manager_t* managerPtr, long flightId);
+manager_deleteFlight (manager_t* managerPtr, long flightId);
 
 
 /* =============================================================================
@@ -197,7 +193,7 @@ manager_deleteFlight (TM_ARGDECL  manager_t* managerPtr, long flightId);
  * =============================================================================
  */
 bool_t
-manager_addCustomer (TM_ARGDECL  manager_t* managerPtr, long customerId);
+manager_addCustomer (manager_t* managerPtr, long customerId);
 
 bool_t
 manager_addCustomer_seq (manager_t* managerPtr, long customerId);
@@ -211,7 +207,7 @@ manager_addCustomer_seq (manager_t* managerPtr, long customerId);
  * =============================================================================
  */
 bool_t
-manager_deleteCustomer (TM_ARGDECL  manager_t* managerPtr, long customerId);
+manager_deleteCustomer (manager_t* managerPtr, long customerId);
 
 
 /* =============================================================================
@@ -227,7 +223,7 @@ manager_deleteCustomer (TM_ARGDECL  manager_t* managerPtr, long customerId);
  * =============================================================================
  */
 long
-manager_queryCar (TM_ARGDECL  manager_t* managerPtr, long carId);
+manager_queryCar (manager_t* managerPtr, long carId);
 
 
 /* =============================================================================
@@ -237,7 +233,7 @@ manager_queryCar (TM_ARGDECL  manager_t* managerPtr, long carId);
  * =============================================================================
  */
 long
-manager_queryCarPrice (TM_ARGDECL  manager_t* managerPtr, long carId);
+manager_queryCarPrice (manager_t* managerPtr, long carId);
 
 
 /* =============================================================================
@@ -247,7 +243,7 @@ manager_queryCarPrice (TM_ARGDECL  manager_t* managerPtr, long carId);
  * =============================================================================
  */
 long
-manager_queryRoom (TM_ARGDECL  manager_t* managerPtr, long roomId);
+manager_queryRoom (manager_t* managerPtr, long roomId);
 
 
 /* =============================================================================
@@ -257,7 +253,7 @@ manager_queryRoom (TM_ARGDECL  manager_t* managerPtr, long roomId);
  * =============================================================================
  */
 long
-manager_queryRoomPrice (TM_ARGDECL  manager_t* managerPtr, long roomId);
+manager_queryRoomPrice (manager_t* managerPtr, long roomId);
 
 
 /* =============================================================================
@@ -267,7 +263,7 @@ manager_queryRoomPrice (TM_ARGDECL  manager_t* managerPtr, long roomId);
  * =============================================================================
  */
 long
-manager_queryFlight (TM_ARGDECL  manager_t* managerPtr, long flightId);
+manager_queryFlight (manager_t* managerPtr, long flightId);
 
 
 /* =============================================================================
@@ -277,7 +273,7 @@ manager_queryFlight (TM_ARGDECL  manager_t* managerPtr, long flightId);
  * =============================================================================
  */
 long
-manager_queryFlightPrice (TM_ARGDECL  manager_t* managerPtr, long flightId);
+manager_queryFlightPrice (manager_t* managerPtr, long flightId);
 
 
 /* =============================================================================
@@ -287,7 +283,7 @@ manager_queryFlightPrice (TM_ARGDECL  manager_t* managerPtr, long flightId);
  * =============================================================================
  */
 long
-manager_queryCustomerBill (TM_ARGDECL  manager_t* managerPtr, long customerId);
+manager_queryCustomerBill (manager_t* managerPtr, long customerId);
 
 
 /* =============================================================================
@@ -303,8 +299,7 @@ manager_queryCustomerBill (TM_ARGDECL  manager_t* managerPtr, long customerId);
  * =============================================================================
  */
 bool_t
-manager_reserveCar (TM_ARGDECL
-                    manager_t* managerPtr, long customerId, long carId);
+manager_reserveCar (manager_t* managerPtr, long customerId, long carId);
 
 
 /* =============================================================================
@@ -314,8 +309,7 @@ manager_reserveCar (TM_ARGDECL
  * =============================================================================
  */
 bool_t
-manager_reserveRoom (TM_ARGDECL
-                     manager_t* managerPtr, long customerId, long roomId);
+manager_reserveRoom (manager_t* managerPtr, long customerId, long roomId);
 
 
 /* =============================================================================
@@ -325,8 +319,7 @@ manager_reserveRoom (TM_ARGDECL
  * =============================================================================
  */
 bool_t
-manager_reserveFlight (TM_ARGDECL
-                       manager_t* managerPtr, long customerId, long flightId);
+manager_reserveFlight (manager_t* managerPtr, long customerId, long flightId);
 
 
 /* =============================================================================
@@ -336,8 +329,7 @@ manager_reserveFlight (TM_ARGDECL
  * =============================================================================
  */
 bool_t
-manager_cancelCar (TM_ARGDECL
-                   manager_t* managerPtr, long customerId, long carId);
+manager_cancelCar (manager_t* managerPtr, long customerId, long carId);
 
 
 /* =============================================================================
@@ -347,8 +339,7 @@ manager_cancelCar (TM_ARGDECL
  * =============================================================================
  */
 bool_t
-manager_cancelRoom (TM_ARGDECL
-                    manager_t* managerPtr, long customerId, long roomId);
+manager_cancelRoom (manager_t* managerPtr, long customerId, long roomId);
 
 
 /* =============================================================================
@@ -358,52 +349,51 @@ manager_cancelRoom (TM_ARGDECL
  * =============================================================================
  */
 bool_t
-manager_cancelFlight (TM_ARGDECL
-                      manager_t* managerPtr, long customerId, long flightId);
+manager_cancelFlight (manager_t* managerPtr, long customerId, long flightId);
 
 
 #define MANAGER_ADD_CAR(mgr, id, num, price) \
-    manager_addCar(TM_ARG  mgr, id, num, price)
+    manager_addCar(mgr, id, num, price)
 #define MANAGER_DELETE_CAR(mgr, id, num) \
-    manager_deleteCar(TM_ARG  mgr, id, num)
+    manager_deleteCar(mgr, id, num)
 #define MANAGER_ADD_ROOM(mgr, id, num, price) \
-    manager_addRoom(TM_ARG  mgr, id, num, price)
+    manager_addRoom(mgr, id, num, price)
 #define MANAGER_DELETE_ROOM(mgr, id, num) \
-    manager_deleteRoom(TM_ARG  mgr, id, num)
+    manager_deleteRoom(mgr, id, num)
 #define MANAGER_ADD_FLIGHT(mgr, id, num, price) \
-    manager_addFlight(TM_ARG  mgr, id, num, price)
+    manager_addFlight(mgr, id, num, price)
 #define MANAGER_DELETE_FLIGHT(mgr, id) \
-    manager_deleteFlight(TM_ARG  mgr, id)
+    manager_deleteFlight(mgr, id)
 #define MANAGER_ADD_CUSTOMER(mgr, id) \
-    manager_addCustomer(TM_ARG  mgr, id)
+    manager_addCustomer(mgr, id)
 #define MANAGER_DELETE_CUSTOMER(mgr, id) \
-    manager_deleteCustomer(TM_ARG  mgr, id)
+    manager_deleteCustomer(mgr, id)
 #define MANAGER_QUERY_CAR(mgr, id) \
-    manager_queryCar(TM_ARG  mgr, id)
+    manager_queryCar(mgr, id)
 #define MANAGER_QUERY_CAR_PRICE(mgr, id) \
-    manager_queryCarPrice(TM_ARG  mgr, id)
+    manager_queryCarPrice(mgr, id)
 #define MANAGER_QUERY_ROOM(mgr, id) \
-    manager_queryRoom(TM_ARG  mgr, id)
+    manager_queryRoom(mgr, id)
 #define MANAGER_QUERY_ROOM_PRICE(mgr, id) \
-    manager_queryRoomPrice(TM_ARG  mgr, id)
+    manager_queryRoomPrice(mgr, id)
 #define MANAGER_QUERY_FLIGHT(mgr, id) \
-    manager_queryFlight(TM_ARG  mgr, id)
+    manager_queryFlight(mgr, id)
 #define MANAGER_QUERY_FLIGHT_PRICE(mgr, id) \
-    manager_queryFlightPrice(TM_ARG  mgr, id)
+    manager_queryFlightPrice(mgr, id)
 #define MANAGER_QUERY_CUSTOMER_BILL(mgr, id) \
-    manager_queryCustomerBill(TM_ARG  mgr, id)
+    manager_queryCustomerBill(mgr, id)
 #define MANAGER_RESERVE_CAR(mgr, cust, id) \
-    manager_reserveCar(TM_ARG  mgr, cust, id)
+    manager_reserveCar(mgr, cust, id)
 #define MANAGER_RESERVE_ROOM(mgr, cust, id) \
-    manager_reserveRoom(TM_ARG  mgr, cust, id)
+    manager_reserveRoom(mgr, cust, id)
 #define MANAGER_RESERVE_FLIGHT(mgr, cust, id) \
-    manager_reserveFlight(TM_ARG  mgr, cust, id)
+    manager_reserveFlight(mgr, cust, id)
 #define MANAGER_CANCEL_CAR(mgr, cust, id) \
-    manager_cancelCar(TM_ARG  mgr, cust, id)
+    manager_cancelCar(mgr, cust, id)
 #define MANAGER_CANCEL_ROOM(mgr, cust, id) \
-    manager_cancelRoom(TM_ARG  mgr, cust, id)
+    manager_cancelRoom(mgr, cust, id)
 #define MANAGER_CANCEL_FLIGHT(mgr, cust, id) \
-    manager_cancelFlight(TM_ARG  mgr, cust, id)
+    manager_cancelFlight(mgr, cust, id)
 
 
 #endif /* MANAGER_H */

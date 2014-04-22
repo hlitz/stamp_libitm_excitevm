@@ -13,48 +13,48 @@
  *
  * For the license of bayes/sort.h and bayes/sort.c, please see the header
  * of the files.
- * 
+ *
  * ------------------------------------------------------------------------
- * 
+ *
  * For the license of kmeans, please see kmeans/LICENSE.kmeans
- * 
+ *
  * ------------------------------------------------------------------------
- * 
+ *
  * For the license of ssca2, please see ssca2/COPYRIGHT
- * 
+ *
  * ------------------------------------------------------------------------
- * 
+ *
  * For the license of lib/mt19937ar.c and lib/mt19937ar.h, please see the
  * header of the files.
- * 
+ *
  * ------------------------------------------------------------------------
- * 
+ *
  * For the license of lib/rbtree.h and lib/rbtree.c, please see
  * lib/LEGALNOTICE.rbtree and lib/LICENSE.rbtree
- * 
+ *
  * ------------------------------------------------------------------------
- * 
+ *
  * Unless otherwise noted, the following license applies to STAMP files:
- * 
+ *
  * Copyright (c) 2007, Stanford University
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
- * 
+ *
  *     * Redistributions of source code must retain the above copyright
  *       notice, this list of conditions and the following disclaimer.
- * 
+ *
  *     * Redistributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in
  *       the documentation and/or other materials provided with the
  *       distribution.
- * 
+ *
  *     * Neither the name of Stanford University nor the names of its
  *       contributors may be used to endorse or promote products derived
  *       from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY STANFORD UNIVERSITY ``AS IS'' AND ANY
  * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -74,7 +74,6 @@
 #ifndef LIST_H
 #define LIST_H 1
 
-#include "tm.h"
 #include "types.h"
 
 
@@ -109,9 +108,8 @@ list_iter_reset (list_iter_t* itPtr, list_t* listPtr);
  * TMlist_iter_reset
  * =============================================================================
  */
-TM_CALLABLE
 void
-TMlist_iter_reset (TM_ARGDECL  list_iter_t* itPtr, list_t* listPtr);
+TMlist_iter_reset (list_iter_t* itPtr, list_t* listPtr);
 
 
 /* =============================================================================
@@ -126,9 +124,8 @@ list_iter_hasNext (list_iter_t* itPtr, list_t* listPtr);
  * TMlist_iter_hasNext
  * =============================================================================
  */
-TM_CALLABLE
 bool_t
-TMlist_iter_hasNext (TM_ARGDECL  list_iter_t* itPtr, list_t* listPtr);
+TMlist_iter_hasNext (list_iter_t* itPtr, list_t* listPtr);
 
 
 /* =============================================================================
@@ -143,9 +140,8 @@ list_iter_next (list_iter_t* itPtr, list_t* listPtr);
  * TMlist_iter_next
  * =============================================================================
  */
-TM_CALLABLE
 void*
-TMlist_iter_next (TM_ARGDECL  list_iter_t* itPtr, list_t* listPtr);
+TMlist_iter_next (list_iter_t* itPtr, list_t* listPtr);
 
 
 /* =============================================================================
@@ -175,7 +171,7 @@ Plist_alloc (long (*compare)(const void*, const void*));
  * =============================================================================
  */
 list_t*
-TMlist_alloc (TM_ARGDECL  long (*compare)(const void*, const void*));
+TMlist_alloc (long (*compare)(const void*, const void*));
 
 
 /* =============================================================================
@@ -203,7 +199,7 @@ Plist_free (list_t* listPtr);
  * =============================================================================
  */
 void
-TMlist_free (TM_ARGDECL  list_t* listPtr);
+TMlist_free (list_t* listPtr);
 
 
 
@@ -221,9 +217,8 @@ list_isEmpty (list_t* listPtr);
  * -- Return TRUE if list is empty, else FALSE
  * =============================================================================
  */
-TM_CALLABLE
 bool_t
-TMlist_isEmpty (TM_ARGDECL  list_t* listPtr);
+TMlist_isEmpty (list_t* listPtr);
 
 
 /* =============================================================================
@@ -240,9 +235,8 @@ list_getSize (list_t* listPtr);
  * -- Returns size of list
  * =============================================================================
  */
-TM_CALLABLE
 long
-TMlist_getSize (TM_ARGDECL  list_t* listPtr);
+TMlist_getSize (list_t* listPtr);
 
 
 /* =============================================================================
@@ -259,9 +253,8 @@ list_find (list_t* listPtr, void* dataPtr);
  * -- Returns NULL if not found, else returns pointer to data
  * =============================================================================
  */
-TM_CALLABLE
 void*
-TMlist_find (TM_ARGDECL  list_t* listPtr, void* dataPtr);
+TMlist_find (list_t* listPtr, void* dataPtr);
 
 
 /* =============================================================================
@@ -287,9 +280,8 @@ Plist_insert (list_t* listPtr, void* dataPtr);
  * -- Return TRUE on success, else FALSE
  * =============================================================================
  */
-TM_CALLABLE
 bool_t
-TMlist_insert (TM_ARGDECL  list_t* listPtr, void* dataPtr);
+TMlist_insert (list_t* listPtr, void* dataPtr);
 
 
 /* =============================================================================
@@ -315,9 +307,8 @@ Plist_remove (list_t* listPtr, void* dataPtr);
  * -- Returns TRUE if successful, else FALSE
  * =============================================================================
  */
-TM_CALLABLE
 bool_t
-TMlist_remove (TM_ARGDECL  list_t* listPtr, void* dataPtr);
+TMlist_remove (list_t* listPtr, void* dataPtr);
 
 
 /* =============================================================================
@@ -346,16 +337,16 @@ Plist_clear (list_t* listPtr);
 #define PLIST_CLEAR(list)               Plist_clear(list)
 
 
-#define TMLIST_ITER_RESET(it, list)     TMlist_iter_reset(TM_ARG  it, list)
-#define TMLIST_ITER_HASNEXT(it, list)   TMlist_iter_hasNext(TM_ARG  it, list)
-#define TMLIST_ITER_NEXT(it, list)      TMlist_iter_next(TM_ARG  it, list)
-#define TMLIST_ALLOC(cmp)               TMlist_alloc(TM_ARG  cmp)
-#define TMLIST_FREE(list)               TMlist_free(TM_ARG  list)
-#define TMLIST_GETSIZE(list)            TMlist_getSize(TM_ARG  list)
-#define TMLIST_ISEMPTY(list)            TMlist_isEmpty(TM_ARG  list)
-#define TMLIST_FIND(list, data)         TMlist_find(TM_ARG  list, data)
-#define TMLIST_INSERT(list, data)       TMlist_insert(TM_ARG  list, data)
-#define TMLIST_REMOVE(list, data)       TMlist_remove(TM_ARG  list, data)
+#define TMLIST_ITER_RESET(it, list)     TMlist_iter_reset(it, list)
+#define TMLIST_ITER_HASNEXT(it, list)   TMlist_iter_hasNext(it, list)
+#define TMLIST_ITER_NEXT(it, list)      TMlist_iter_next(it, list)
+#define TMLIST_ALLOC(cmp)               TMlist_alloc(cmp)
+#define TMLIST_FREE(list)               TMlist_free(list)
+#define TMLIST_GETSIZE(list)            TMlist_getSize(list)
+#define TMLIST_ISEMPTY(list)            TMlist_isEmpty(list)
+#define TMLIST_FIND(list, data)         TMlist_find(list, data)
+#define TMLIST_INSERT(list, data)       TMlist_insert(list, data)
+#define TMLIST_REMOVE(list, data)       TMlist_remove(list, data)
 
 
 #ifdef __cplusplus

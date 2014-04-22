@@ -11,48 +11,48 @@
  *
  * For the license of bayes/sort.h and bayes/sort.c, please see the header
  * of the files.
- * 
+ *
  * ------------------------------------------------------------------------
- * 
+ *
  * For the license of kmeans, please see kmeans/LICENSE.kmeans
- * 
+ *
  * ------------------------------------------------------------------------
- * 
+ *
  * For the license of ssca2, please see ssca2/COPYRIGHT
- * 
+ *
  * ------------------------------------------------------------------------
- * 
+ *
  * For the license of lib/mt19937ar.c and lib/mt19937ar.h, please see the
  * header of the files.
- * 
+ *
  * ------------------------------------------------------------------------
- * 
+ *
  * For the license of lib/rbtree.h and lib/rbtree.c, please see
  * lib/LEGALNOTICE.rbtree and lib/LICENSE.rbtree
- * 
+ *
  * ------------------------------------------------------------------------
- * 
+ *
  * Unless otherwise noted, the following license applies to STAMP files:
- * 
+ *
  * Copyright (c) 2007, Stanford University
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
- * 
+ *
  *     * Redistributions of source code must retain the above copyright
  *       notice, this list of conditions and the following disclaimer.
- * 
+ *
  *     * Redistributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in
  *       the documentation and/or other materials provided with the
  *       distribution.
- * 
+ *
  *     * Neither the name of Stanford University nor the names of its
  *       contributors may be used to endorse or promote products derived
  *       from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY STANFORD UNIVERSITY ``AS IS'' AND ANY
  * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -155,8 +155,6 @@ selectAction (long r, long percentUser)
 void
 client_run (void* argPtr)
 {
-    TM_THREAD_ENTER();
-
     long myId = thread_getId();
     client_t* clientPtr = ((client_t**)argPtr)[myId];
 
@@ -168,10 +166,10 @@ client_run (void* argPtr)
     long queryRange             = clientPtr->queryRange;
     long percentUser            = clientPtr->percentUser;
 
-    long* types  = (long*)P_MALLOC(numQueryPerTransaction * sizeof(long));
-    long* ids    = (long*)P_MALLOC(numQueryPerTransaction * sizeof(long));
-    long* ops    = (long*)P_MALLOC(numQueryPerTransaction * sizeof(long));
-    long* prices = (long*)P_MALLOC(numQueryPerTransaction * sizeof(long));
+    long* types  = (long*)malloc(numQueryPerTransaction * sizeof(long));
+    long* ids    = (long*)malloc(numQueryPerTransaction * sizeof(long));
+    long* ops    = (long*)malloc(numQueryPerTransaction * sizeof(long));
+    long* prices = (long*)malloc(numQueryPerTransaction * sizeof(long));
 
     long i;
 
@@ -193,7 +191,8 @@ client_run (void* argPtr)
                     ids[n] = (random_generate(randomPtr) % queryRange) + 1;
                 }
                 bool_t isFound = FALSE;
-                TM_BEGIN();
+                // [mfs] __transaction_atomic
+                {
                 for (n = 0; n < numQuery; n++) {
                     long t = types[n];
                     long id = ids[n];
@@ -238,18 +237,19 @@ client_run (void* argPtr)
                     MANAGER_RESERVE_ROOM(managerPtr,
                                          customerId, maxIds[RESERVATION_ROOM]);
                 }
-                TM_END();
+                }
                 break;
             }
 
             case ACTION_DELETE_CUSTOMER: {
                 long customerId = random_generate(randomPtr) % queryRange + 1;
-                TM_BEGIN();
+                // [mfs] __transaction_atomic
+                {
                 long bill = MANAGER_QUERY_CUSTOMER_BILL(managerPtr, customerId);
                 if (bill >= 0) {
                     MANAGER_DELETE_CUSTOMER(managerPtr, customerId);
                 }
-                TM_END();
+                }
                 break;
             }
 
@@ -264,7 +264,8 @@ client_run (void* argPtr)
                         prices[n] = ((random_generate(randomPtr) % 5) * 10) + 50;
                     }
                 }
-                TM_BEGIN();
+                // [mfs] __transaction_atomic
+                {
                 for (n = 0; n < numUpdate; n++) {
                     long t = types[n];
                     long id = ids[n];
@@ -300,7 +301,7 @@ client_run (void* argPtr)
                         }
                     }
                 }
-                TM_END();
+                }
                 break;
             }
 
@@ -310,8 +311,6 @@ client_run (void* argPtr)
         } /* switch (action) */
 
     } /* for i */
-
-    TM_THREAD_EXIT();
 }
 
 

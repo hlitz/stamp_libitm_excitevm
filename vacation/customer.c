@@ -12,48 +12,48 @@
  *
  * For the license of bayes/sort.h and bayes/sort.c, please see the header
  * of the files.
- * 
+ *
  * ------------------------------------------------------------------------
- * 
+ *
  * For the license of kmeans, please see kmeans/LICENSE.kmeans
- * 
+ *
  * ------------------------------------------------------------------------
- * 
+ *
  * For the license of ssca2, please see ssca2/COPYRIGHT
- * 
+ *
  * ------------------------------------------------------------------------
- * 
+ *
  * For the license of lib/mt19937ar.c and lib/mt19937ar.h, please see the
  * header of the files.
- * 
+ *
  * ------------------------------------------------------------------------
- * 
+ *
  * For the license of lib/rbtree.h and lib/rbtree.c, please see
  * lib/LEGALNOTICE.rbtree and lib/LICENSE.rbtree
- * 
+ *
  * ------------------------------------------------------------------------
- * 
+ *
  * Unless otherwise noted, the following license applies to STAMP files:
- * 
+ *
  * Copyright (c) 2007, Stanford University
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
- * 
+ *
  *     * Redistributions of source code must retain the above copyright
  *       notice, this list of conditions and the following disclaimer.
- * 
+ *
  *     * Redistributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in
  *       the documentation and/or other materials provided with the
  *       distribution.
- * 
+ *
  *     * Neither the name of Stanford University nor the names of its
  *       contributors may be used to endorse or promote products derived
  *       from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY STANFORD UNIVERSITY ``AS IS'' AND ANY
  * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -76,7 +76,6 @@
 #include "list.h"
 #include "memory.h"
 #include "reservation.h"
-#include "tm.h"
 #include "types.h"
 
 
@@ -97,11 +96,11 @@ compareReservationInfo (const void* aPtr, const void* bPtr)
  * =============================================================================
  */
 customer_t*
-customer_alloc (TM_ARGDECL  long id)
+customer_alloc (long id)
 {
     customer_t* customerPtr;
 
-    customerPtr = (customer_t*)TM_MALLOC(sizeof(customer_t));
+    customerPtr = (customer_t*)malloc(sizeof(customer_t));
     assert(customerPtr != NULL);
 
     customerPtr->id = id;
@@ -147,12 +146,12 @@ customer_compare (customer_t* aPtr, customer_t* bPtr)
  * =============================================================================
  */
 void
-customer_free (TM_ARGDECL  customer_t* customerPtr)
+customer_free (customer_t* customerPtr)
 {
     list_t* reservationInfoListPtr =
-        (list_t*)TM_SHARED_READ(customerPtr->reservationInfoListPtr);
+        (list_t*)customerPtr->reservationInfoListPtr;
     TMLIST_FREE(reservationInfoListPtr);
-    TM_FREE(customerPtr);
+    free(customerPtr);
 }
 
 
@@ -162,8 +161,7 @@ customer_free (TM_ARGDECL  customer_t* customerPtr)
  * =============================================================================
  */
 bool_t
-customer_addReservationInfo (TM_ARGDECL
-                             customer_t* customerPtr,
+customer_addReservationInfo (customer_t* customerPtr,
                              reservation_type_t type, long id, long price)
 {
     reservation_info_t* reservationInfoPtr;
@@ -172,7 +170,7 @@ customer_addReservationInfo (TM_ARGDECL
     assert(reservationInfoPtr != NULL);
 
     list_t* reservationInfoListPtr =
-        (list_t*)TM_SHARED_READ(customerPtr->reservationInfoListPtr);
+        (list_t*)customerPtr->reservationInfoListPtr;
 
     return TMLIST_INSERT(reservationInfoListPtr, (void*)reservationInfoPtr);
 }
@@ -184,8 +182,7 @@ customer_addReservationInfo (TM_ARGDECL
  * =============================================================================
  */
 bool_t
-customer_removeReservationInfo (TM_ARGDECL
-                                customer_t* customerPtr,
+customer_removeReservationInfo (customer_t* customerPtr,
                                 reservation_type_t type, long id)
 {
     reservation_info_t findReservationInfo;
@@ -195,7 +192,7 @@ customer_removeReservationInfo (TM_ARGDECL
     /* price not used to compare reservation infos */
 
     list_t* reservationInfoListPtr =
-        (list_t*)TM_SHARED_READ(customerPtr->reservationInfoListPtr);
+        (list_t*)customerPtr->reservationInfoListPtr;
 
     reservation_info_t* reservationInfoPtr =
         (reservation_info_t*)TMLIST_FIND(reservationInfoListPtr,
@@ -208,7 +205,7 @@ customer_removeReservationInfo (TM_ARGDECL
     bool_t status = TMLIST_REMOVE(reservationInfoListPtr,
                                   (void*)&findReservationInfo);
     if (status == FALSE) {
-        TM_RESTART();
+        assert(0);
     }
 
     RESERVATION_INFO_FREE(reservationInfoPtr);
@@ -223,12 +220,12 @@ customer_removeReservationInfo (TM_ARGDECL
  * =============================================================================
  */
 long
-customer_getBill (TM_ARGDECL  customer_t* customerPtr)
+customer_getBill (customer_t* customerPtr)
 {
     long bill = 0;
     list_iter_t it;
     list_t* reservationInfoListPtr =
-        (list_t*)TM_SHARED_READ(customerPtr->reservationInfoListPtr);
+        (list_t*)customerPtr->reservationInfoListPtr;
 
     TMLIST_ITER_RESET(&it, reservationInfoListPtr);
     while (TMLIST_ITER_HASNEXT(&it, reservationInfoListPtr)) {
