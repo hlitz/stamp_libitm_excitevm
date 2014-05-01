@@ -1,67 +1,29 @@
-# ==============================================================================
-#
-# Makefile.stm
-#
-# ==============================================================================
+CXX       = g++
+CXXFLAGS += -g -Wall -pthread -O3
 
-
-CC       := gcc
-CFLAGS   += -g -Wall -pthread
-CFLAGS   += -O3
-CFLAGS   += -I$(LIB)
-CPP      := g++
-CPPFLAGS += $(CFLAGS)
 LD       := g++
-LIBS     += -lpthread
+LDFLAGS  += -lpthread
 
-# Remove these files when doing clean
-OUTPUT +=
-
-LIB := ../lib
-
-STM := ../../tl2
-
-LOSTM := ../../OpenTM/lostm
-
-
-CFLAGS += -DLIST_NO_DUPLICATES
-CFLAGS += -DMAP_USE_RBTREE
+CXXFLAGS += -DLIST_NO_DUPLICATES
+CXXFLAGS += -DMAP_USE_RBTREE
 
 PROG := vacation
 
-SRCS += \
-	client.c \
-	customer.c \
-	manager.c \
-	reservation.c \
-	vacation.c \
-	list.c \
-	pair.c \
-	mt19937ar.c \
-	random.c \
-	rbtree.c \
-	thread.c 
+SRCS += client.cc customer.cc manager.cc reservation.cc vacation.cc list.cc \
+	pair.cc mt19937ar.cc random.cc rbtree.cc thread.cc
 
-OBJS := ${SRCS:.c=.o}
+OBJS := ${SRCS:.cc=.o}
 
-CFLAGS   += -DSTM -I$(STM)
-CPPFLAGS := $(CFLAGS)
-LDFLAGS  += -L$(STM)
-LIBS     +=
 
 .PHONY: default
 default: $(PROG)
 
 .PHONY: clean
 clean:
-	$(RM) $(OBJS) $(PROG) $(OUTPUT)
+	$(RM) $(OBJS) $(PROG)
+
+%.o: %.cc *.h
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 $(PROG): $(OBJS)
-	$(LD) $(LDFLAGS) $^ $(LIBS) -o $(PROG)
-
-
-%.o: %.c *.h
-	$(CC) $(CFLAGS) -c $< -o $@
-
-%.o: %.cpp *.h
-	$(CPP) $(CPPFLAGS) -c $< -o $@
+	$(LD) $(LDFLAGS) $^ -o $(PROG)
