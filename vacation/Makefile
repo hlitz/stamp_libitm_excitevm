@@ -14,7 +14,6 @@ SRCS += client.cc customer.cc manager.cc reservation.cc vacation.cc list.cc \
 
 OBJS := ${SRCS:.cc=.o}
 
-
 .PHONY: default
 default: $(PROG)
 
