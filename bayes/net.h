@@ -244,28 +244,23 @@ net_generateRandomEdges (net_t* netPtr,
                          random_t* randomPtr);
 
 
-#define TMNET_APPLYOPERATION(net, op, from, to)     TMnet_applyOperation(TM_ARG \
-                                                                         net, \
+#define TMNET_APPLYOPERATION(net, op, from, to)     TMnet_applyOperation(net, \
                                                                          op, \
                                                                          from, \
                                                                          to)
-#define TMNET_HASEDGE(net, from, to)                TMnet_hasEdge(TM_ARG \
-                                                                  net, \
+#define TMNET_HASEDGE(net, from, to)                TMnet_hasEdge(net, \
                                                                   from, \
                                                                   to)
-#define TMNET_ISPATH(net, from, to, bmp, wq)        TMnet_isPath(TM_ARG \
-                                                                 net, \
+#define TMNET_ISPATH(net, from, to, bmp, wq)        TMnet_isPath(net, \
                                                                  from, \
                                                                  to, \
                                                                  bmp, \
                                                                  wq)
-#define TMNET_FINDANCESTORS(net, id, bmp, wq)       TMnet_findAncestors(TM_ARG \
-                                                                        net, \
+#define TMNET_FINDANCESTORS(net, id, bmp, wq)       TMnet_findAncestors(net, \
                                                                         id, \
                                                                         bmp, \
                                                                         wq)
-#define TMNET_FINDDESCENDANTS(net, id, bmp, wq)     TMnet_findDescendants(TM_ARG \
-                                                                          net, \
+#define TMNET_FINDDESCENDANTS(net, id, bmp, wq)     TMnet_findDescendants(net, \
                                                                           id, \
                                                                           bmp, \
                                                                           wq)

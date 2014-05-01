@@ -120,7 +120,7 @@ Pbitmap_alloc (long numBit)
 {
     bitmap_t* bitmapPtr;
 
-    bitmapPtr = (bitmap_t*)P_MALLOC(sizeof(bitmap_t));
+    bitmapPtr = (bitmap_t*)malloc(sizeof(bitmap_t));
     if (bitmapPtr == NULL) {
         return NULL;
     }
@@ -129,7 +129,7 @@ Pbitmap_alloc (long numBit)
     long numWord = DIVIDE_AND_ROUND_UP(numBit, NUM_BIT_PER_WORD);
     bitmapPtr->numWord = numWord;
 
-    bitmapPtr->bits = (ulong_t*)P_MALLOC(numWord * sizeof(ulong_t));
+    bitmapPtr->bits = (ulong_t*)malloc(numWord * sizeof(ulong_t));
     if (bitmapPtr->bits == NULL) {
         free(bitmapPtr);
         return NULL;
@@ -159,8 +159,8 @@ bitmap_free (bitmap_t* bitmapPtr)
 void
 Pbitmap_free (bitmap_t* bitmapPtr)
 {
-    P_FREE(bitmapPtr->bits);
-    P_FREE(bitmapPtr);
+    free(bitmapPtr->bits);
+    free(bitmapPtr);
 }
 
 

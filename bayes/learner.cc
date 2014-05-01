@@ -169,14 +169,18 @@ extern float global_operationQualityFactor;
  * =============================================================================
  */
 
+#ifdef LEARNER_TRY_REVERSE
 static learner_task_t
 TMfindBestReverseTask (findBestTaskArg_t* argPtr);
+#endif
 
 static learner_task_t
 TMfindBestInsertTask (findBestTaskArg_t* argPtr);
 
+#ifdef LEARNER_TRY_REMOVE
 static learner_task_t
 TMfindBestRemoveTask (findBestTaskArg_t* argPtr);
+#endif
 
 /* =============================================================================
  * compareTask
@@ -378,11 +382,10 @@ createTaskList (void* argPtr)
 
     } /* foreach variable */
 
-    __transaction_atomic {
-    float globalBaseLogLikelihood =
-        TM_SHARED_READ_F(learnerPtr->baseLogLikelihood);
-    TM_SHARED_WRITE_F(learnerPtr->baseLogLikelihood,
-                      (baseLogLikelihood + globalBaseLogLikelihood));
+    // [mfs] __transaction_atomic
+    {
+    float globalBaseLogLikelihood = learnerPtr->baseLogLikelihood;
+    learnerPtr->baseLogLikelihood = (baseLogLikelihood + globalBaseLogLikelihood);
     }
 
     /*
@@ -473,9 +476,10 @@ createTaskList (void* argPtr)
             taskPtr->fromId = bestLocalIndex;
             taskPtr->toId = v;
             taskPtr->score = score;
-            TM_BEGIN();
+            // [mfs] __transaction_atomic
+            {
             status = TMLIST_INSERT(taskListPtr, (void*)taskPtr);
-            TM_END();
+            }
             assert(status);
         }
 
@@ -638,7 +642,7 @@ computeLocalLogLikelihoodHelper (long i,
 
     float localLogLikelihood = 0.0;
 
-    query_t* parentQueryPtr = vector_at(parentQueryVectorPtr, i);
+    query_t* parentQueryPtr = (query_t*)vector_at(parentQueryVectorPtr, i);
     long parentIndex = parentQueryPtr->index;
 
     queries[parentIndex].value = 0;
@@ -747,7 +751,7 @@ TMfindBestInsertTask (findBestTaskArg_t* argPtr)
 
     float bestFromId = toId; /* flag for not found */
     float oldLocalLogLikelihood =
-        (float)TM_SHARED_READ_F(localBaseLogLikelihoods[toId]);
+        (float)localBaseLogLikelihoods[toId];
     float bestLocalLogLikelihood = oldLocalLogLikelihood;
 
     status = TMNET_FINDDESCENDANTS(netPtr, toId, invalidBitmapPtr, workQueuePtr);
@@ -1131,8 +1135,6 @@ TMfindBestReverseTask (findBestTaskArg_t* argPtr)
 static void
 learnStructure (void* argPtr)
 {
-    TM_THREAD_ENTER();
-
     learner_t* learnerPtr = (learner_t*)argPtr;
     net_t* netPtr = learnerPtr->netPtr;
     adtree_t* adtreePtr = learnerPtr->adtreePtr;
@@ -1148,7 +1150,7 @@ learnStructure (void* argPtr)
     assert(workQueuePtr);
 
     long numVar = adtreePtr->numVar;
-    query_t* queries = (query_t*)P_MALLOC(numVar * sizeof(query_t));
+    query_t* queries = (query_t*)malloc(numVar * sizeof(query_t));
     assert(queries);
     long v;
     for (v = 0; v < numVar; v++) {
@@ -1180,9 +1182,10 @@ learnStructure (void* argPtr)
     while (1) {
 
         learner_task_t* taskPtr;
-        TM_BEGIN();
+        // [mfs] __transaction_atomic
+        {
         taskPtr = TMpopTask(taskListPtr);
-        TM_END();
+        }
         if (taskPtr == NULL) {
             break;
         }
@@ -1193,7 +1196,8 @@ learnStructure (void* argPtr)
 
         bool_t isTaskValid;
 
-        TM_BEGIN();
+        // [mfs] __transaction_atomic
+        {
 
         /*
          * Check if task is still valid
@@ -1249,7 +1253,7 @@ learnStructure (void* argPtr)
             TMNET_APPLYOPERATION(netPtr, op, fromId, toId);
         }
 
-        TM_END();
+        }
 
         float deltaLogLikelihood = 0.0;
 
@@ -1258,7 +1262,8 @@ learnStructure (void* argPtr)
             switch (op) {
                 float newBaseLogLikelihood;
                 case OPERATION_INSERT: {
-                    TM_BEGIN();
+                    // [mfs] __transaction_atomic
+                    {
                     TMpopulateQueryVectors(
                                            netPtr,
                                            toId,
@@ -1273,21 +1278,22 @@ learnStructure (void* argPtr)
                                                   queryVectorPtr,
                                                   parentQueryVectorPtr);
                     float toLocalBaseLogLikelihood =
-                        (float)TM_SHARED_READ_F(localBaseLogLikelihoods[toId]);
+                        (float)localBaseLogLikelihoods[toId];
                     deltaLogLikelihood +=
                         toLocalBaseLogLikelihood - newBaseLogLikelihood;
-                    TM_SHARED_WRITE_F(localBaseLogLikelihoods[toId],
-                                      newBaseLogLikelihood);
-                    TM_END();
-                    TM_BEGIN();
-                    long numTotalParent = (long)TM_SHARED_READ(learnerPtr->numTotalParent);
-                    TM_SHARED_WRITE(learnerPtr->numTotalParent, (numTotalParent + 1));
-                    TM_END();
+                    localBaseLogLikelihoods[toId] = newBaseLogLikelihood;
+                    }
+                    // [mfs] __transaction_atomic
+                    {
+                    long numTotalParent = (long)learnerPtr->numTotalParent;
+                    learnerPtr->numTotalParent = (numTotalParent + 1);
+                    }
                     break;
                 }
 #ifdef LEARNER_TRY_REMOVE
                 case OPERATION_REMOVE: {
-                    TM_BEGIN();
+                    // [mfs] __transaction_atomic
+                    {
                     TMpopulateQueryVectors(
                                            netPtr,
                                            fromId,
@@ -1307,17 +1313,19 @@ learnStructure (void* argPtr)
                         fromLocalBaseLogLikelihood - newBaseLogLikelihood;
                     TM_SHARED_WRITE_F(localBaseLogLikelihoods[fromId],
                                       newBaseLogLikelihood);
-                    TM_END();
-                    TM_BEGIN();
+                    }
+                    // [mfs] __transaction_atomic
+                    {
                     long numTotalParent = (long)TM_SHARED_READ(learnerPtr->numTotalParent);
                     TM_SHARED_WRITE(learnerPtr->numTotalParent, (numTotalParent - 1));
-                    TM_END();
+                    }
                     break;
                 }
 #endif /* LEARNER_TRY_REMOVE */
 #ifdef LEARNER_TRY_REVERSE
                 case OPERATION_REVERSE: {
-                    TM_BEGIN();
+                    // [mfs] __transaction_atomic
+                    {
                     TMpopulateQueryVectors(
                                            netPtr,
                                            fromId,
@@ -1337,9 +1345,10 @@ learnStructure (void* argPtr)
                         fromLocalBaseLogLikelihood - newBaseLogLikelihood;
                     TM_SHARED_WRITE_F(localBaseLogLikelihoods[fromId],
                                       newBaseLogLikelihood);
-                    TM_END();
+                    }
 
-                    TM_BEGIN();
+                    // [mfs] __transaction_atomic
+                    {
                     TMpopulateQueryVectors(
                                            netPtr,
                                            toId,
@@ -1359,7 +1368,7 @@ learnStructure (void* argPtr)
                         toLocalBaseLogLikelihood - newBaseLogLikelihood;
                     TM_SHARED_WRITE_F(localBaseLogLikelihoods[toId],
                                       newBaseLogLikelihood);
-                    TM_END();
+                    }
                     break;
                 }
 #endif /* LEARNER_TRY_REVERSE */
@@ -1376,14 +1385,15 @@ learnStructure (void* argPtr)
         float baseLogLikelihood;
         long numTotalParent;
 
-        TM_BEGIN();
+        // [mfs] __transaction_atomic
+        {
         float oldBaseLogLikelihood =
-            (float)TM_SHARED_READ_F(learnerPtr->baseLogLikelihood);
+            (float)learnerPtr->baseLogLikelihood;
         float newBaseLogLikelihood = oldBaseLogLikelihood + deltaLogLikelihood;
-        TM_SHARED_WRITE_F(learnerPtr->baseLogLikelihood, newBaseLogLikelihood);
+        learnerPtr->baseLogLikelihood = newBaseLogLikelihood;
         baseLogLikelihood = newBaseLogLikelihood;
-        numTotalParent = (long)TM_SHARED_READ(learnerPtr->numTotalParent);
-        TM_END();
+        numTotalParent = (long)learnerPtr->numTotalParent;
+        }
 
         /*
          * Find next task
@@ -1405,9 +1415,10 @@ learnStructure (void* argPtr)
         arg.basePenalty       = basePenalty;
         arg.baseLogLikelihood = baseLogLikelihood;
 
-        TM_BEGIN();
+        // [mfs] __transaction_atomic
+        {
         newTask = TMfindBestInsertTask(&arg);
-        TM_END();
+        }
 
         if ((newTask.fromId != newTask.toId) &&
             (newTask.score > (bestTask.score / operationQualityFactor)))
@@ -1416,9 +1427,10 @@ learnStructure (void* argPtr)
         }
 
 #ifdef LEARNER_TRY_REMOVE
-        TM_BEGIN();
+        // [mfs] __transaction_atomic
+        {
         newTask = TMfindBestRemoveTask(&arg);
-        TM_END();
+        }
 
         if ((newTask.fromId != newTask.toId) &&
             (newTask.score > (bestTask.score / operationQualityFactor)))
@@ -1428,9 +1440,10 @@ learnStructure (void* argPtr)
 #endif /* LEARNER_TRY_REMOVE */
 
 #ifdef LEARNER_TRY_REVERSE
-        TM_BEGIN();
+        // [mfs] __transaction_atomic
+        {
         newTask = TMfindBestReverseTask(&arg);
-        TM_END();
+        }
 
         if ((newTask.fromId != newTask.toId) &&
             (newTask.score > (bestTask.score / operationQualityFactor)))
@@ -1442,9 +1455,10 @@ learnStructure (void* argPtr)
         if (bestTask.toId != -1) {
             learner_task_t* tasks = learnerPtr->tasks;
             tasks[toId] = bestTask;
-            TM_BEGIN();
+            // [mfs] __transaction_atomic
+            {
             TMLIST_INSERT(taskListPtr, (void*)&tasks[toId]);
-            TM_END();
+            }
 #ifdef TEST_LEARNER
             printf("[new]  op=%i from=%li to=%li score=%lf\n",
                    bestTask.op, bestTask.fromId, bestTask.toId, bestTask.score);
@@ -1460,9 +1474,7 @@ learnStructure (void* argPtr)
     PVECTOR_FREE(aQueryVectorPtr);
     PVECTOR_FREE(queryVectorPtr);
     PVECTOR_FREE(parentQueryVectorPtr);
-    P_FREE(queries);
-
-    TM_THREAD_EXIT();
+    free(queries);
 }
 
 

@@ -238,7 +238,7 @@ insertEdge (net_t* netPtr, long fromId, long toId)
  * =============================================================================
  */
 static void
-TMinsertEdge (TM_ARGDECL  net_t* netPtr, long fromId, long toId)
+TMinsertEdge (net_t* netPtr, long fromId, long toId)
 {
     vector_t* nodeVectorPtr = netPtr->nodeVectorPtr;
     bool_t status;
@@ -282,7 +282,7 @@ removeEdge (net_t* netPtr, long fromId, long toId)
  * =============================================================================
  */
 static void
-TMremoveEdge (TM_ARGDECL  net_t* netPtr, long fromId, long toId)
+TMremoveEdge (net_t* netPtr, long fromId, long toId)
 {
     vector_t* nodeVectorPtr = netPtr->nodeVectorPtr;
     bool_t status;
@@ -316,10 +316,10 @@ reverseEdge (net_t* netPtr, long fromId, long toId)
  * =============================================================================
  */
 static void
-TMreverseEdge (TM_ARGDECL  net_t* netPtr, long fromId, long toId)
+TMreverseEdge (net_t* netPtr, long fromId, long toId)
 {
-    TMremoveEdge(TM_ARG  netPtr, fromId, toId);
-    TMinsertEdge(TM_ARG  netPtr, toId, fromId);
+    TMremoveEdge(netPtr, fromId, toId);
+    TMinsertEdge(netPtr, toId, fromId);
 }
 
 
@@ -345,13 +345,12 @@ net_applyOperation (net_t* netPtr, operation_t op, long fromId, long toId)
  * =============================================================================
  */
 void
-TMnet_applyOperation (TM_ARGDECL
-                      net_t* netPtr, operation_t op, long fromId, long toId)
+TMnet_applyOperation (net_t* netPtr, operation_t op, long fromId, long toId)
 {
     switch (op) {
-        case OPERATION_INSERT:  TMinsertEdge(TM_ARG   netPtr, fromId, toId); break;
-        case OPERATION_REMOVE:  TMremoveEdge(TM_ARG   netPtr, fromId, toId); break;
-        case OPERATION_REVERSE: TMreverseEdge(TM_ARG  netPtr, fromId, toId); break;
+        case OPERATION_INSERT:  TMinsertEdge(netPtr, fromId, toId); break;
+        case OPERATION_REMOVE:  TMremoveEdge(netPtr, fromId, toId); break;
+        case OPERATION_REVERSE: TMreverseEdge(netPtr, fromId, toId); break;
         default:
             assert(0);
     }
@@ -387,7 +386,7 @@ net_hasEdge (net_t* netPtr, long fromId, long toId)
  * =============================================================================
  */
 bool_t
-TMnet_hasEdge (TM_ARGDECL  net_t* netPtr, long fromId, long toId)
+TMnet_hasEdge (net_t* netPtr, long fromId, long toId)
 {
     vector_t* nodeVectorPtr = netPtr->nodeVectorPtr;
     net_node_t* childNodePtr = (net_node_t*)vector_at(nodeVectorPtr, toId);
@@ -458,8 +457,7 @@ net_isPath (net_t* netPtr,
  * =============================================================================
  */
 bool_t
-TMnet_isPath (TM_ARGDECL
-              net_t* netPtr,
+TMnet_isPath (net_t* netPtr,
               long fromId,
               long toId,
               bitmap_t* visitedBitmapPtr,
@@ -671,8 +669,7 @@ net_findAncestors (net_t* netPtr,
  * =============================================================================
  */
 bool_t
-TMnet_findAncestors (TM_ARGDECL
-                     net_t* netPtr,
+TMnet_findAncestors (net_t* netPtr,
                      long id,
                      bitmap_t* ancestorBitmapPtr,
                      queue_t* workQueuePtr)
@@ -790,8 +787,7 @@ net_findDescendants (net_t* netPtr,
  * =============================================================================
  */
 bool_t
-TMnet_findDescendants (TM_ARGDECL
-                       net_t* netPtr,
+TMnet_findDescendants (net_t* netPtr,
                        long id,
                        bitmap_t* descendantBitmapPtr,
                        queue_t* workQueuePtr)

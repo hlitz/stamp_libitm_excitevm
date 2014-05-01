@@ -1,64 +1,29 @@
-CC       := gcc
-CFLAGS   += -g -Wall -pthread
-CFLAGS   += -O3
-CFLAGS   += -I$(LIB)
-CPP      := g++
-CPPFLAGS += $(CFLAGS)
+CXX       = g++
+CXXFLAGS += -g -Wall -pthread -O3
+
 LD       := g++
-LIBS     += -lpthread
-
-# Remove these files when doing clean
-OUTPUT +=
-
-LIB := ../lib
-
-STM := ../../tl2
-
-LOSTM := ../../OpenTM/lostm
-
-
-
-PROG := bayes
-
-SRCS += \
-	adtree.c \
-	bayes.c \
-	data.c \
-	learner.c \
-	net.c \
-	sort.c \
-	bitmap.c \
-	list.c \
-	mt19937ar.c \
-	queue.c \
-	random.c \
-	thread.c \
-	vector.c
-
-OBJS := ${SRCS:.c=.o}
+LDFLAGS  += -lpthread
 
 CFLAGS += -DLIST_NO_DUPLICATES
 CFLAGS += -DLEARNER_TRY_REMOVE
 CFLAGS += -DLEARNER_TRY_REVERSE
 
-CFLAGS   += -DSTM -I$(STM)
-CPPFLAGS := $(CFLAGS)
-LDFLAGS  += -L$(STM)
-LIBS     += -ltl2
+PROG := bayes
+
+SRCS += adtree.cc bayes.cc data.cc learner.cc net.cc sort.cc bitmap.cc \
+	list.cc mt19937ar.cc queue.cc random.cc thread.cc vector.cc
+
+OBJS := ${SRCS:.cc=.o}
 
 .PHONY: default
 default: $(PROG)
 
 .PHONY: clean
 clean:
-	$(RM) $(OBJS) $(PROG) $(OUTPUT)
+	$(RM) $(OBJS) $(PROG)
+
+%.o: %.cc *.h
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 $(PROG): $(OBJS)
-	$(LD) $(LDFLAGS) $^ $(LIBS) -o $(PROG)
-
-%.o: %.c *.h
-	$(CC) $(CFLAGS) -c $< -o $@
-
-%.o: %.cpp *.h
-	$(CPP) $(CPPFLAGS) -c $< -o $@
-
+	$(LD) $(LDFLAGS) $^ -o $(PROG)
