@@ -1,0 +1,42 @@
+# obj folder
+TMBUILD ?= obj
+
+# ======== Defines ========
+CC	:= gcc
+#CPPFLAGS += -DNDEBUG
+CPPFLAGS += -I../lib -I../
+CPPFLAGS += 
+CFLAGS   += -Wall -Wextra -g
+CFLAGS   += -fgnu-tm
+CFLAGS   += -O2
+
+LD	:= gcc
+LDFLAGS  += -lpthread
+LDFLAGS  += -litm
+LIBDEPS  += 
+
+# ======== Rules ========
+OBJDIR = ../../$(TMBUILD)/$(PROG)/
+
+_OBJS = $(patsubst %,$(OBJDIR)/%,$(OBJS))
+_PROG = $(OBJDIR)/$(PROG)
+
+.PHONY: default
+default: $(PROG)
+
+.PHONY: $(PROG)
+$(PROG): $(_PROG)
+
+.PHONY: clean
+clean:
+	$(RM) $(_OBJS) $(_PROG)
+
+$(_PROG): $(_OBJS) $(LIBDEPS)
+	$(LD) $^ $(LDFLAGS) -o $(_PROG)
+
+$(OBJDIR)/%.o: %.c *.h ../lib/*.h
+	@mkdir -p $(@D)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+
+$(OBJDIR)/lib_%.o: ../lib/%.c ../lib/*.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
