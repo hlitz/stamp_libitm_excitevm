@@ -72,6 +72,7 @@
 #include <stdlib.h>
 #include "mt19937ar.h"
 #include "random.h"
+#include "tm.h"
 
 
 /* =============================================================================
@@ -93,40 +94,11 @@ random_alloc (void)
 
 
 /* =============================================================================
- * Prandom_alloc
- * -- Returns NULL if failure
- * =============================================================================
- */
-random_t*
-Prandom_alloc (void)
-{
-    random_t* randomPtr = (random_t*)malloc(sizeof(random_t));
-    if (randomPtr != NULL) {
-        randomPtr->mti = N;
-        init_genrand(randomPtr->mt, &(randomPtr->mti), RANDOM_DEFAULT_SEED);
-    }
-
-    return randomPtr;
-}
-
-
-/* =============================================================================
  * random_free
  * =============================================================================
  */
 void
 random_free (random_t* randomPtr)
-{
-    free(randomPtr);
-}
-
-
-/* =============================================================================
- * Prandom_free
- * =============================================================================
- */
-void
-Prandom_free (random_t* randomPtr)
 {
     free(randomPtr);
 }

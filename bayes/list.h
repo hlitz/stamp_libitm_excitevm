@@ -74,6 +74,7 @@
 #ifndef LIST_H
 #define LIST_H 1
 
+#include "tm.h"
 #include "types.h"
 
 
@@ -91,57 +92,37 @@ typedef list_node_t* list_iter_t;
 
 typedef struct list {
     list_node_t head;
-    long (*compare)(const void*, const void*);   /* returns {-1,0,1}, 0 -> equal */
+    TM_SAFE long (*compare)(const void*, const void*);   /* returns {-1,0,1}, 0 -> equal */
     long size;
 } list_t;
-
-
-/* =============================================================================
- * list_iter_reset
- * =============================================================================
- */
-void
-list_iter_reset (list_iter_t* itPtr, list_t* listPtr);
 
 
 /* =============================================================================
  * TMlist_iter_reset
  * =============================================================================
  */
+TM_SAFE
 void
-TMlist_iter_reset (list_iter_t* itPtr, list_t* listPtr);
-
-
-/* =============================================================================
- * list_iter_hasNext
- * =============================================================================
- */
-bool_t
-list_iter_hasNext (list_iter_t* itPtr, list_t* listPtr);
+list_iter_reset (  list_iter_t* itPtr, list_t* listPtr);
 
 
 /* =============================================================================
  * TMlist_iter_hasNext
  * =============================================================================
  */
+TM_SAFE
 bool_t
-TMlist_iter_hasNext (list_iter_t* itPtr, list_t* listPtr);
-
-
-/* =============================================================================
- * list_iter_next
- * =============================================================================
- */
-void*
-list_iter_next (list_iter_t* itPtr, list_t* listPtr);
+//list_iter_hasNext (  list_iter_t* itPtr, list_t* listPtr);
+list_iter_hasNext (  list_iter_t* itPtr);
 
 
 /* =============================================================================
  * TMlist_iter_next
  * =============================================================================
  */
+TM_SAFE
 void*
-TMlist_iter_next (list_iter_t* itPtr, list_t* listPtr);
+list_iter_next (  list_iter_t* itPtr, list_t* listPtr);
 
 
 /* =============================================================================
@@ -150,57 +131,18 @@ TMlist_iter_next (list_iter_t* itPtr, list_t* listPtr);
  * -- Returns NULL on failure
  * =============================================================================
  */
+TM_SAFE
 list_t*
-list_alloc (long (*compare)(const void*, const void*));
-
-
-/* =============================================================================
- * Plist_alloc
- * -- If NULL passed for 'compare' function, will compare data pointer addresses
- * -- Returns NULL on failure
- * =============================================================================
- */
-list_t*
-Plist_alloc (long (*compare)(const void*, const void*));
-
-
-/* =============================================================================
- * TMlist_alloc
- * -- If NULL passed for 'compare' function, will compare data pointer addresses
- * -- Returns NULL on failure
- * =============================================================================
- */
-list_t*
-TMlist_alloc (long (*compare)(const void*, const void*));
+list_alloc (TM_SAFE long (*compare)(const void*, const void*));
 
 
 /* =============================================================================
  * list_free
  * =============================================================================
  */
+TM_SAFE
 void
 list_free (list_t* listPtr);
-
-
-/* =============================================================================
- * Plist_free
- * -- If NULL passed for 'compare' function, will compare data pointer addresses
- * -- Returns NULL on failure
- * =============================================================================
- */
-void
-Plist_free (list_t* listPtr);
-
-
-/* =============================================================================
- * TMlist_free
- * -- If NULL passed for 'compare' function, will compare data pointer addresses
- * -- Returns NULL on failure
- * =============================================================================
- */
-void
-TMlist_free (list_t* listPtr);
-
 
 
 /* =============================================================================
@@ -208,17 +150,9 @@ TMlist_free (list_t* listPtr);
  * -- Return TRUE if list is empty, else FALSE
  * =============================================================================
  */
+TM_SAFE
 bool_t
 list_isEmpty (list_t* listPtr);
-
-
-/* =============================================================================
- * TMlist_isEmpty
- * -- Return TRUE if list is empty, else FALSE
- * =============================================================================
- */
-bool_t
-TMlist_isEmpty (list_t* listPtr);
 
 
 /* =============================================================================
@@ -226,26 +160,9 @@ TMlist_isEmpty (list_t* listPtr);
  * -- Returns size of list
  * =============================================================================
  */
+TM_SAFE
 long
 list_getSize (list_t* listPtr);
-
-
-/* =============================================================================
- * TMlist_getSize
- * -- Returns size of list
- * =============================================================================
- */
-long
-TMlist_getSize (list_t* listPtr);
-
-
-/* =============================================================================
- * list_find
- * -- Returns NULL if not found, else returns pointer to data
- * =============================================================================
- */
-void*
-list_find (list_t* listPtr, void* dataPtr);
 
 
 /* =============================================================================
@@ -253,26 +170,9 @@ list_find (list_t* listPtr, void* dataPtr);
  * -- Returns NULL if not found, else returns pointer to data
  * =============================================================================
  */
+TM_SAFE
 void*
-TMlist_find (list_t* listPtr, void* dataPtr);
-
-
-/* =============================================================================
- * list_insert
- * -- Return TRUE on success, else FALSE
- * =============================================================================
- */
-bool_t
-list_insert (list_t* listPtr, void* dataPtr);
-
-
-/* =============================================================================
- * Plist_insert
- * -- Return TRUE on success, else FALSE
- * =============================================================================
- */
-bool_t
-Plist_insert (list_t* listPtr, void* dataPtr);
+list_find (  list_t* listPtr, void* dataPtr);
 
 
 /* =============================================================================
@@ -280,26 +180,9 @@ Plist_insert (list_t* listPtr, void* dataPtr);
  * -- Return TRUE on success, else FALSE
  * =============================================================================
  */
+TM_SAFE
 bool_t
-TMlist_insert (list_t* listPtr, void* dataPtr);
-
-
-/* =============================================================================
- * list_remove
- * -- Returns TRUE if successful, else FALSE
- * =============================================================================
- */
-bool_t
-list_remove (list_t* listPtr, void* dataPtr);
-
-
-/* =============================================================================
- * Plist_remove
- * -- Returns TRUE if successful, else FALSE
- * =============================================================================
- */
-bool_t
-Plist_remove (list_t* listPtr, void* dataPtr);
+list_insert (list_t* listPtr, void* dataPtr);
 
 
 /* =============================================================================
@@ -307,8 +190,9 @@ Plist_remove (list_t* listPtr, void* dataPtr);
  * -- Returns TRUE if successful, else FALSE
  * =============================================================================
  */
+TM_SAFE
 bool_t
-TMlist_remove (list_t* listPtr, void* dataPtr);
+list_remove (  list_t* listPtr, void* dataPtr);
 
 
 /* =============================================================================
@@ -316,37 +200,20 @@ TMlist_remove (list_t* listPtr, void* dataPtr);
  * -- Removes all elements
  * =============================================================================
  */
+TM_SAFE
 void
 list_clear (list_t* listPtr);
 
-
-/* =============================================================================
- * Plist_clear
- * -- Removes all elements
- * =============================================================================
- */
-void
-Plist_clear (list_t* listPtr);
-
-
-#define PLIST_ALLOC(cmp)                Plist_alloc(cmp)
-#define PLIST_FREE(list)                Plist_free(list)
-#define PLIST_GETSIZE(list)             list_getSize(list)
-#define PLIST_INSERT(list, data)        Plist_insert(list, data)
-#define PLIST_REMOVE(list, data)        Plist_remove(list, data)
-#define PLIST_CLEAR(list)               Plist_clear(list)
-
-
-#define TMLIST_ITER_RESET(it, list)     TMlist_iter_reset(it, list)
-#define TMLIST_ITER_HASNEXT(it, list)   TMlist_iter_hasNext(it, list)
-#define TMLIST_ITER_NEXT(it, list)      TMlist_iter_next(it, list)
-#define TMLIST_ALLOC(cmp)               TMlist_alloc(cmp)
-#define TMLIST_FREE(list)               TMlist_free(list)
-#define TMLIST_GETSIZE(list)            TMlist_getSize(list)
-#define TMLIST_ISEMPTY(list)            TMlist_isEmpty(list)
-#define TMLIST_FIND(list, data)         TMlist_find(list, data)
-#define TMLIST_INSERT(list, data)       TMlist_insert(list, data)
-#define TMLIST_REMOVE(list, data)       TMlist_remove(list, data)
+#define TMLIST_ITER_RESET(it, list)     list_iter_reset(it, list)
+#define TMLIST_ITER_HASNEXT(it)         list_iter_hasNext(it)
+#define TMLIST_ITER_NEXT(it, list)      list_iter_next(it, list)
+#define TMLIST_ALLOC(cmp)               list_alloc(cmp)
+#define TMLIST_FREE(list)               list_free(list)
+#define TMLIST_GETSIZE(list)            list_getSize(list)
+#define TMLIST_ISEMPTY(list)            list_isEmpty(list)
+#define TMLIST_FIND(list, data)         list_find(list, data)
+#define TMLIST_INSERT(list, data)       list_insert(list, data)
+#define TMLIST_REMOVE(list, data)       list_remove(list, data)
 
 
 #ifdef __cplusplus

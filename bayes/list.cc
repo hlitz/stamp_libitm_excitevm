@@ -75,27 +75,44 @@
 #include <assert.h>
 #include "list.h"
 #include "types.h"
+#include "tm.h"
+
+// [mfs] HACK
+__attribute__((transaction_pure))
+void __assert_fail(const char*, const char*, unsigned int, const char*);
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* =============================================================================
- * DECLARATION OF TM_CALLABLE FUNCTIONS
+ * DECLARATION OF TM_SAFE FUNCTIONS
  * =============================================================================
  */
 
-static list_node_t*
-TMfindPrevious (list_t* listPtr, void* dataPtr);
+TM_SAFE
+list_node_t*
+findPrevious (list_t* listPtr, void* dataPtr);
 
-static void
-TMfreeList (list_node_t* nodePtr);
-
+TM_SAFE
 void
-TMlist_free (list_t* listPtr);
+freeList (list_node_t* nodePtr);
+
+TM_SAFE
+list_node_t*
+allocNode (void* dataPtr);
+
+TM_SAFE
+void
+freeNode (list_node_t* nodePtr);
 
 /* =============================================================================
  * compareDataPtrAddresses
  * -- Default compare function
  * =============================================================================
  */
-static long
+TM_SAFE
+long
 compareDataPtrAddresses (const void* a, const void* b)
 {
     return ((long)a - (long)b);
@@ -106,19 +123,10 @@ compareDataPtrAddresses (const void* a, const void* b)
  * list_iter_reset
  * =============================================================================
  */
+//[wer] caution, problematic, replace with direct write
+TM_SAFE
 void
 list_iter_reset (list_iter_t* itPtr, list_t* listPtr)
-{
-    *itPtr = &(listPtr->head);
-}
-
-
-/* =============================================================================
- * TMlist_iter_reset
- * =============================================================================
- */
-void
-TMlist_iter_reset (list_iter_t* itPtr, list_t* listPtr)
 {
     *itPtr = &(listPtr->head);
 }
@@ -128,50 +136,26 @@ TMlist_iter_reset (list_iter_t* itPtr, list_t* listPtr)
  * list_iter_hasNext
  * =============================================================================
  */
+//[wer] caution, problematic, replace with direct write
+// removed the second junk parameter
+TM_SAFE
 bool_t
-list_iter_hasNext (list_iter_t* itPtr, list_t* listPtr)
+//list_iter_hasNext (list_iter_t* itPtr, list_t* listPtr)
+list_iter_hasNext (list_iter_t* itPtr)
 {
     return (((*itPtr)->nextPtr != NULL) ? TRUE : FALSE);
 }
-
-
-/* =============================================================================
- * TMlist_iter_hasNext
- * =============================================================================
- */
-bool_t
-TMlist_iter_hasNext (list_iter_t* itPtr, list_t* listPtr)
-{
-    list_iter_t next = (list_iter_t)(*itPtr)->nextPtr;
-
-    return ((next != NULL) ? TRUE : FALSE);
-}
-
 
 /* =============================================================================
  * list_iter_next
  * =============================================================================
  */
+TM_SAFE
 void*
 list_iter_next (list_iter_t* itPtr, list_t* listPtr)
 {
     *itPtr = (*itPtr)->nextPtr;
-
     return (*itPtr)->dataPtr;
-}
-
-
-/* =============================================================================
- * TMlist_iter_next
- * =============================================================================
- */
-void*
-TMlist_iter_next (list_iter_t* itPtr, list_t* listPtr)
-{
-    list_iter_t next = (list_iter_t)(*itPtr)->nextPtr;
-    *itPtr = next;
-
-    return next->dataPtr;
 }
 
 
@@ -180,48 +164,9 @@ TMlist_iter_next (list_iter_t* itPtr, list_t* listPtr)
  * -- Returns NULL on failure
  * =============================================================================
  */
-static list_node_t*
+TM_SAFE
+list_node_t*
 allocNode (void* dataPtr)
-{
-    list_node_t* nodePtr = (list_node_t*)malloc(sizeof(list_node_t));
-    if (nodePtr == NULL) {
-        return NULL;
-    }
-
-    nodePtr->dataPtr = dataPtr;
-    nodePtr->nextPtr = NULL;
-
-    return nodePtr;
-}
-
-
-/* =============================================================================
- * PallocNode
- * -- Returns NULL on failure
- * =============================================================================
- */
-static list_node_t*
-PallocNode (void* dataPtr)
-{
-    list_node_t* nodePtr = (list_node_t*)malloc(sizeof(list_node_t));
-    if (nodePtr == NULL) {
-        return NULL;
-    }
-
-    nodePtr->dataPtr = dataPtr;
-    nodePtr->nextPtr = NULL;
-
-    return nodePtr;
-}
-
-
-/* =============================================================================
- * TMallocNode
- * -- Returns NULL on failure
- * =============================================================================
- */
-static list_node_t*
-TMallocNode (void* dataPtr)
 {
     list_node_t* nodePtr = (list_node_t*)malloc(sizeof(list_node_t));
     if (nodePtr == NULL) {
@@ -241,8 +186,9 @@ TMallocNode (void* dataPtr)
  * -- Returns NULL on failure
  * =============================================================================
  */
+TM_SAFE
 list_t*
-list_alloc (long (*compare)(const void*, const void*))
+list_alloc (TM_SAFE long (*compare)(const void*, const void*))
 {
     list_t* listPtr = (list_t*)malloc(sizeof(list_t));
     if (listPtr == NULL) {
@@ -260,84 +206,6 @@ list_alloc (long (*compare)(const void*, const void*))
     }
 
     return listPtr;
-}
-
-
-/* =============================================================================
- * Plist_alloc
- * -- If NULL passed for 'compare' function, will compare data pointer addresses
- * -- Returns NULL on failure
- * =============================================================================
- */
-list_t*
-Plist_alloc (long (*compare)(const void*, const void*))
-{
-    list_t* listPtr = (list_t*)malloc(sizeof(list_t));
-    if (listPtr == NULL) {
-        return NULL;
-    }
-
-    listPtr->head.dataPtr = NULL;
-    listPtr->head.nextPtr = NULL;
-    listPtr->size = 0;
-
-    if (compare == NULL) {
-        listPtr->compare = &compareDataPtrAddresses; /* default */
-    } else {
-        listPtr->compare = compare;
-    }
-
-    return listPtr;
-}
-
-
-/* =============================================================================
- * TMlist_alloc
- * -- If NULL passed for 'compare' function, will compare data pointer addresses
- * -- Returns NULL on failure
- * =============================================================================
- */
-list_t*
-TMlist_alloc (long (*compare)(const void*, const void*))
-{
-    list_t* listPtr = (list_t*)malloc(sizeof(list_t));
-    if (listPtr == NULL) {
-        return NULL;
-    }
-
-    listPtr->head.dataPtr = NULL;
-    listPtr->head.nextPtr = NULL;
-    listPtr->size = 0;
-
-    if (compare == NULL) {
-        listPtr->compare = &compareDataPtrAddresses; /* default */
-    } else {
-        listPtr->compare = compare;
-    }
-
-    return listPtr;
-}
-
-
-/* =============================================================================
- * freeNode
- * =============================================================================
- */
-static void
-freeNode (list_node_t* nodePtr)
-{
-    free(nodePtr);
-}
-
-
-/* =============================================================================
- * PfreeNode
- * =============================================================================
- */
-static void
-PfreeNode (list_node_t* nodePtr)
-{
-    free(nodePtr);
 }
 
 
@@ -345,38 +213,11 @@ PfreeNode (list_node_t* nodePtr)
  * TMfreeNode
  * =============================================================================
  */
-static void
-TMfreeNode (list_node_t* nodePtr)
+TM_SAFE
+void
+freeNode (list_node_t* nodePtr)
 {
     free(nodePtr);
-}
-
-
-/* =============================================================================
- * freeList
- * =============================================================================
- */
-static void
-freeList (list_node_t* nodePtr)
-{
-    if (nodePtr != NULL) {
-        freeList(nodePtr->nextPtr);
-        freeNode(nodePtr);
-    }
-}
-
-
-/* =============================================================================
- * PfreeList
- * =============================================================================
- */
-static void
-PfreeList (list_node_t* nodePtr)
-{
-    if (nodePtr != NULL) {
-        PfreeList(nodePtr->nextPtr);
-        PfreeNode(nodePtr);
-    }
 }
 
 
@@ -384,50 +225,27 @@ PfreeList (list_node_t* nodePtr)
  * TMfreeList
  * =============================================================================
  */
-static void
-TMfreeList (list_node_t* nodePtr)
+TM_SAFE
+void
+freeList (list_node_t* nodePtr)
 {
     if (nodePtr != NULL) {
         list_node_t* nextPtr = (list_node_t*)nodePtr->nextPtr;
-        TMfreeList(nextPtr);
-        TMfreeNode(nodePtr);
+        freeList(nextPtr);
+        freeNode(nodePtr);
     }
 }
-
 
 /* =============================================================================
  * list_free
  * =============================================================================
  */
+TM_SAFE
 void
-list_free (list_t* listPtr)
-{
-    freeList(listPtr->head.nextPtr);
-    free(listPtr);
-}
-
-
-/* =============================================================================
- * Plist_free
- * =============================================================================
- */
-void
-Plist_free (list_t* listPtr)
-{
-    PfreeList(listPtr->head.nextPtr);
-    free(listPtr);
-}
-
-
-/* =============================================================================
- * TMlist_free
- * =============================================================================
- */
-void
-TMlist_free (list_t* listPtr)
+list_free (  list_t* listPtr)
 {
     list_node_t* nextPtr = (list_node_t*)listPtr->head.nextPtr;
-    TMfreeList(nextPtr);
+    freeList(nextPtr);
     free(listPtr);
 }
 
@@ -437,6 +255,7 @@ TMlist_free (list_t* listPtr)
  * -- Return TRUE if list is empty, else FALSE
  * =============================================================================
  */
+TM_SAFE
 bool_t
 list_isEmpty (list_t* listPtr)
 {
@@ -445,39 +264,15 @@ list_isEmpty (list_t* listPtr)
 
 
 /* =============================================================================
- * TMlist_isEmpty
- * -- Return TRUE if list is empty, else FALSE
- * =============================================================================
- */
-bool_t
-TMlist_isEmpty (list_t* listPtr)
-{
-    return (((void*)listPtr->head.nextPtr == NULL) ?
-            TRUE : FALSE);
-}
-
-
-/* =============================================================================
- * list_getSize
- * -- Returns the size of the list
- * =============================================================================
- */
-long
-list_getSize (list_t* listPtr)
-{
-    return listPtr->size;
-}
-
-
-/* =============================================================================
  * TMlist_getSize
  * -- Returns the size of the list
  * =============================================================================
  */
+TM_SAFE
 long
-TMlist_getSize (list_t* listPtr)
+list_getSize (  list_t* listPtr)
 {
-    return (long)listPtr->size;
+    return (long)(listPtr->size);
 }
 
 
@@ -485,7 +280,8 @@ TMlist_getSize (list_t* listPtr)
  * findPrevious
  * =============================================================================
  */
-static list_node_t*
+TM_SAFE
+list_node_t*
 findPrevious (list_t* listPtr, void* dataPtr)
 {
     list_node_t* prevPtr = &(listPtr->head);
@@ -503,34 +299,11 @@ findPrevious (list_t* listPtr, void* dataPtr)
 
 
 /* =============================================================================
- * TMfindPrevious
- * =============================================================================
- */
-static list_node_t*
-TMfindPrevious (list_t* listPtr, void* dataPtr)
-{
-    list_node_t* prevPtr = &(listPtr->head);
-    list_node_t* nodePtr;
-
-    for (nodePtr = (list_node_t*)(prevPtr->nextPtr);
-         nodePtr != NULL;
-         nodePtr = (list_node_t*)(nodePtr->nextPtr))
-    {
-        if (listPtr->compare(nodePtr->dataPtr, dataPtr) >= 0) {
-            return prevPtr;
-        }
-        prevPtr = nodePtr;
-    }
-
-    return prevPtr;
-}
-
-
-/* =============================================================================
  * list_find
  * -- Returns NULL if not found, else returns pointer to data
  * =============================================================================
  */
+TM_SAFE
 void*
 list_find (list_t* listPtr, void* dataPtr)
 {
@@ -549,32 +322,11 @@ list_find (list_t* listPtr, void* dataPtr)
 
 
 /* =============================================================================
- * TMlist_find
- * -- Returns NULL if not found, else returns pointer to data
- * =============================================================================
- */
-void*
-TMlist_find (list_t* listPtr, void* dataPtr)
-{
-    list_node_t* nodePtr;
-    list_node_t* prevPtr = TMfindPrevious(listPtr, dataPtr);
-
-    nodePtr = (list_node_t*)(prevPtr->nextPtr);
-
-    if ((nodePtr == NULL) ||
-        (listPtr->compare(nodePtr->dataPtr, dataPtr) != 0)) {
-        return NULL;
-    }
-
-    return (nodePtr->dataPtr);
-}
-
-
-/* =============================================================================
  * list_insert
  * -- Return TRUE on success, else FALSE
  * =============================================================================
  */
+TM_SAFE
 bool_t
 list_insert (list_t* listPtr, void* dataPtr)
 {
@@ -583,8 +335,9 @@ list_insert (list_t* listPtr, void* dataPtr)
     list_node_t* currPtr;
 
     prevPtr = findPrevious(listPtr, dataPtr);
-    currPtr = prevPtr->nextPtr;
+    currPtr = prevPtr->nextPtr; // shared_read
 
+    // TM_SAFE compare()
 #ifdef LIST_NO_DUPLICATES
     if ((currPtr != NULL) &&
         listPtr->compare(currPtr->dataPtr, dataPtr) == 0) {
@@ -597,79 +350,10 @@ list_insert (list_t* listPtr, void* dataPtr)
         return FALSE;
     }
 
+    // shared_writes
     nodePtr->nextPtr = currPtr;
     prevPtr->nextPtr = nodePtr;
     listPtr->size++;
-
-    return TRUE;
-}
-
-
-/* =============================================================================
- * Plist_insert
- * -- Return TRUE on success, else FALSE
- * =============================================================================
- */
-bool_t
-Plist_insert (list_t* listPtr, void* dataPtr)
-{
-    list_node_t* prevPtr;
-    list_node_t* nodePtr;
-    list_node_t* currPtr;
-
-    prevPtr = findPrevious(listPtr, dataPtr);
-    currPtr = prevPtr->nextPtr;
-
-#ifdef LIST_NO_DUPLICATES
-    if ((currPtr != NULL) &&
-        listPtr->compare(currPtr->dataPtr, dataPtr) == 0) {
-        return FALSE;
-    }
-#endif
-
-    nodePtr = PallocNode(dataPtr);
-    if (nodePtr == NULL) {
-        return FALSE;
-    }
-
-    nodePtr->nextPtr = currPtr;
-    prevPtr->nextPtr = nodePtr;
-    listPtr->size++;
-
-    return TRUE;
-}
-
-
-/* =============================================================================
- * TMlist_insert
- * -- Return TRUE on success, else FALSE
- * =============================================================================
- */
-bool_t
-TMlist_insert (list_t* listPtr, void* dataPtr)
-{
-    list_node_t* prevPtr;
-    list_node_t* nodePtr;
-    list_node_t* currPtr;
-
-    prevPtr = TMfindPrevious(listPtr, dataPtr);
-    currPtr = (list_node_t*)(prevPtr->nextPtr);
-
-#ifdef LIST_NO_DUPLICATES
-    if ((currPtr != NULL) &&
-        listPtr->compare(currPtr->dataPtr, dataPtr) == 0) {
-        return FALSE;
-    }
-#endif
-
-    nodePtr = TMallocNode(dataPtr);
-    if (nodePtr == NULL) {
-        return FALSE;
-    }
-
-    nodePtr->nextPtr = currPtr;
-    prevPtr->nextPtr = nodePtr;
-    listPtr->size    = listPtr->size + 1;
 
     return TRUE;
 }
@@ -680,6 +364,7 @@ TMlist_insert (list_t* listPtr, void* dataPtr)
  * -- Returns TRUE if successful, else FALSE
  * =============================================================================
  */
+TM_SAFE
 bool_t
 list_remove (list_t* listPtr, void* dataPtr)
 {
@@ -705,86 +390,15 @@ list_remove (list_t* listPtr, void* dataPtr)
 
 
 /* =============================================================================
- * Plist_remove
- * -- Returns TRUE if successful, else FALSE
- * =============================================================================
- */
-bool_t
-Plist_remove (list_t* listPtr, void* dataPtr)
-{
-    list_node_t* prevPtr;
-    list_node_t* nodePtr;
-
-    prevPtr = findPrevious(listPtr, dataPtr);
-
-    nodePtr = prevPtr->nextPtr;
-    if ((nodePtr != NULL) &&
-        (listPtr->compare(nodePtr->dataPtr, dataPtr) == 0))
-    {
-        prevPtr->nextPtr = nodePtr->nextPtr;
-        nodePtr->nextPtr = NULL;
-        PfreeNode(nodePtr);
-        listPtr->size--;
-        assert(listPtr->size >= 0);
-        return TRUE;
-    }
-
-    return FALSE;
-}
-
-
-/* =============================================================================
- * TMlist_remove
- * -- Returns TRUE if successful, else FALSE
- * =============================================================================
- */
-bool_t
-TMlist_remove (list_t* listPtr, void* dataPtr)
-{
-    list_node_t* prevPtr;
-    list_node_t* nodePtr;
-
-    prevPtr = TMfindPrevious(listPtr, dataPtr);
-
-    nodePtr = (list_node_t*)(prevPtr->nextPtr);
-    if ((nodePtr != NULL) &&
-        (listPtr->compare(nodePtr->dataPtr, dataPtr) == 0))
-    {
-        prevPtr->nextPtr = (nodePtr->nextPtr);
-        nodePtr->nextPtr = (struct list_node*)NULL;
-        TMfreeNode(nodePtr);
-        listPtr->size = listPtr->size - 1;
-        assert(listPtr->size >= 0);
-        return TRUE;
-    }
-
-    return FALSE;
-}
-
-
-/* =============================================================================
  * list_clear
  * -- Removes all elements
  * =============================================================================
  */
+TM_SAFE
 void
 list_clear (list_t* listPtr)
 {
     freeList(listPtr->head.nextPtr);
-    listPtr->head.nextPtr = NULL;
-    listPtr->size = 0;
-}
-
-
-/* =============================================================================
- * Plist_clear
- * -- Removes all elements
- * =============================================================================
- */
-void
-Plist_clear (list_t* listPtr)
-{
-    PfreeList(listPtr->head.nextPtr);
     listPtr->head.nextPtr = NULL;
     listPtr->size = 0;
 }
@@ -893,6 +507,9 @@ main ()
 
 #endif /* TEST_LIST */
 
+#ifdef __cplusplus
+}
+#endif
 
 /* =============================================================================
  *

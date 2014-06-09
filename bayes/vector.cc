@@ -71,44 +71,25 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include "tm.h"
 #include "types.h"
 #include "utility.h"
 #include "vector.h"
 
+#include "custom_qsort.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* =============================================================================
  * vector_alloc
  * -- Returns NULL if failed
  * =============================================================================
  */
+TM_SAFE
 vector_t*
 vector_alloc (long initCapacity)
-{
-    vector_t* vectorPtr;
-    long capacity = MAX(initCapacity, 1);
-
-    vectorPtr = (vector_t*)malloc(sizeof(vector_t));
-
-    if (vectorPtr != NULL) {
-        vectorPtr->size = 0;
-        vectorPtr->capacity = capacity;
-        vectorPtr->elements = (void**)malloc(capacity * sizeof(void*));
-        if (vectorPtr->elements == NULL) {
-            return NULL;
-        }
-    }
-
-    return vectorPtr;
-}
-
-
-/* =============================================================================
- * Pvector_alloc
- * -- Returns NULL if failed
- * =============================================================================
- */
-vector_t*
-Pvector_alloc (long initCapacity)
 {
     vector_t* vectorPtr;
     long capacity = MAX(initCapacity, 1);
@@ -132,20 +113,9 @@ Pvector_alloc (long initCapacity)
  * vector_free
  * =============================================================================
  */
+TM_SAFE
 void
 vector_free (vector_t* vectorPtr)
-{
-    free(vectorPtr->elements);
-    free(vectorPtr);
-}
-
-
-/* =============================================================================
- * Pvector_free
- * =============================================================================
- */
-void
-Pvector_free (vector_t* vectorPtr)
 {
     free(vectorPtr->elements);
     free(vectorPtr);
@@ -157,6 +127,7 @@ Pvector_free (vector_t* vectorPtr)
  * -- Returns NULL if failed
  * =============================================================================
  */
+TM_SAFE
 void*
 vector_at (vector_t* vectorPtr, long i)
 {
@@ -173,6 +144,7 @@ vector_at (vector_t* vectorPtr, long i)
  * -- Returns FALSE if fail, else TRUE
  * =============================================================================
  */
+TM_SAFE
 bool_t
 vector_pushBack (vector_t* vectorPtr, void* dataPtr)
 {
@@ -190,38 +162,7 @@ vector_pushBack (vector_t* vectorPtr, void* dataPtr)
         free(vectorPtr->elements);
         vectorPtr->elements = newElements;
     }
-
     vectorPtr->elements[vectorPtr->size++] = dataPtr;
-
-    return TRUE;
-}
-
-
-/* =============================================================================
- * Pvector_pushBack
- * -- Returns FALSE if fail, else TRUE
- * =============================================================================
- */
-bool_t
-Pvector_pushBack (vector_t* vectorPtr, void* dataPtr)
-{
-    if (vectorPtr->size == vectorPtr->capacity) {
-        long i;
-        long newCapacity = vectorPtr->capacity * 2;
-        void** newElements = (void**)malloc(newCapacity * sizeof(void*));
-        if (newElements == NULL) {
-            return FALSE;
-        }
-        vectorPtr->capacity = newCapacity;
-        for (i = 0; i < vectorPtr->size; i++) {
-            newElements[i] = vectorPtr->elements[i];
-        }
-        free(vectorPtr->elements);
-        vectorPtr->elements = newElements;
-    }
-
-    vectorPtr->elements[vectorPtr->size++] = dataPtr;
-
     return TRUE;
 }
 
@@ -231,6 +172,7 @@ Pvector_pushBack (vector_t* vectorPtr, void* dataPtr)
  * Returns NULL if fail, else returns last element
  * =============================================================================
  */
+TM_SAFE
 void*
 vector_popBack (vector_t* vectorPtr)
 {
@@ -246,6 +188,7 @@ vector_popBack (vector_t* vectorPtr)
  * vector_getSize
  * =============================================================================
  */
+TM_SAFE
 long
 vector_getSize (vector_t* vectorPtr)
 {
@@ -257,28 +200,62 @@ vector_getSize (vector_t* vectorPtr)
  * vector_clear
  * =============================================================================
  */
+TM_SAFE
 void
 vector_clear (vector_t* vectorPtr)
 {
     vectorPtr->size = 0;
 }
 
-
+#if 1
 /* =============================================================================
  * vector_sort
  * =============================================================================
  */
+//TM_PURE //[wer] this function is pure because of qsort()
+TM_SAFE
 void
 vector_sort (vector_t* vectorPtr, int (*compare) (const void*, const void*))
 {
-    qsort((void*)vectorPtr->elements, vectorPtr->size, sizeof(void**), compare);
+    _quicksort((void*)vectorPtr->elements, vectorPtr->size, sizeof(void**), compare);
 }
+#else
+/* =============================================================================
+ * TM_SAFE
+ * vector_sort
+ * selection_sort
+ * =============================================================================
+ */
+TM_SAFE
+void
+vector_sort (vector_t* vectorPtr, int TM_SAFE (*compare) (const void*, const void*))
+{
+    long size = vectorPtr->size;
+    long i, j;
 
+    for (i = 0; i < size - 1; i++)
+    {
+      long min = i;
+      // find the minimal number from i to N
+      for (j = i + 1; j < size; j++)
+        if (compare (&vectorPtr->elements[j], &vectorPtr->elements[min]) < 0)
+          min = j;
+
+      // exchange
+      if (min != i) {
+        void* temp = vectorPtr->elements[i];
+        vectorPtr->elements[i] = vectorPtr->elements[min];
+        vectorPtr->elements[min] = temp;
+      }
+    }
+}
+#endif
 
 /* =============================================================================
  * vector_copy
  * =============================================================================
  */
+TM_SAFE
 bool_t
 vector_copy (vector_t* dstVectorPtr, vector_t* srcVectorPtr)
 {
@@ -287,45 +264,15 @@ vector_copy (vector_t* dstVectorPtr, vector_t* srcVectorPtr)
     if (dstCapacity < srcSize) {
         long srcCapacity = srcVectorPtr->capacity;
         void** elements = (void**)malloc(srcCapacity * sizeof(void*));
-        if (elements == NULL) {
+        if (elements == NULL)
             return FALSE;
-        }
+
         free(dstVectorPtr->elements);
         dstVectorPtr->elements = elements;
         dstVectorPtr->capacity = srcCapacity;
     }
 
-    memcpy(dstVectorPtr->elements,
-           srcVectorPtr->elements,
-           (srcSize * sizeof(void*)));
-    dstVectorPtr->size = srcSize;
-
-    return TRUE;
-}
-
-
-/* =============================================================================
- * Pvector_copy
- * =============================================================================
- */
-bool_t
-Pvector_copy (vector_t* dstVectorPtr, vector_t* srcVectorPtr)
-{
-    long dstCapacity = dstVectorPtr->capacity;
-    long srcSize = srcVectorPtr->size;
-    if (dstCapacity < srcSize) {
-        long srcCapacity = srcVectorPtr->capacity;
-        void** elements = (void**)malloc(srcCapacity * sizeof(void*));
-        if (elements == NULL) {
-            return FALSE;
-        }
-        free(dstVectorPtr->elements);
-        dstVectorPtr->elements = elements;
-        dstVectorPtr->capacity = srcCapacity;
-    }
-
-    memcpy(dstVectorPtr->elements,
-           srcVectorPtr->elements,
+    memcpy(dstVectorPtr->elements, srcVectorPtr->elements,
            (srcSize * sizeof(void*)));
     dstVectorPtr->size = srcSize;
 
@@ -424,6 +371,9 @@ main ()
 
 #endif /* TEST_VECTOR */
 
+#ifdef __cplusplus
+}
+#endif
 
 /* =============================================================================
  *

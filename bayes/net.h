@@ -77,6 +77,7 @@
 #include "list.h"
 #include "operation.h"
 #include "queue.h"
+#include "tm.h"
 
 typedef struct net net_t;
 
@@ -98,54 +99,30 @@ net_free (net_t* netPtr);
 
 
 /* =============================================================================
- * net_applyOperation
- * =============================================================================
- */
-void
-net_applyOperation (net_t* netPtr, operation_t op, long fromId, long toId);
-
-
-/* =============================================================================
  * TMnet_applyOperation
  * =============================================================================
  */
+TM_SAFE
 void
 TMnet_applyOperation (
                       net_t* netPtr, operation_t op, long fromId, long toId);
 
 
 /* =============================================================================
- * net_hasEdge
- * =============================================================================
- */
-bool_t
-net_hasEdge (net_t* netPtr, long fromId, long toId);
-
-
-/* =============================================================================
  * TMnet_hasEdge
  * =============================================================================
  */
+TM_SAFE
 bool_t
-TMnet_hasEdge (net_t* netPtr, long fromId, long toId);
+TMnet_hasEdge (  net_t* netPtr, long fromId, long toId);
 
-
-/* =============================================================================
- * net_isPath
- * =============================================================================
- */
-bool_t
-net_isPath (net_t* netPtr,
-            long fromId,
-            long toId,
-            bitmap_t* visitedBitmapPtr,
-            queue_t* workQueuePtr);
 
 
 /* =============================================================================
  * TMnet_isPath
  * =============================================================================
  */
+TM_SAFE
 bool_t
 TMnet_isPath (
               net_t* netPtr,
@@ -167,6 +144,7 @@ net_isCycle (net_t* netPtr);
  * net_getParentIdListPtr
  * =============================================================================
  */
+TM_SAFE
 list_t*
 net_getParentIdListPtr (net_t* netPtr, long id);
 
@@ -180,42 +158,16 @@ net_getChildIdListPtr (net_t* netPtr, long id);
 
 
 /* =============================================================================
- * net_findAncestors
- * -- Contents of bitmapPtr set to 1 if parent, else 0
- * -- Returns false if id is not root node (i.e., has cycle back id)
- * =============================================================================
- */
-bool_t
-net_findAncestors (net_t* netPtr,
-                   long id,
-                   bitmap_t* ancestorBitmapPtr,
-                   queue_t* workQueuePtr);
-
-
-/* =============================================================================
  * TMnet_findAncestors
  * -- Contents of bitmapPtr set to 1 if parent, else 0
  * -- Returns false if id is not root node (i.e., has cycle back id)
  * =============================================================================
  */
+TM_SAFE
 bool_t
-TMnet_findAncestors (
-                     net_t* netPtr,
+TMnet_findAncestors (net_t* netPtr,
                      long id,
                      bitmap_t* ancestorBitmapPtr,
-                     queue_t* workQueuePtr);
-
-
-/* =============================================================================
- * net_findDescendants
- * -- Contents of bitmapPtr set to 1 if descendants, else 0
- * -- Returns false if id is not root node (i.e., has cycle back id)
- * =============================================================================
- */
-bool_t
-net_findDescendants (net_t* netPtr,
-                     long id,
-                     bitmap_t* descendantBitmapPtr,
                      queue_t* workQueuePtr);
 
 
@@ -225,9 +177,9 @@ net_findDescendants (net_t* netPtr,
  * -- Returns false if id is not root node (i.e., has cycle back id)
  * =============================================================================
  */
+TM_SAFE
 bool_t
-TMnet_findDescendants (
-                       net_t* netPtr,
+TMnet_findDescendants (net_t* netPtr,
                        long id,
                        bitmap_t* descendantBitmapPtr,
                        queue_t* workQueuePtr);

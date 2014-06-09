@@ -73,9 +73,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include "random.h"
+#include "tm.h"
 #include "types.h"
 #include "queue.h"
 
+// [mfs] HACK
+__attribute__((transaction_pure))
+void __assert_fail(const char*, const char*, unsigned int, const char*);
 
 struct queue {
     long pop; /* points before element to pop */
@@ -85,66 +89,17 @@ struct queue {
 };
 
 enum config {
-    QUEUE_GROWTH_FACTOR = 2,
+    QUEUE_GROWTH_FACTOR = 2
 };
-
-
-/* =============================================================================
- * queue_alloc
- * =============================================================================
- */
-queue_t*
-queue_alloc (long initCapacity)
-{
-    queue_t* queuePtr = (queue_t*)malloc(sizeof(queue_t));
-
-    if (queuePtr) {
-        long capacity = ((initCapacity < 2) ? 2 : initCapacity);
-        queuePtr->elements = (void**)malloc(capacity * sizeof(void*));
-        if (queuePtr->elements == NULL) {
-            free(queuePtr);
-            return NULL;
-        }
-        queuePtr->pop      = capacity - 1;
-        queuePtr->push     = 0;
-        queuePtr->capacity = capacity;
-    }
-
-    return queuePtr;
-}
-
-
-/* =============================================================================
- * Pqueue_alloc
- * =============================================================================
- */
-queue_t*
-Pqueue_alloc (long initCapacity)
-{
-    queue_t* queuePtr = (queue_t*)malloc(sizeof(queue_t));
-
-    if (queuePtr) {
-        long capacity = ((initCapacity < 2) ? 2 : initCapacity);
-        queuePtr->elements = (void**)malloc(capacity * sizeof(void*));
-        if (queuePtr->elements == NULL) {
-            free(queuePtr);
-            return NULL;
-        }
-        queuePtr->pop      = capacity - 1;
-        queuePtr->push     = 0;
-        queuePtr->capacity = capacity;
-    }
-
-    return queuePtr;
-}
 
 
 /* =============================================================================
  * TMqueue_alloc
  * =============================================================================
  */
+TM_SAFE
 queue_t*
-TMqueue_alloc (long initCapacity)
+queue_alloc (  long initCapacity)
 {
     queue_t* queuePtr = (queue_t*)malloc(sizeof(queue_t));
 
@@ -168,6 +123,7 @@ TMqueue_alloc (long initCapacity)
  * queue_free
  * =============================================================================
  */
+TM_SAFE
 void
 queue_free (queue_t* queuePtr)
 {
@@ -177,33 +133,10 @@ queue_free (queue_t* queuePtr)
 
 
 /* =============================================================================
- * Pqueue_free
- * =============================================================================
- */
-void
-Pqueue_free (queue_t* queuePtr)
-{
-    free(queuePtr->elements);
-    free(queuePtr);
-}
-
-
-/* =============================================================================
- * TMqueue_free
- * =============================================================================
- */
-void
-TMqueue_free (queue_t* queuePtr)
-{
-    free((void**)(queuePtr->elements));
-    free(queuePtr);
-}
-
-
-/* =============================================================================
  * queue_isEmpty
  * =============================================================================
  */
+TM_SAFE
 bool_t
 queue_isEmpty (queue_t* queuePtr)
 {
@@ -214,11 +147,11 @@ queue_isEmpty (queue_t* queuePtr)
     return (((pop + 1) % capacity == push) ? TRUE : FALSE);
 }
 
-
 /* =============================================================================
  * queue_clear
  * =============================================================================
  */
+TM_SAFE
 void
 queue_clear (queue_t* queuePtr)
 {
@@ -228,24 +161,10 @@ queue_clear (queue_t* queuePtr)
 
 
 /* =============================================================================
- * TMqueue_isEmpty
- * =============================================================================
- */
-bool_t
-TMqueue_isEmpty (queue_t* queuePtr)
-{
-    long pop      = (long)(queuePtr->pop);
-    long push     = (long)(queuePtr->push);
-    long capacity = (long)(queuePtr->capacity);
-
-    return (((pop + 1) % capacity == push) ? TRUE : FALSE);
-}
-
-
-/* =============================================================================
  * queue_shuffle
  * =============================================================================
  */
+TM_PURE // [wer] queue_shuffle has to be TM_PURE, use random()
 void
 queue_shuffle (queue_t* queuePtr, random_t* randomPtr)
 {
@@ -279,6 +198,7 @@ queue_shuffle (queue_t* queuePtr, random_t* randomPtr)
  * queue_push
  * =============================================================================
  */
+TM_SAFE
 bool_t
 queue_push (queue_t* queuePtr, void* dataPtr)
 {
@@ -321,121 +241,10 @@ queue_push (queue_t* queuePtr, void* dataPtr)
         queuePtr->capacity = newCapacity;
         push = dst;
         newPush = push + 1; /* no need modulo */
-    }
-
-    queuePtr->elements[push] = dataPtr;
-    queuePtr->push = newPush;
-
-    return TRUE;
-}
-
-
-/* =============================================================================
- * Pqueue_push
- * =============================================================================
- */
-bool_t
-Pqueue_push (queue_t* queuePtr, void* dataPtr)
-{
-    long pop      = queuePtr->pop;
-    long push     = queuePtr->push;
-    long capacity = queuePtr->capacity;
-
-    assert(pop != push);
-
-    /* Need to resize */
-    long newPush = (push + 1) % capacity;
-    if (newPush == pop) {
-
-        long newCapacity = capacity * QUEUE_GROWTH_FACTOR;
-        void** newElements = (void**)malloc(newCapacity * sizeof(void*));
-        if (newElements == NULL) {
-            return FALSE;
-        }
-
-        long dst = 0;
-        void** elements = queuePtr->elements;
-        if (pop < push) {
-            long src;
-            for (src = (pop + 1); src < push; src++, dst++) {
-                newElements[dst] = elements[src];
-            }
-        } else {
-            long src;
-            for (src = (pop + 1); src < capacity; src++, dst++) {
-                newElements[dst] = elements[src];
-            }
-            for (src = 0; src < push; src++, dst++) {
-                newElements[dst] = elements[src];
-            }
-        }
-
-        free(elements);
-        queuePtr->elements = newElements;
-        queuePtr->pop      = newCapacity - 1;
-        queuePtr->capacity = newCapacity;
-        push = dst;
-        newPush = push + 1; /* no need modulo */
 
     }
 
     queuePtr->elements[push] = dataPtr;
-    queuePtr->push = newPush;
-
-    return TRUE;
-}
-
-
-/* =============================================================================
- * TMqueue_push
- * =============================================================================
- */
-bool_t
-TMqueue_push (queue_t* queuePtr, void* dataPtr)
-{
-    long pop      = (long)queuePtr->pop;
-    long push     = (long)queuePtr->push;
-    long capacity = (long)queuePtr->capacity;
-
-    assert(pop != push);
-
-    /* Need to resize */
-    long newPush = (push + 1) % capacity;
-    if (newPush == pop) {
-        long newCapacity = capacity * QUEUE_GROWTH_FACTOR;
-        void** newElements = (void**)malloc(newCapacity * sizeof(void*));
-        if (newElements == NULL) {
-            return FALSE;
-        }
-
-        long dst = 0;
-        void** elements = (void**)(queuePtr->elements);
-        if (pop < push) {
-            long src;
-            for (src = (pop + 1); src < push; src++, dst++) {
-                newElements[dst] = (void*)elements[src];
-            }
-        } else {
-            long src;
-            for (src = (pop + 1); src < capacity; src++, dst++) {
-                newElements[dst] = (void*)(elements[src]);
-            }
-            for (src = 0; src < push; src++, dst++) {
-                newElements[dst] = (void*)(elements[src]);
-            }
-        }
-
-        free(elements);
-        queuePtr->elements = newElements;
-        queuePtr->pop      = newCapacity - 1;
-        queuePtr->capacity = newCapacity;
-        push = dst;
-        newPush = push + 1; /* no need modulo */
-
-    }
-
-    void** elements = (void**)(queuePtr->elements);
-    elements[push] = dataPtr;
     queuePtr->push = newPush;
 
     return TRUE;
@@ -446,6 +255,7 @@ TMqueue_push (queue_t* queuePtr, void* dataPtr)
  * queue_pop
  * =============================================================================
  */
+TM_SAFE
 void*
 queue_pop (queue_t* queuePtr)
 {
@@ -459,30 +269,6 @@ queue_pop (queue_t* queuePtr)
     }
 
     void* dataPtr = queuePtr->elements[newPop];
-    queuePtr->pop = newPop;
-
-    return dataPtr;
-}
-
-
-/* =============================================================================
- * TMqueue_pop
- * =============================================================================
- */
-void*
-TMqueue_pop (queue_t* queuePtr)
-{
-    long pop      = (long)(queuePtr->pop);
-    long push     = (long)(queuePtr->push);
-    long capacity = (long)(queuePtr->capacity);
-
-    long newPop = (pop + 1) % capacity;
-    if (newPop == push) {
-        return NULL;
-    }
-
-    void** elements = (void**)(queuePtr->elements);
-    void* dataPtr = (void*)(elements[newPop]);
     queuePtr->pop = newPop;
 
     return dataPtr;

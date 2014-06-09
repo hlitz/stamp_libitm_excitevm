@@ -1,8 +1,8 @@
 CXX       = g++
-CXXFLAGS += -g -Wall -pthread -O3
+CXXFLAGS += -g -Wall -pthread -O3 -fgnu-tm
 
 LD       := g++
-LDFLAGS  += -lpthread
+LDFLAGS  += -lpthread -litm
 
 CFLAGS += -DLIST_NO_DUPLICATES
 CFLAGS += -DLEARNER_TRY_REMOVE

@@ -74,6 +74,7 @@
 
 
 #include "random.h"
+#include "tm.h"
 #include "types.h"
 
 
@@ -86,73 +87,37 @@ typedef struct queue queue_t;
 
 
 /* =============================================================================
- * queue_alloc
- * =============================================================================
- */
-queue_t*
-queue_alloc (long initCapacity);
-
-
-/* =============================================================================
- * Pqueue_alloc
- * =============================================================================
- */
-queue_t*
-Pqueue_alloc (long initCapacity);
-
-
-/* =============================================================================
  * TMqueue_alloc
  * =============================================================================
  */
+TM_SAFE
 queue_t*
-TMqueue_alloc (long initCapacity);
-
-
-/* =============================================================================
- * queue_free
- * =============================================================================
- */
-void
-queue_free (queue_t* queuePtr);
-
-
-/* =============================================================================
- * Pqueue_free
- * =============================================================================
- */
-void
-Pqueue_free (queue_t* queuePtr);
+queue_alloc (  long initCapacity);
 
 
 /* =============================================================================
  * TMqueue_free
  * =============================================================================
  */
+TM_SAFE
 void
-TMqueue_free (queue_t* queuePtr);
-
-
-/* =============================================================================
- * queue_isEmpty
- * =============================================================================
- */
-bool_t
-queue_isEmpty (queue_t* queuePtr);
+queue_free (  queue_t* queuePtr);
 
 
 /* =============================================================================
  * TMqueue_isEmpty
  * =============================================================================
  */
+TM_SAFE
 bool_t
-TMqueue_isEmpty (queue_t* queuePtr);
+queue_isEmpty (  queue_t* queuePtr);
 
 
 /* =============================================================================
  * queue_clear
  * =============================================================================
  */
+TM_SAFE
 void
 queue_clear (queue_t* queuePtr);
 
@@ -161,6 +126,9 @@ queue_clear (queue_t* queuePtr);
  * queue_shuffle
  * =============================================================================
  */
+//[wer210] has to be TM_PURE, use random_generate(), only called once
+//         outside tx in yada, yada.c: initializeWork().
+TM_PURE
 void
 queue_shuffle (queue_t* queuePtr, random_t* randomPtr);
 
@@ -169,55 +137,26 @@ queue_shuffle (queue_t* queuePtr, random_t* randomPtr);
  * queue_push
  * =============================================================================
  */
+TM_SAFE
 bool_t
-queue_push (queue_t* queuePtr, void* dataPtr);
-
-
-/* =============================================================================
- * Pqueue_push
- * =============================================================================
- */
-bool_t
-Pqueue_push (queue_t* queuePtr, void* dataPtr);
-
-
-/* =============================================================================
- * TMqueue_push
- * =============================================================================
- */
-bool_t
-TMqueue_push (queue_t* queuePtr, void* dataPtr);
-
+queue_push (  queue_t* queuePtr, void* dataPtr);
 
 /* =============================================================================
  * queue_pop
  * =============================================================================
  */
+TM_SAFE
 void*
-queue_pop (queue_t* queuePtr);
+queue_pop (  queue_t* queuePtr);
 
-
-/* =============================================================================
- * TMqueue_pop
- * =============================================================================
- */
-void*
-TMqueue_pop (queue_t* queuePtr);
-
-
-#define PQUEUE_ALLOC(c)     Pqueue_alloc(c)
-#define PQUEUE_FREE(q)      Pqueue_free(q)
-#define PQUEUE_ISEMPTY(q)   queue_isEmpty(q)
-#define PQUEUE_CLEAR(q)     queue_clear(q)
 #define PQUEUE_SHUFFLE(q)   queue_shuffle(q, randomPtr);
-#define PQUEUE_PUSH(q, d)   Pqueue_push(q, (void*)(d))
-#define PQUEUE_POP(q)       queue_pop(q)
 
-#define TMQUEUE_ALLOC(c)    TMqueue_alloc(TM_ARG_ALONE  c)
-#define TMQUEUE_FREE(q)     TMqueue_free(TM_ARG  q)
-#define TMQUEUE_ISEMPTY(q)  TMqueue_isEmpty(TM_ARG  q)
-#define TMQUEUE_PUSH(q, d)  TMqueue_push(TM_ARG  q, (void*)(d))
-#define TMQUEUE_POP(q)      TMqueue_pop(TM_ARG  q)
+#define TMQUEUE_ALLOC(c)    queue_alloc(c)
+#define TMQUEUE_FREE(q)     queue_free(q)
+#define TMQUEUE_ISEMPTY(q)  queue_isEmpty(q)
+#define TMQUEUE_CLEAR(q)    queue_clear(q)
+#define TMQUEUE_PUSH(q, d)  queue_push(q, (void*)(d))
+#define TMQUEUE_POP(q)      queue_pop(q)
 
 
 #ifdef __cplusplus

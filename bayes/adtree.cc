@@ -19,48 +19,48 @@
  *
  * For the license of bayes/sort.h and bayes/sort.c, please see the header
  * of the files.
- * 
+ *
  * ------------------------------------------------------------------------
- * 
+ *
  * For the license of kmeans, please see kmeans/LICENSE.kmeans
- * 
+ *
  * ------------------------------------------------------------------------
- * 
+ *
  * For the license of ssca2, please see ssca2/COPYRIGHT
- * 
+ *
  * ------------------------------------------------------------------------
- * 
+ *
  * For the license of lib/mt19937ar.c and lib/mt19937ar.h, please see the
  * header of the files.
- * 
+ *
  * ------------------------------------------------------------------------
- * 
+ *
  * For the license of lib/rbtree.h and lib/rbtree.c, please see
  * lib/LEGALNOTICE.rbtree and lib/LICENSE.rbtree
- * 
+ *
  * ------------------------------------------------------------------------
- * 
+ *
  * Unless otherwise noted, the following license applies to STAMP files:
- * 
+ *
  * Copyright (c) 2007, Stanford University
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
- * 
+ *
  *     * Redistributions of source code must retain the above copyright
  *       notice, this list of conditions and the following disclaimer.
- * 
+ *
  *     * Redistributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in
  *       the documentation and/or other materials provided with the
  *       distribution.
- * 
+ *
  *     * Neither the name of Stanford University nor the names of its
  *       contributors may be used to endorse or promote products derived
  *       from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY STANFORD UNIVERSITY ``AS IS'' AND ANY
  * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -85,12 +85,21 @@
 #include "utility.h"
 #include "vector.h"
 
+// [mfs] HACK
+__attribute__((transaction_pure))
+void __assert_fail(const char*, const char*, unsigned int, const char*);
+
+TM_PURE //TMprint()
+void TMprinti(int i)
+{
+    printf("%d", i);
+}
 
 /* =============================================================================
  * allocNode
  * =============================================================================
  */
-adtree_node_t*
+static adtree_node_t*
 allocNode (long index)
 {
     adtree_node_t* nodePtr;
@@ -115,7 +124,7 @@ allocNode (long index)
  * freeNode
  * =============================================================================
  */
-void
+static void
 freeNode (adtree_node_t* nodePtr)
 {
     vector_free(nodePtr->varyVectorPtr);
@@ -127,7 +136,7 @@ freeNode (adtree_node_t* nodePtr)
  * allocVary
  * =============================================================================
  */
-adtree_vary_t*
+static adtree_vary_t*
 allocVary (long index)
 {
     adtree_vary_t* varyPtr;
@@ -148,10 +157,10 @@ allocVary (long index)
  * freeVary
  * =============================================================================
  */
-void
+static void
 freeVary (adtree_vary_t* varyPtr)
 {
-    free(varyPtr);
+  free(varyPtr);
 }
 
 
@@ -320,7 +329,8 @@ adtree_make (adtree_t* adtreePtr, data_t* dataPtr)
  * getCount
  * =============================================================================
  */
-static long
+TM_SAFE
+long
 getCount (adtree_node_t* nodePtr,
           long i,
           long q,
@@ -346,9 +356,8 @@ getCount (adtree_node_t* nodePtr,
     long queryIndex = queryPtr->index;
     assert(queryIndex <= lastQueryIndex);
     vector_t* varyVectorPtr = nodePtr->varyVectorPtr;
-    adtree_vary_t* varyPtr =
-        (adtree_vary_t*)vector_at(varyVectorPtr,
-                                  (queryIndex - nodeIndex - 1));
+    adtree_vary_t* varyPtr = (adtree_vary_t*)vector_at(varyVectorPtr,
+                                                       (queryIndex - nodeIndex - 1));
     assert(varyPtr);
 
     long queryValue = queryPtr->value;
@@ -362,19 +371,24 @@ getCount (adtree_node_t* nodePtr,
          * query with the current toggled (invertCount).
          */
         long numQuery = vector_getSize(queryVectorPtr);
+        //[wer] PVECTOR_ALLOC is transformed into TM_SAFE
         vector_t* superQueryVectorPtr = PVECTOR_ALLOC(numQuery - 1);
+
         assert(superQueryVectorPtr);
 
         long qq;
         for (qq = 0; qq < numQuery; qq++) {
             if (qq != q) {
+              //[wer] TM_SAFE call
                 bool_t status = vector_pushBack(superQueryVectorPtr,
                                                 vector_at(queryVectorPtr, qq));
                 assert(status);
             }
         }
+
         long superCount = adtree_getCount(adtreePtr, superQueryVectorPtr);
 
+        //[wer]TM_SAFE
         PVECTOR_FREE(superQueryVectorPtr);
 
         long invertCount;
@@ -400,7 +414,6 @@ getCount (adtree_node_t* nodePtr,
         count += superCount - invertCount;
 
     } else {
-
         if (queryValue == 0) {
             count += getCount(varyPtr->zeroNodePtr,
                               (i + 1),
@@ -430,12 +443,11 @@ getCount (adtree_node_t* nodePtr,
                               lastQueryIndex,
                               adtreePtr);
 #else
+            //TMprinti(queryValue);
             assert(0); /* catch bugs in learner */
 #endif
         }
-
     }
-
     return count;
 }
 
@@ -445,6 +457,8 @@ getCount (adtree_node_t* nodePtr,
  * -- queryVector must consist of queries sorted by id
  * =============================================================================
  */
+//[wer] called in learner.c inside a TM_SAFE function
+TM_SAFE
 long
 adtree_getCount (adtree_t* adtreePtr, vector_t* queryVectorPtr)
 {
@@ -459,7 +473,7 @@ adtree_getCount (adtree_t* adtreePtr, vector_t* queryVectorPtr)
         query_t* lastQueryPtr = (query_t*)vector_at(queryVectorPtr, (numQuery - 1));
         lastQueryIndex = lastQueryPtr->index;
     }
-
+    //[wer] this function should be safe
     return getCount(rootNodePtr,
                     -1,
                     0,
@@ -634,7 +648,7 @@ testCounts (adtree_t* adtreePtr, data_t* dataPtr)
     for (v = -1; v < numVar; v++) {
         testCount(adtreePtr, dataPtr, queryVectorPtr, v, dataPtr->numVar);
     }
-    vector_free(queryVectorPtr);
+    Pvector_free(queryVectorPtr);
 }
 
 

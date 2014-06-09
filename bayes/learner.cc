@@ -116,6 +116,7 @@
  */
 
 
+#include "tm.h"
 #include <assert.h>
 #include <math.h>
 #include <stdlib.h>
@@ -131,6 +132,31 @@
 #include "timer.h"
 #include "utility.h"
 #include "vector.h"
+
+// [mfs] HACK
+__attribute__((transaction_pure))
+void __assert_fail(const char*, const char*, unsigned int, const char*);
+
+__attribute__ ((transaction_pure))
+void tmp_string(char* s)
+{
+  printf("%s", s);
+}
+__attribute__ ((transaction_pure))
+void tmp_int(int i)
+{
+  printf("%d", i);
+}
+__attribute__ ((transaction_pure))
+void tmp_long(long l)
+{
+  printf("%ld", l);
+}
+__attribute__ ((transaction_pure))
+void tmp_float(float f)
+{
+  printf("%f", f);
+}
 
 struct learner_task {
     operation_t op;
@@ -164,23 +190,42 @@ extern long global_maxNumEdgeLearned;
 extern float global_operationQualityFactor;
 #endif
 
+
 /* =============================================================================
- * DECLARATION OF TM_CALLABLE FUNCTIONS
+ * DECLARATION OF TM_SAFE FUNCTIONS
  * =============================================================================
  */
 
-#ifdef LEARNER_TRY_REVERSE
-static learner_task_t
-TMfindBestReverseTask (findBestTaskArg_t* argPtr);
-#endif
+TM_SAFE
+void
+TMfindBestReverseTask (learner_task_t *dest,  findBestTaskArg_t* argPtr);
 
-static learner_task_t
-TMfindBestInsertTask (findBestTaskArg_t* argPtr);
+TM_SAFE
+void
+TMfindBestInsertTask (learner_task_t *dest,  findBestTaskArg_t* argPtr);
 
-#ifdef LEARNER_TRY_REMOVE
-static learner_task_t
-TMfindBestRemoveTask (findBestTaskArg_t* argPtr);
-#endif
+TM_SAFE
+void
+TMfindBestRemoveTask (learner_task_t *dest,  findBestTaskArg_t* argPtr);
+
+TM_SAFE
+void
+TMpopulateParentQueryVector (net_t* netPtr,
+                             long id,
+                             query_t* queries,
+                             vector_t* parentQueryVectorPtr);
+
+TM_SAFE
+void
+TMpopulateQueryVectors (net_t* netPtr,
+                        long id,
+                        query_t* queries,
+                        vector_t* queryVectorPtr,
+                        vector_t* parentQueryVectorPtr);
+
+TM_SAFE
+learner_task_t*
+TMpopTask (list_t* taskListPtr);
 
 /* =============================================================================
  * compareTask
@@ -188,7 +233,8 @@ TMfindBestRemoveTask (findBestTaskArg_t* argPtr);
  * -- For list
  * =============================================================================
  */
-static long
+//[wer] comparator
+TM_SAFE long
 compareTask (const void* aPtr, const void* bPtr)
 {
     learner_task_t* aTaskPtr = (learner_task_t*)aPtr;
@@ -212,7 +258,7 @@ compareTask (const void* aPtr, const void* bPtr)
  * -- For vector_sort
  * =============================================================================
  */
-static int
+TM_SAFE int
 compareQuery (const void* aPtr, const void* bPtr)
 {
     query_t* aQueryPtr = (query_t*)(*(void**)aPtr);
@@ -265,30 +311,85 @@ learner_free (learner_t* learnerPtr)
     net_free(learnerPtr->netPtr);
     free(learnerPtr);
 }
+/* =============================================================================
+ * Logarithm(s)
+ * =============================================================================
+ */
+TM_SAFE
+double my_exp(double x, int y)
+{
+    double ret = 1;
+    int i;
+    for (i = 0; i < y; i++)
+        ret *= x;
+    return ret;
+}
 
+// Taylor series to calculate TM_SAFE logarithm
+TM_SAFE
+double TM_log (double x)
+{
+  assert (x > 0);
+  double ret = 0.0;
+  int i;
+
+  if (ABS(x - 1) <= 0.000001)
+    return ret;
+  else if (ABS(x) > 1) {
+    double y = x / (x - 1);
+    // more iteration, more precise
+    for (i = 1; i < 20; i++) {
+      ret += 1 / (i * my_exp (y, i));
+    }
+    return ret;
+  }
+  else{
+    double y = x - 1;
+    // more iteration, more precise
+    for (i = 1; i < 20; i++) {
+      if (i % 2 == 1)
+        ret += my_exp (y, i) / i;
+      else
+        ret -= my_exp (y, i) / i;
+    }
+    return ret;
+  }
+}
+
+TM_PURE //TM_PURE logarithm
+double PURE_log (double dat)
+{
+  return (double)log(dat);
+}
 
 /* =============================================================================
  * computeSpecificLocalLogLikelihood
  * -- Query vectors should not contain wildcards
  * =============================================================================
  */
-static float
+TM_SAFE
+float
 computeSpecificLocalLogLikelihood (adtree_t* adtreePtr,
                                    vector_t* queryVectorPtr,
                                    vector_t* parentQueryVectorPtr)
 {
-    long count = adtree_getCount(adtreePtr, queryVectorPtr);
-    if (count == 0) {
-        return 0.0;
-    }
+  //[wer] TM_SAFE call
+  long count = adtree_getCount(adtreePtr, queryVectorPtr);
+  if (count == 0) {
+    return 0.0;
+  }
 
-    double probability = (double)count / (double)adtreePtr->numRecord;
-    long parentCount = adtree_getCount(adtreePtr, parentQueryVectorPtr);
+  double probability = (double)count / (double)adtreePtr->numRecord;
+  long parentCount = adtree_getCount(adtreePtr, parentQueryVectorPtr);
 
-    assert(parentCount >= count);
-    assert(parentCount > 0);
+  assert(parentCount >= count);
+  assert(parentCount > 0);
 
-    return (float)(probability * (double)log((double)count/ (double)parentCount));
+  //[wer210] replaced with TM_SAFE log()
+  double temp = (double)count/ (double)parentCount;
+  //double t = (double)PURE_log(temp);
+  double t = (double)TM_log(temp);
+  return (float)(probability * t);
 }
 
 
@@ -296,7 +397,7 @@ computeSpecificLocalLogLikelihood (adtree_t* adtreePtr,
  * createPartition
  * =============================================================================
  */
-static void
+void
 createPartition (long min, long max, long id, long n,
                  long* startPtr, long* stopPtr)
 {
@@ -320,7 +421,7 @@ createPartition (long min, long max, long id, long n,
  * -- baseLogLikelihoods and taskListPtr are updated
  * =============================================================================
  */
-static void
+void
 createTaskList (void* argPtr)
 {
     long myId = thread_getId();
@@ -382,11 +483,11 @@ createTaskList (void* argPtr)
 
     } /* foreach variable */
 
-    // [mfs] __transaction_atomic
-    {
-    float globalBaseLogLikelihood = learnerPtr->baseLogLikelihood;
-    learnerPtr->baseLogLikelihood = (baseLogLikelihood + globalBaseLogLikelihood);
-    }
+    __transaction_atomic {
+      float globalBaseLogLikelihood = learnerPtr->baseLogLikelihood;
+      learnerPtr->baseLogLikelihood =
+                        baseLogLikelihood + globalBaseLogLikelihood;
+   }
 
     /*
      * For each variable, find if the addition of any edge _to_ it is better
@@ -476,9 +577,8 @@ createTaskList (void* argPtr)
             taskPtr->fromId = bestLocalIndex;
             taskPtr->toId = v;
             taskPtr->score = score;
-            // [mfs] __transaction_atomic
-            {
-            status = TMLIST_INSERT(taskListPtr, (void*)taskPtr);
+            __transaction_atomic {
+              status = TMLIST_INSERT(taskListPtr, (void*)taskPtr);
             }
             assert(status);
         }
@@ -491,7 +591,7 @@ createTaskList (void* argPtr)
 #ifdef TEST_LEARNER
     list_iter_t it;
     list_iter_reset(&it, taskListPtr);
-    while (list_iter_hasNext(&it, taskListPtr)) {
+    while (list_iter_hasNext(&it)) {
         learner_task_t* taskPtr = (learner_task_t*)list_iter_next(&it, taskListPtr);
         printf("[task] op=%i from=%li to=%li score=%lf\n",
                taskPtr->op, taskPtr->fromId, taskPtr->toId, taskPtr->score);
@@ -506,17 +606,23 @@ createTaskList (void* argPtr)
  * -- Returns NULL is list is empty
  * =============================================================================
  */
+TM_SAFE
 learner_task_t*
 TMpopTask (list_t* taskListPtr)
 {
     learner_task_t* taskPtr = NULL;
 
     list_iter_t it;
-    TMLIST_ITER_RESET(&it, taskListPtr);
-    if (TMLIST_ITER_HASNEXT(&it, taskListPtr)) {
-        taskPtr = (learner_task_t*)TMLIST_ITER_NEXT(&it, taskListPtr);
-        bool_t status = TMLIST_REMOVE(taskListPtr, (void*)taskPtr);
-        assert(status);
+    //TMLIST_ITER_RESET(&it, taskListPtr);
+    it = &(taskListPtr->head);
+
+    //if (TMLIST_ITER_HASNEXT(&it)) {
+    if (it->nextPtr != NULL) {
+      //taskPtr = (learner_task_t*)TMLIST_ITER_NEXT(&it, taskListPtr);
+      taskPtr = (learner_task_t*)it->nextPtr->dataPtr;
+
+      bool_t status = TMLIST_REMOVE(taskListPtr, (void*)taskPtr);
+      assert(status);
     }
 
     return taskPtr;
@@ -528,7 +634,7 @@ TMpopTask (list_t* taskListPtr)
  * -- Modifies contents of parentQueryVectorPtr
  * =============================================================================
  */
-static void
+void
 populateParentQueryVector (net_t* netPtr,
                            long id,
                            query_t* queries,
@@ -539,7 +645,7 @@ populateParentQueryVector (net_t* netPtr,
     list_t* parentIdListPtr = net_getParentIdListPtr(netPtr, id);
     list_iter_t it;
     list_iter_reset(&it, parentIdListPtr);
-    while (list_iter_hasNext(&it, parentIdListPtr)) {
+    while (list_iter_hasNext(&it)) {
         long parentId = (long)list_iter_next(&it, parentIdListPtr);
         bool_t status = vector_pushBack(parentQueryVectorPtr,
                                         (void*)&queries[parentId]);
@@ -549,51 +655,35 @@ populateParentQueryVector (net_t* netPtr,
 
 
 /* =============================================================================
- * TMpopulateParentQuery
+ * TMpopulateParentQueryVector
  * -- Modifies contents of parentQueryVectorPtr
  * =============================================================================
  */
-static void
-TMpopulateParentQueryVector (
-                             net_t* netPtr,
+//[wer] This function has the same problem as in net.c, where I noted.
+TM_SAFE
+void
+TMpopulateParentQueryVector (net_t* netPtr,
                              long id,
                              query_t* queries,
                              vector_t* parentQueryVectorPtr)
 {
-    vector_clear(parentQueryVectorPtr);
+  vector_clear(parentQueryVectorPtr);
 
-    list_t* parentIdListPtr = net_getParentIdListPtr(netPtr, id);
-    list_iter_t it;
-    TMLIST_ITER_RESET(&it, parentIdListPtr);
-    while (TMLIST_ITER_HASNEXT(&it, parentIdListPtr)) {
-        long parentId = (long)TMLIST_ITER_NEXT(&it, parentIdListPtr);
-        bool_t status = PVECTOR_PUSHBACK(parentQueryVectorPtr,
-                                         (void*)&queries[parentId]);
-        assert(status);
-    }
-}
+  list_t* parentIdListPtr = net_getParentIdListPtr(netPtr, id); //TM_SAFE
+  list_iter_t it;
+  //TMLIST_ITER_RESET(&it, parentIdListPtr);
+  it = &(parentIdListPtr->head);
 
+  //while (TMLIST_ITER_HASNEXT(&it)) {
+  while (it->nextPtr != NULL) {
+    //long parentId = (long)TMLIST_ITER_NEXT(&it, parentIdListPtr);
+    long parentId = (long)it->nextPtr->dataPtr;
+    it = it->nextPtr;
 
-/* =============================================================================
- * populateQueryVectors
- * -- Modifies contents of queryVectorPtr and parentQueryVectorPtr
- * =============================================================================
- */
-static void
-populateQueryVectors (net_t* netPtr,
-                      long id,
-                      query_t* queries,
-                      vector_t* queryVectorPtr,
-                      vector_t* parentQueryVectorPtr)
-{
-    populateParentQueryVector(netPtr, id, queries, parentQueryVectorPtr);
-
-    bool_t status;
-    status = vector_copy(queryVectorPtr, parentQueryVectorPtr);
+    bool_t status = PVECTOR_PUSHBACK(parentQueryVectorPtr,
+                                     (void*)&queries[parentId]);
     assert(status);
-    status = vector_pushBack(queryVectorPtr, (void*)&queries[id]);
-    assert(status);
-    vector_sort(queryVectorPtr, &compareQuery);
+  }
 }
 
 
@@ -602,13 +692,13 @@ populateQueryVectors (net_t* netPtr,
  * -- Modifies contents of queryVectorPtr and parentQueryVectorPtr
  * =============================================================================
  */
-static void
-TMpopulateQueryVectors (
-                        net_t* netPtr,
-                        long id,
-                        query_t* queries,
-                        vector_t* queryVectorPtr,
-                        vector_t* parentQueryVectorPtr)
+TM_SAFE
+void
+TMpopulateQueryVectors (net_t* netPtr,
+                      long id,
+                      query_t* queries,
+                      vector_t* queryVectorPtr,
+                      vector_t* parentQueryVectorPtr)
 {
     TMpopulateParentQueryVector(netPtr, id, queries, parentQueryVectorPtr);
 
@@ -617,7 +707,7 @@ TMpopulateQueryVectors (
     assert(status);
     status = PVECTOR_PUSHBACK(queryVectorPtr, (void*)&queries[id]);
     assert(status);
-    PVECTOR_SORT(queryVectorPtr, &compareQuery);
+    vector_sort(queryVectorPtr, &compareQuery);
 }
 
 
@@ -626,7 +716,8 @@ TMpopulateQueryVectors (
  * -- Recursive helper routine
  * =============================================================================
  */
-static float
+TM_SAFE
+float
 computeLocalLogLikelihoodHelper (long i,
                                  long numParent,
                                  adtree_t* adtreePtr,
@@ -635,6 +726,7 @@ computeLocalLogLikelihoodHelper (long i,
                                  vector_t* parentQueryVectorPtr)
 {
     if (i >= numParent) {
+      //[wer] this function contains a log(), which was not TM_SAFE
         return computeSpecificLocalLogLikelihood(adtreePtr,
                                                  queryVectorPtr,
                                                  parentQueryVectorPtr);
@@ -672,7 +764,9 @@ computeLocalLogLikelihoodHelper (long i,
  * -- Populate the query vectors before passing as args
  * =============================================================================
  */
-static float
+//TM_PURE
+TM_SAFE
+float
 computeLocalLogLikelihood (long id,
                            adtree_t* adtreePtr,
                            net_t* netPtr,
@@ -701,6 +795,10 @@ computeLocalLogLikelihood (long id,
 
     queries[id].value = QUERY_VALUE_WILDCARD;
 
+    /* tmp_string("local log likelyhood "); */
+    /* tmp_float(localLogLikelihood); */
+    /* tmp_string("\n"); */
+
     return localLogLikelihood;
 }
 
@@ -709,8 +807,9 @@ computeLocalLogLikelihood (long id,
  * TMfindBestInsertTask
  * =============================================================================
  */
-static learner_task_t
-TMfindBestInsertTask (findBestTaskArg_t* argPtr)
+TM_SAFE
+void
+TMfindBestInsertTask (learner_task_t * dest,  findBestTaskArg_t* argPtr)
 {
     long       toId                     = argPtr->toId;
     learner_t* learnerPtr               = argPtr->learnerPtr;
@@ -730,20 +829,22 @@ TMfindBestInsertTask (findBestTaskArg_t* argPtr)
     net_t*    netPtr                  = learnerPtr->netPtr;
     float*    localBaseLogLikelihoods = learnerPtr->localBaseLogLikelihoods;
 
+    //[wer] this function contained unsafe calls, fixed
     TMpopulateParentQueryVector(netPtr, toId, queries, parentQueryVectorPtr);
 
     /*
      * Create base query and parentQuery
      */
-
+    //[wer] all TM_SAFE
     status = PVECTOR_COPY(baseParentQueryVectorPtr, parentQueryVectorPtr);
     assert(status);
-
     status = PVECTOR_COPY(baseQueryVectorPtr, baseParentQueryVectorPtr);
     assert(status);
     status = PVECTOR_PUSHBACK(baseQueryVectorPtr, (void*)&queries[toId]);
     assert(status);
-    PVECTOR_SORT(queryVectorPtr, &compareQuery);
+
+    //[wer] was TM_PURE due to qsort(), now TM_SAFE
+    vector_sort(queryVectorPtr, &compareQuery);
 
     /*
      * Search all possible valid operations for better local log likelihood
@@ -751,53 +852,60 @@ TMfindBestInsertTask (findBestTaskArg_t* argPtr)
 
     float bestFromId = toId; /* flag for not found */
     float oldLocalLogLikelihood =
-        (float)localBaseLogLikelihoods[toId];
+      (float)TM_SHARED_READ_F(localBaseLogLikelihoods[toId]);
     float bestLocalLogLikelihood = oldLocalLogLikelihood;
 
+    // [wer] TM_SAFE now
     status = TMNET_FINDDESCENDANTS(netPtr, toId, invalidBitmapPtr, workQueuePtr);
+
     assert(status);
     long fromId = -1;
-
+    // TM_SAFE
     list_t* parentIdListPtr = net_getParentIdListPtr(netPtr, toId);
-
     long maxNumEdgeLearned = global_maxNumEdgeLearned;
 
     if ((maxNumEdgeLearned < 0) ||
         (TMLIST_GETSIZE(parentIdListPtr) <= maxNumEdgeLearned))
     {
-
         list_iter_t it;
-        TMLIST_ITER_RESET(&it, parentIdListPtr);
-        while (TMLIST_ITER_HASNEXT(&it, parentIdListPtr)) {
-            long parentId = (long)TMLIST_ITER_NEXT(&it, parentIdListPtr);
-            bitmap_set(invalidBitmapPtr, parentId); /* invalid since already have edge */
+        // TMLIST_ITER_RESET(&it, parentIdListPtr);
+        it = &(parentIdListPtr->head);
+
+        //while (TMLIST_ITER_HASNEXT(&it)) {
+        while (it->nextPtr != NULL) {
+          //long parentId = (long)TMLIST_ITER_NEXT(&it, parentIdListPtr);
+          long parentId = (long)it->nextPtr->dataPtr;
+          it = it->nextPtr;
+
+          bitmap_set(invalidBitmapPtr, parentId); /* invalid since already have edge */
         }
 
         while ((fromId = bitmap_findClear(invalidBitmapPtr, (fromId + 1))) >= 0) {
-
             if (fromId == toId) {
                 continue;
             }
 
+            //[wer] TM_SAFE
             status = PVECTOR_COPY(queryVectorPtr, baseQueryVectorPtr);
             assert(status);
             status = PVECTOR_PUSHBACK(queryVectorPtr, (void*)&queries[fromId]);
             assert(status);
-            PVECTOR_SORT(queryVectorPtr, &compareQuery);
+            //[wer] was TM_PURE due to qsort(), fixed
+            vector_sort(queryVectorPtr, &compareQuery);
 
             status = PVECTOR_COPY(parentQueryVectorPtr, baseParentQueryVectorPtr);
             assert(status);
             status = PVECTOR_PUSHBACK(parentQueryVectorPtr, (void*)&queries[fromId]);
             assert(status);
-            PVECTOR_SORT(parentQueryVectorPtr, &compareQuery);
+            vector_sort(parentQueryVectorPtr, &compareQuery);
 
-            float newLocalLogLikelihood =
-                computeLocalLogLikelihood(toId,
-                                          adtreePtr,
-                                          netPtr,
-                                          queries,
-                                          queryVectorPtr,
-                                          parentQueryVectorPtr);
+            //[wer] in computeLocal...(), there's a function log(), which not TM_SAFE
+            float newLocalLogLikelihood = computeLocalLogLikelihood(toId,
+                                                                    adtreePtr,
+                                                                    netPtr,
+                                                                    queries,
+                                                                    queryVectorPtr,
+                                                                    parentQueryVectorPtr);
 
             if (newLocalLogLikelihood > bestLocalLogLikelihood) {
                 bestLocalLogLikelihood = newLocalLogLikelihood;
@@ -811,7 +919,6 @@ TMfindBestInsertTask (findBestTaskArg_t* argPtr)
     /*
      * Return best task; Note: if none is better, fromId will equal toId
      */
-
     learner_task_t bestTask;
     bestTask.op     = OPERATION_INSERT;
     bestTask.fromId = bestFromId;
@@ -830,7 +937,7 @@ TMfindBestInsertTask (findBestTaskArg_t* argPtr)
         bestTask.score  = bestScore;
     }
 
-    return bestTask;
+    *dest = bestTask;
 }
 
 
@@ -839,8 +946,10 @@ TMfindBestInsertTask (findBestTaskArg_t* argPtr)
  * TMfindBestRemoveTask
  * =============================================================================
  */
-static learner_task_t
-TMfindBestRemoveTask (findBestTaskArg_t* argPtr)
+TM_SAFE
+//learner_task_t
+void
+TMfindBestRemoveTask (learner_task_t * dest,  findBestTaskArg_t* argPtr)
 {
     long       toId                     = argPtr->toId;
     learner_t* learnerPtr               = argPtr->learnerPtr;
@@ -857,8 +966,7 @@ TMfindBestRemoveTask (findBestTaskArg_t* argPtr)
     net_t* netPtr = learnerPtr->netPtr;
     float* localBaseLogLikelihoods = learnerPtr->localBaseLogLikelihoods;
 
-    TMpopulateParentQueryVector(
-                                netPtr, toId, queries, origParentQueryVectorPtr);
+    TMpopulateParentQueryVector(netPtr, toId, queries, origParentQueryVectorPtr);
     long numParent = PVECTOR_GETSIZE(origParentQueryVectorPtr);
 
     /*
@@ -885,7 +993,7 @@ TMfindBestRemoveTask (findBestTaskArg_t* argPtr)
         long p;
         for (p = 0; p < numParent; p++) {
             if (p != fromId) {
-                query_t* queryPtr = PVECTOR_AT(origParentQueryVectorPtr, p);
+                query_t* queryPtr = (query_t*)PVECTOR_AT(origParentQueryVectorPtr, p);
                 status = PVECTOR_PUSHBACK(parentQueryVectorPtr,
                                           (void*)&queries[queryPtr->index]);
                 assert(status);
@@ -900,19 +1008,18 @@ TMfindBestRemoveTask (findBestTaskArg_t* argPtr)
         assert(status);
         status = PVECTOR_PUSHBACK(queryVectorPtr, (void*)&queries[toId]);
         assert(status);
-        PVECTOR_SORT(queryVectorPtr, &compareQuery);
+        vector_sort(queryVectorPtr, &compareQuery);
 
         /*
          * See if removing parent is better
          */
 
-        float newLocalLogLikelihood =
-            computeLocalLogLikelihood(toId,
-                                      adtreePtr,
-                                      netPtr,
-                                      queries,
-                                      queryVectorPtr,
-                                      parentQueryVectorPtr);
+        float newLocalLogLikelihood = computeLocalLogLikelihood(toId,
+                                                                adtreePtr,
+                                                                netPtr,
+                                                                queries,
+                                                                queryVectorPtr,
+                                                                parentQueryVectorPtr);
 
         if (newLocalLogLikelihood > bestLocalLogLikelihood) {
             bestLocalLogLikelihood = newLocalLogLikelihood;
@@ -941,7 +1048,12 @@ TMfindBestRemoveTask (findBestTaskArg_t* argPtr)
         bestTask.score  = bestScore;
     }
 
-    return bestTask;
+    //[wer210]
+    dest->op = bestTask.op;
+    dest->fromId = bestTask.fromId;
+    dest->toId = bestTask.toId;
+    dest->score = bestTask.score;
+    //return bestTask;
 }
 #endif /* LEARNER_TRY_REMOVE */
 
@@ -951,8 +1063,9 @@ TMfindBestRemoveTask (findBestTaskArg_t* argPtr)
  * TMfindBestReverseTask
  * =============================================================================
  */
-static learner_task_t
-TMfindBestReverseTask (findBestTaskArg_t* argPtr)
+TM_SAFE
+void
+TMfindBestReverseTask (learner_task_t * dest,  findBestTaskArg_t* argPtr)
 {
     long       toId                         = argPtr->toId;
     learner_t* learnerPtr                   = argPtr->learnerPtr;
@@ -967,111 +1080,109 @@ TMfindBestReverseTask (findBestTaskArg_t* argPtr)
     vector_t*  toOrigParentQueryVectorPtr   = argPtr->aQueryVectorPtr;
     vector_t*  fromOrigParentQueryVectorPtr = argPtr->bQueryVectorPtr;
 
-    bool_t status;
-    adtree_t* adtreePtr = learnerPtr->adtreePtr;
-    net_t* netPtr = learnerPtr->netPtr;
-    float* localBaseLogLikelihoods = learnerPtr->localBaseLogLikelihoods;
+    bool_t    status;
+    adtree_t* adtreePtr               = learnerPtr->adtreePtr;
+    net_t*    netPtr                  = learnerPtr->netPtr;
+    float*    localBaseLogLikelihoods = learnerPtr->localBaseLogLikelihoods;
 
-    TMpopulateParentQueryVector(
-                                netPtr, toId, queries, toOrigParentQueryVectorPtr);
-    long numParent = PVECTOR_GETSIZE(toOrigParentQueryVectorPtr);
+    TMpopulateParentQueryVector(netPtr, toId, queries, toOrigParentQueryVectorPtr);
+    long numParent = PVECTOR_GETSIZE(toOrigParentQueryVectorPtr);//TM_SAFE
 
     /*
      * Search all possible valid operations for better local log likelihood
      */
 
     long bestFromId = toId; /* flag for not found */
-    float oldLocalLogLikelihood =
-        (float)TM_SHARED_READ_F(localBaseLogLikelihoods[toId]);
+    //[wer210] was TM_SHARED_READ(), same below when read localBaseLogLikelihoods[]
+    float oldLocalLogLikelihood = (float)localBaseLogLikelihoods[toId];
     float bestLocalLogLikelihood = oldLocalLogLikelihood;
     long fromId = 0;
 
     long i;
     for (i = 0; i < numParent; i++) {
+      query_t* queryPtr = (query_t*)PVECTOR_AT(toOrigParentQueryVectorPtr, i);
+      fromId = queryPtr->index;
 
-        query_t* queryPtr = (query_t*)PVECTOR_AT(toOrigParentQueryVectorPtr, i);
-        fromId = queryPtr->index;
+      bestLocalLogLikelihood = oldLocalLogLikelihood +
+        (float)localBaseLogLikelihoods[fromId];
 
-        bestLocalLogLikelihood =
-            oldLocalLogLikelihood +
-            (float)TM_SHARED_READ_F(localBaseLogLikelihoods[fromId]);
+      //TM_SAFE
+      TMpopulateParentQueryVector(netPtr,
+                                  fromId,
+                                  queries,
+                                  fromOrigParentQueryVectorPtr);
 
-        TMpopulateParentQueryVector(
-                                    netPtr,
-                                    fromId,
-                                    queries,
-                                    fromOrigParentQueryVectorPtr);
+      /*
+       * Create parent query (subset of parents since remove an edge)
+       */
 
-        /*
-         * Create parent query (subset of parents since remove an edge)
-         */
+      PVECTOR_CLEAR(parentQueryVectorPtr);
 
-        PVECTOR_CLEAR(parentQueryVectorPtr);
-
-        long p;
-        for (p = 0; p < numParent; p++) {
-            if (p != fromId) {
-                query_t* queryPtr = PVECTOR_AT(toOrigParentQueryVectorPtr, p);
-                status = PVECTOR_PUSHBACK(parentQueryVectorPtr,
-                                          (void*)&queries[queryPtr->index]);
-                assert(status);
-            }
-        } /* create new parent query */
+      long p;
+      for (p = 0; p < numParent; p++) {
+        if (p != fromId) {
+          query_t* queryPtr = (query_t*)PVECTOR_AT(toOrigParentQueryVectorPtr, p);
+          status = PVECTOR_PUSHBACK(parentQueryVectorPtr,
+                                    (void*)&queries[queryPtr->index]);
+          assert(status);
+        }
+      } /* create new parent query */
 
         /*
          * Create query
          */
 
-        status = PVECTOR_COPY(queryVectorPtr, parentQueryVectorPtr);
-        assert(status);
-        status = PVECTOR_PUSHBACK(queryVectorPtr, (void*)&queries[toId]);
-        assert(status);
-        PVECTOR_SORT(queryVectorPtr, &compareQuery);
+      status = PVECTOR_COPY(queryVectorPtr, parentQueryVectorPtr);
+      assert(status);
+      status = PVECTOR_PUSHBACK(queryVectorPtr, (void*)&queries[toId]);
+      assert(status);
 
-        /*
-         * Get log likelihood for removing parent from toId
-         */
+      //[wer]TM_SAFE
+      vector_sort(queryVectorPtr, &compareQuery);
 
-        float newLocalLogLikelihood =
-            computeLocalLogLikelihood(toId,
-                                      adtreePtr,
-                                      netPtr,
-                                      queries,
-                                      queryVectorPtr,
-                                      parentQueryVectorPtr);
+      /*
+       * Get log likelihood for removing parent from toId
+       */
 
-        /*
-         * Get log likelihood for adding parent to fromId
-         */
+      float newLocalLogLikelihood = computeLocalLogLikelihood(toId,
+                                                              adtreePtr,
+                                                              netPtr,
+                                                              queries,
+                                                              queryVectorPtr,
+                                                              parentQueryVectorPtr);
 
-        status = PVECTOR_COPY(parentQueryVectorPtr, fromOrigParentQueryVectorPtr);
-        assert(status);
-        status = PVECTOR_PUSHBACK(parentQueryVectorPtr, (void*)&queries[toId]);
-        assert(status);
-        PVECTOR_SORT(parentQueryVectorPtr, &compareQuery);
 
-        status = PVECTOR_COPY(queryVectorPtr, parentQueryVectorPtr);
-        assert(status);
-        status = PVECTOR_PUSHBACK(queryVectorPtr, (void*)&queries[fromId]);
-        assert(status);
-        PVECTOR_SORT(queryVectorPtr, &compareQuery);
+      /*
+       * Get log likelihood for adding parent to fromId
+       */
 
-        newLocalLogLikelihood +=
-            computeLocalLogLikelihood(fromId,
-                                      adtreePtr,
-                                      netPtr,
-                                      queries,
-                                      queryVectorPtr,
-                                      parentQueryVectorPtr);
+      status = PVECTOR_COPY(parentQueryVectorPtr, fromOrigParentQueryVectorPtr);
+      assert(status);
+      status = PVECTOR_PUSHBACK(parentQueryVectorPtr, (void*)&queries[toId]);
+      assert(status);
+      vector_sort(parentQueryVectorPtr, &compareQuery);
 
-        /*
-         * Record best
-         */
+      status = PVECTOR_COPY(queryVectorPtr, parentQueryVectorPtr);
+      assert(status);
+      status = PVECTOR_PUSHBACK(queryVectorPtr, (void*)&queries[fromId]);
+      assert(status);
+      vector_sort(queryVectorPtr, &compareQuery);
 
-        if (newLocalLogLikelihood > bestLocalLogLikelihood) {
-            bestLocalLogLikelihood = newLocalLogLikelihood;
-            bestFromId = fromId;
-        }
+      //[wer210] assertion failed in the next function call.
+      newLocalLogLikelihood += computeLocalLogLikelihood(fromId,
+                                                         adtreePtr,
+                                                         netPtr,
+                                                         queries,
+                                                         queryVectorPtr,
+                                                         parentQueryVectorPtr);
+      /*
+       * Record best
+       */
+
+      if (newLocalLogLikelihood > bestLocalLogLikelihood) {
+        bestLocalLogLikelihood = newLocalLogLikelihood;
+        bestFromId = fromId;
+      }
 
     } /* for each parent */
 
@@ -1080,20 +1191,16 @@ TMfindBestReverseTask (findBestTaskArg_t* argPtr)
      */
 
     if (bestFromId != toId) {
-        bool_t isTaskValid = TRUE;
-        TMNET_APPLYOPERATION(netPtr, OPERATION_REMOVE, bestFromId, toId);
-        if (TMNET_ISPATH(netPtr,
-                         bestFromId,
-                         toId,
-                         visitedBitmapPtr,
-                         workQueuePtr))
-        {
-            isTaskValid = FALSE;
-        }
-        TMNET_APPLYOPERATION(netPtr, OPERATION_INSERT, bestFromId, toId);
-        if (!isTaskValid) {
-            bestFromId = toId;
-        }
+      bool_t isTaskValid = TRUE;
+      TMNET_APPLYOPERATION(netPtr, OPERATION_REMOVE, bestFromId, toId);
+      if (TMNET_ISPATH(netPtr, bestFromId, toId, visitedBitmapPtr,
+                       workQueuePtr)) {
+        isTaskValid = FALSE;
+      }
+
+      TMNET_APPLYOPERATION(netPtr, OPERATION_INSERT, bestFromId, toId);
+      if (!isTaskValid)
+        bestFromId = toId;
     }
 
     /*
@@ -1107,22 +1214,21 @@ TMfindBestReverseTask (findBestTaskArg_t* argPtr)
     bestTask.score  = 0.0;
 
     if (bestFromId != toId) {
-        float fromLocalLogLikelihood =
-            (float)TM_SHARED_READ_F(localBaseLogLikelihoods[bestFromId]);
-        long numRecord = adtreePtr->numRecord;
-        float penalty = numTotalParent * basePenalty;
-        float logLikelihood = numRecord * (baseLogLikelihood +
-                                            + bestLocalLogLikelihood
-                                            - oldLocalLogLikelihood
-                                            - fromLocalLogLikelihood);
-        float bestScore = penalty + logLikelihood;
-        bestTask.score  = bestScore;
+      float fromLocalLogLikelihood =
+        (float)TM_SHARED_READ_F(localBaseLogLikelihoods[bestFromId]);
+      long numRecord = adtreePtr->numRecord;
+      float penalty = numTotalParent * basePenalty;
+      float logLikelihood = numRecord * (baseLogLikelihood +
+                                         + bestLocalLogLikelihood
+                                         - oldLocalLogLikelihood
+                                         - fromLocalLogLikelihood);
+      float bestScore = penalty + logLikelihood;
+      bestTask.score  = bestScore;
     }
 
-    return bestTask;
+    *dest = bestTask;
 }
 #endif /* LEARNER_TRY_REVERSE */
-
 
 /* =============================================================================
  * learnStructure
@@ -1132,7 +1238,7 @@ TMfindBestReverseTask (findBestTaskArg_t* argPtr)
  * threads.
  * =============================================================================
  */
-static void
+void
 learnStructure (void* argPtr)
 {
     learner_t* learnerPtr = (learner_t*)argPtr;
@@ -1144,9 +1250,9 @@ learnStructure (void* argPtr)
 
     float operationQualityFactor = global_operationQualityFactor;
 
-    bitmap_t* visitedBitmapPtr = PBITMAP_ALLOC(learnerPtr->adtreePtr->numVar);
+    bitmap_t* visitedBitmapPtr = TMBITMAP_ALLOC(learnerPtr->adtreePtr->numVar);
     assert(visitedBitmapPtr);
-    queue_t* workQueuePtr = PQUEUE_ALLOC(-1);
+    queue_t* workQueuePtr = TMQUEUE_ALLOC(-1);
     assert(workQueuePtr);
 
     long numVar = adtreePtr->numVar;
@@ -1179,13 +1285,15 @@ learnStructure (void* argPtr)
     arg.aQueryVectorPtr      = aQueryVectorPtr;
     arg.bQueryVectorPtr      = bQueryVectorPtr;
 
+    int x=0, y=0;
+
     while (1) {
 
         learner_task_t* taskPtr;
-        // [mfs] __transaction_atomic
-        {
-        taskPtr = TMpopTask(taskListPtr);
+        __transaction_atomic {
+          taskPtr = TMpopTask(  taskListPtr);
         }
+
         if (taskPtr == NULL) {
             break;
         }
@@ -1196,31 +1304,35 @@ learnStructure (void* argPtr)
 
         bool_t isTaskValid;
 
-        // [mfs] __transaction_atomic
-        {
+        //printf("hello %d\n", x++);
+        //tmp_task(taskPtr);
 
+        __transaction_atomic {
         /*
          * Check if task is still valid
          */
         isTaskValid = TRUE;
+
         switch (op) {
-            case OPERATION_INSERT: {
-                if (TMNET_HASEDGE(netPtr, fromId, toId) ||
-                    TMNET_ISPATH(netPtr,
-                                 toId,
-                                 fromId,
-                                 visitedBitmapPtr,
-                                 workQueuePtr))
+         case OPERATION_INSERT: {
+                if (TMNET_HASEDGE(netPtr, fromId, toId)
+                    || TMNET_ISPATH(netPtr,
+                                    toId,
+                                    fromId,
+                                    visitedBitmapPtr,
+                                    workQueuePtr)
+                   )
                 {
-                    isTaskValid = FALSE;
+                  isTaskValid = FALSE;
                 }
                 break;
             }
-            case OPERATION_REMOVE: {
+
+         case OPERATION_REMOVE: {
                 /* Can never create cycle, so always valid */
                 break;
             }
-            case OPERATION_REVERSE: {
+         case OPERATION_REVERSE: {
                 /* Temporarily remove edge for check */
                 TMNET_APPLYOPERATION(netPtr, OPERATION_REMOVE, fromId, toId);
                 if (TMNET_ISPATH(netPtr,
@@ -1234,8 +1346,9 @@ learnStructure (void* argPtr)
                 TMNET_APPLYOPERATION(netPtr, OPERATION_INSERT, fromId, toId);
                 break;
             }
-            default:
-                assert(0);
+
+         default:
+          assert(0);
         }
 
 #ifdef TEST_LEARNER
@@ -1250,52 +1363,50 @@ learnStructure (void* argPtr)
          */
 
         if (isTaskValid) {
-            TMNET_APPLYOPERATION(netPtr, op, fromId, toId);
+          TMNET_APPLYOPERATION(netPtr, op, fromId, toId);
         }
 
-        }
+        } //[wer] seg fault at commit time...fixed
+        //printf("[task] op=%i from=%li to=%li score=%lf valid=%s\n",
+        //       taskPtr->op, taskPtr->fromId, taskPtr->toId, taskPtr->score,
+        //       (isTaskValid ? "yes" : "no"));
 
         float deltaLogLikelihood = 0.0;
-
         if (isTaskValid) {
-
             switch (op) {
                 float newBaseLogLikelihood;
                 case OPERATION_INSERT: {
-                    // [mfs] __transaction_atomic
-                    {
-                    TMpopulateQueryVectors(
-                                           netPtr,
+                  __transaction_atomic {
+                    TMpopulateQueryVectors(netPtr,
                                            toId,
                                            queries,
                                            queryVectorPtr,
                                            parentQueryVectorPtr);
                     newBaseLogLikelihood =
-                        computeLocalLogLikelihood(toId,
-                                                  adtreePtr,
-                                                  netPtr,
-                                                  queries,
-                                                  queryVectorPtr,
-                                                  parentQueryVectorPtr);
+                      computeLocalLogLikelihood(toId,
+                                                adtreePtr,
+                                                netPtr,
+                                                queries,
+                                                queryVectorPtr,
+                                                parentQueryVectorPtr);
                     float toLocalBaseLogLikelihood =
-                        (float)localBaseLogLikelihoods[toId];
+                      (float)TM_SHARED_READ_F(localBaseLogLikelihoods[toId]);
                     deltaLogLikelihood +=
                         toLocalBaseLogLikelihood - newBaseLogLikelihood;
-                    localBaseLogLikelihoods[toId] = newBaseLogLikelihood;
-                    }
-                    // [mfs] __transaction_atomic
-                    {
-                    long numTotalParent = (long)learnerPtr->numTotalParent;
-                    learnerPtr->numTotalParent = (numTotalParent + 1);
-                    }
-                    break;
+                    TM_SHARED_WRITE_F(localBaseLogLikelihoods[toId],
+                                      newBaseLogLikelihood);
+                  }
+
+                  __transaction_atomic {
+                    long numTotalParent = (long)TM_SHARED_READ(learnerPtr->numTotalParent);
+                    TM_SHARED_WRITE(learnerPtr->numTotalParent, (numTotalParent + 1));
+                  }
+                  break;
                 }
 #ifdef LEARNER_TRY_REMOVE
                 case OPERATION_REMOVE: {
-                    // [mfs] __transaction_atomic
-                    {
-                    TMpopulateQueryVectors(
-                                           netPtr,
+                  __transaction_atomic {
+                    TMpopulateQueryVectors(netPtr,
                                            fromId,
                                            queries,
                                            queryVectorPtr,
@@ -1313,53 +1424,49 @@ learnStructure (void* argPtr)
                         fromLocalBaseLogLikelihood - newBaseLogLikelihood;
                     TM_SHARED_WRITE_F(localBaseLogLikelihoods[fromId],
                                       newBaseLogLikelihood);
-                    }
-                    // [mfs] __transaction_atomic
-                    {
+                  }
+
+                  __transaction_atomic {
                     long numTotalParent = (long)TM_SHARED_READ(learnerPtr->numTotalParent);
                     TM_SHARED_WRITE(learnerPtr->numTotalParent, (numTotalParent - 1));
-                    }
-                    break;
+                  }
+                  break;
                 }
 #endif /* LEARNER_TRY_REMOVE */
 #ifdef LEARNER_TRY_REVERSE
                 case OPERATION_REVERSE: {
-                    // [mfs] __transaction_atomic
-                    {
-                    TMpopulateQueryVectors(
-                                           netPtr,
-                                           fromId,
-                                           queries,
-                                           queryVectorPtr,
-                                           parentQueryVectorPtr);
+                  __transaction_atomic {
+                    TMpopulateQueryVectors(netPtr,
+                                         fromId,
+                                         queries,
+                                         queryVectorPtr,
+                                         parentQueryVectorPtr);
                     newBaseLogLikelihood =
-                        computeLocalLogLikelihood(fromId,
-                                                  adtreePtr,
-                                                  netPtr,
-                                                  queries,
-                                                  queryVectorPtr,
-                                                  parentQueryVectorPtr);
+                      computeLocalLogLikelihood(fromId,
+                                                adtreePtr,
+                                                netPtr,
+                                                queries,
+                                                queryVectorPtr,
+                                                parentQueryVectorPtr);
                     float fromLocalBaseLogLikelihood =
-                        (float)TM_SHARED_READ_F(localBaseLogLikelihoods[fromId]);
+                      (float)TM_SHARED_READ_F(localBaseLogLikelihoods[fromId]);
                     deltaLogLikelihood +=
-                        fromLocalBaseLogLikelihood - newBaseLogLikelihood;
+                      fromLocalBaseLogLikelihood - newBaseLogLikelihood;
                     TM_SHARED_WRITE_F(localBaseLogLikelihoods[fromId],
                                       newBaseLogLikelihood);
-                    }
+                  }
 
-                    // [mfs] __transaction_atomic
-                    {
-                    TMpopulateQueryVectors(
-                                           netPtr,
+                  __transaction_atomic {
+                    TMpopulateQueryVectors(netPtr,
                                            toId,
                                            queries,
                                            queryVectorPtr,
                                            parentQueryVectorPtr);
                     newBaseLogLikelihood =
-                        computeLocalLogLikelihood(toId,
-                                                  adtreePtr,
-                                                  netPtr,
-                                                  queries,
+                      computeLocalLogLikelihood(toId,
+                                                adtreePtr,
+                                                netPtr,
+                                                queries,
                                                   queryVectorPtr,
                                                   parentQueryVectorPtr);
                     float toLocalBaseLogLikelihood =
@@ -1368,12 +1475,12 @@ learnStructure (void* argPtr)
                         toLocalBaseLogLikelihood - newBaseLogLikelihood;
                     TM_SHARED_WRITE_F(localBaseLogLikelihoods[toId],
                                       newBaseLogLikelihood);
-                    }
-                    break;
+                  }
+                  break;
                 }
 #endif /* LEARNER_TRY_REVERSE */
-                default:
-                    assert(0);
+             default:
+              assert(0);
             } /* switch op */
 
         } /* if isTaskValid */
@@ -1385,14 +1492,13 @@ learnStructure (void* argPtr)
         float baseLogLikelihood;
         long numTotalParent;
 
-        // [mfs] __transaction_atomic
-        {
-        float oldBaseLogLikelihood =
-            (float)learnerPtr->baseLogLikelihood;
-        float newBaseLogLikelihood = oldBaseLogLikelihood + deltaLogLikelihood;
-        learnerPtr->baseLogLikelihood = newBaseLogLikelihood;
-        baseLogLikelihood = newBaseLogLikelihood;
-        numTotalParent = (long)learnerPtr->numTotalParent;
+        __transaction_atomic {
+          float oldBaseLogLikelihood =
+            (float)TM_SHARED_READ_F(learnerPtr->baseLogLikelihood);
+          float newBaseLogLikelihood = oldBaseLogLikelihood + deltaLogLikelihood;
+          TM_SHARED_WRITE_F(learnerPtr->baseLogLikelihood, newBaseLogLikelihood);
+          baseLogLikelihood = newBaseLogLikelihood;
+          numTotalParent = (long)TM_SHARED_READ(learnerPtr->numTotalParent);
         }
 
         /*
@@ -1415,50 +1521,56 @@ learnStructure (void* argPtr)
         arg.basePenalty       = basePenalty;
         arg.baseLogLikelihood = baseLogLikelihood;
 
-        // [mfs] __transaction_atomic
-        {
-        newTask = TMfindBestInsertTask(&arg);
-        }
+        __transaction_atomic {
+          TMfindBestInsertTask(&newTask, &arg);
+        } //[wer210] same here, commit failure, fixed
+        //[wer210] but assertion fails inside this transaction..[todo]
 
         if ((newTask.fromId != newTask.toId) &&
             (newTask.score > (bestTask.score / operationQualityFactor)))
         {
-            bestTask = newTask;
+          //printf("insert task found\n");
+          bestTask = newTask;
         }
 
 #ifdef LEARNER_TRY_REMOVE
-        // [mfs] __transaction_atomic
-        {
-        newTask = TMfindBestRemoveTask(&arg);
+        __transaction_atomic {
+          // newTask = TMfindBestRemoveTask(&arg);
+          TMfindBestRemoveTask(&newTask, &arg);
         }
 
         if ((newTask.fromId != newTask.toId) &&
             (newTask.score > (bestTask.score / operationQualityFactor)))
         {
-            bestTask = newTask;
+          //printf("remove task found\n");
+          bestTask = newTask;
         }
+
 #endif /* LEARNER_TRY_REMOVE */
 
 #ifdef LEARNER_TRY_REVERSE
-        // [mfs] __transaction_atomic
-        {
-        newTask = TMfindBestReverseTask(&arg);
+        //[wer210] used to have problems, fixed(log, qsort)
+        __transaction_atomic {
+          TMfindBestReverseTask(&newTask, &arg);
         }
 
         if ((newTask.fromId != newTask.toId) &&
             (newTask.score > (bestTask.score / operationQualityFactor)))
         {
-            bestTask = newTask;
+          //printf("reverse task found\n");
+          bestTask = newTask;
         }
+
 #endif /* LEARNER_TRY_REVERSE */
 
         if (bestTask.toId != -1) {
             learner_task_t* tasks = learnerPtr->tasks;
             tasks[toId] = bestTask;
-            // [mfs] __transaction_atomic
-            {
-            TMLIST_INSERT(taskListPtr, (void*)&tasks[toId]);
+            //printf("insert best task: op = %d, fromid = %ld, toid = %ld, score = %f \n", bestTask.op, bestTask.fromId, bestTask.toId, bestTask.score);
+            __transaction_atomic {
+              TMLIST_INSERT(taskListPtr, (void*)&tasks[toId]);
             }
+
 #ifdef TEST_LEARNER
             printf("[new]  op=%i from=%li to=%li score=%lf\n",
                    bestTask.op, bestTask.fromId, bestTask.toId, bestTask.score);
@@ -1468,8 +1580,8 @@ learnStructure (void* argPtr)
 
     } /* while (tasks) */
 
-    PBITMAP_FREE(visitedBitmapPtr);
-    PQUEUE_FREE(workQueuePtr);
+    TMBITMAP_FREE(visitedBitmapPtr);
+    TMQUEUE_FREE(workQueuePtr);
     PVECTOR_FREE(bQueryVectorPtr);
     PVECTOR_FREE(aQueryVectorPtr);
     PVECTOR_FREE(queryVectorPtr);
@@ -1536,7 +1648,7 @@ learner_score (learner_t* learnerPtr)
         numTotalParent += list_getSize(parentIdListPtr);
 
 
-        populateQueryVectors(netPtr,
+        TMpopulateQueryVectors(netPtr,
                              v,
                              queries,
                              queryVectorPtr,
@@ -1571,7 +1683,7 @@ learner_score (learner_t* learnerPtr)
 #include <stdio.h>
 
 
-static void
+void
 testPartition (long min, long max, long n)
 {
     long start;

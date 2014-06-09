@@ -88,11 +88,8 @@ extern "C" {
 
 typedef unsigned long ulong_t;
 
-enum {
-    FALSE = 0,
-    TRUE  = 1
-};
-
+#define FALSE (0L)
+#define TRUE  (1L)
 typedef long bool_t;
 
 

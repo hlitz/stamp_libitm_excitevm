@@ -31,13 +31,11 @@ When using this benchmark, please cite [1].
 Compiling and Running
 ---------------------
 
-To build the application, simply run:
+To build the application with sequential mode, simply run:
 
-    make -f <makefile>
+    make TMBUILD=seq
 
-in the source directory. For example, for the sequential flavor, run:
-
-    make -f Makefile.seq
+in the source directory.
 
 By default, this produces an executable named "bayes", which can then be
 run in the following manner:
@@ -64,13 +62,13 @@ as the input for the structure learning algorithm.
 
 The following arguments are recommended for simulated runs:
 
-    -v32 -r1024 -n2 -p20 -s0 -i2 -e2
+    -v32 -r1024 -n2 -p20 -i2 -e2 -s0
 
 For non-simulator runs, a larger Bayesian network can be learned:
 
     -v32 -r4096 -n10 -p40 -i2 -e8 -s1
 
-For multithreaded runs, the runing time can vary depending on the insertion
+For multithreaded runs, the running time can vary depending on the insertion
 order of edges.
 
 

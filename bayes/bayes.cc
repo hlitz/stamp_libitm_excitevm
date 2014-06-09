@@ -76,6 +76,7 @@
 #include "net.h"
 #include "thread.h"
 #include "timer.h"
+#include "tm.h"
 #include "types.h"
 
 enum param_types {
@@ -86,18 +87,18 @@ enum param_types {
     PARAM_RECORD  = (unsigned char)'r',
     PARAM_SEED    = (unsigned char)'s',
     PARAM_THREAD  = (unsigned char)'t',
-    PARAM_VAR     = (unsigned char)'v',
+    PARAM_VAR     = (unsigned char)'v'
 };
 
 enum param_defaults {
-    PARAM_DEFAULT_EDGE    = -1,
-    PARAM_DEFAULT_INSERT  = 1,
-    PARAM_DEFAULT_NUMBER  = 4,
-    PARAM_DEFAULT_PERCENT = 10,
+    PARAM_DEFAULT_EDGE    = 8,
+    PARAM_DEFAULT_INSERT  = 2,
+    PARAM_DEFAULT_NUMBER  = 10,
+    PARAM_DEFAULT_PERCENT = 40,
     PARAM_DEFAULT_RECORD  = 4096,
     PARAM_DEFAULT_SEED    = 1,
     PARAM_DEFAULT_THREAD  = 1,
-    PARAM_DEFAULT_VAR     = 32,
+    PARAM_DEFAULT_VAR     = 32
 };
 
 #define PARAM_DEFAULT_QUALITY           1.0F
@@ -227,7 +228,7 @@ score (net_t* netPtr, adtree_t* adtreePtr)
  * main
  * =============================================================================
  */
-int main(int argc, char **argv)
+int main (int argc, char** argv)
 {
     /*
      * Initialization
@@ -242,6 +243,7 @@ int main(int argc, char **argv)
     long percentParent = global_params[PARAM_PERCENT];
     global_insertPenalty = global_params[PARAM_INSERT];
     global_maxNumEdgeLearned = global_params[PARAM_EDGE];
+
     thread_startup(numThread);
 
     printf("Random seed                = %li\n", randomSeed);
@@ -318,12 +320,12 @@ int main(int argc, char **argv)
 
     learner_run(learnerPtr);
 
-        TIMER_T learnStopTime;
+    TIMER_T learnStopTime;
     TIMER_READ(learnStopTime);
 
     puts("done.");
     fflush(stdout);
-    printf("Learn time = %f\n",
+    printf("Time = %f\n",
            TIMER_DIFF_SECONDS(learnStartTime, learnStopTime));
     fflush(stdout);
 
@@ -348,11 +350,8 @@ int main(int argc, char **argv)
     random_free(randomPtr);
 #ifndef SIMULATOR
     adtree_free(adtreePtr);
-#  if 0
     learner_free(learnerPtr);
-#  endif
 #endif
-
 
     thread_shutdown();
 

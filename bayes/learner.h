@@ -80,6 +80,7 @@
 
 typedef struct learner_task learner_task_t;
 
+/* ??? Cacheline size is fixed. */
 #define CACHE_LINE_SIZE (64)
 
 typedef struct learner {
