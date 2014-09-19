@@ -1,29 +1,26 @@
 PROG := ssca2
 
 SRCS += \
-	alg_radix_smp.c \
-	computeGraph.c \
-	createPartition.c \
-	cutClusters.c \
-	findSubGraphs.c \
-	genScalData.c \
-	getStartLists.c \
-	getUserParameters.c \
-	globals.c \
-	ssca2.c
+	alg_radix_smp.cc \
+	computeGraph.cc \
+	createPartition.cc \
+	cutClusters.cc \
+	findSubGraphs.cc \
+	genScalData.cc \
+	getStartLists.cc \
+	getUserParameters.cc \
+	globals.cc \
+	ssca2.cc
 
-LIBSRCS += \
-	mt19937ar.c \
-	random.c \
-	thread.c
+LIBSRCS += thread.cc
 
-OBJS := ${SRCS:.c=.o} ${LIBSRCS:%.c=lib_%.o}
+OBJS := ${SRCS:.cc=.o} ${LIBSRCS:%.cc=lib_%.o}
 
-#CFLAGS += -DUSE_PARALLEL_DATA_GENERATION
-#CFLAGS += -DWRITE_RESULT_FILES
-CFLAGS += -DENABLE_KERNEL1
-#CFLAGS += -DENABLE_KERNEL2 -DENABLE_KERNEL3
-#CFLAGS += -DENABLE_KERNEL4
+#CXXFLAGS += -DUSE_PARALLEL_DATA_GENERATION
+#CXXFLAGS += -DWRITE_RESULT_FILES
+CXXFLAGS += -DENABLE_KERNEL1
+#CXXFLAGS += -DENABLE_KERNEL2 -DENABLE_KERNEL3
+#CXXFLAGS += -DENABLE_KERNEL4
 
 LDFLAGS += -lm
 

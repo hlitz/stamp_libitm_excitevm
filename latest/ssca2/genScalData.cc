@@ -69,12 +69,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <random>
 #include "alg_radix_smp.h"
 #include "createPartition.h"
 #include "defs.h"
 #include "genScalData.h"
 #include "globals.h"
-#include "random.h"
 #include "thread.h"
 #include "tm.h"
 
@@ -103,9 +103,8 @@ genScalData_seq (graphSDG* SDGdataPtr)
      * STEP 0: Create the permutations required to randomize the vertices
      */
 
-    random_t* stream = random_alloc();
-    assert(stream);
-    random_seed(stream, 0);
+    std::mt19937 stream;
+    stream.seed(0);
 
     ULONGINT_T* permV; /* the vars associated with the graph tuple */
     permV = (ULONGINT_T*)malloc(TOT_VERTICES * sizeof(ULONGINT_T));
@@ -119,7 +118,7 @@ genScalData_seq (graphSDG* SDGdataPtr)
     }
 
     for (i = 0; i < TOT_VERTICES; i++) {
-        long t1 = random_generate(stream);
+        long t1 = stream();
         long t = i + t1 % (TOT_VERTICES - i);
         if (t != i) {
             ULONGINT_T t2 = permV[t];
@@ -146,7 +145,7 @@ genScalData_seq (graphSDG* SDGdataPtr)
 
     /* Generate random clique sizes. */
     for (i = 0; i < estTotCliques; i++) {
-        cliqueSizes[i] = 1 + (random_generate(stream) % MAX_CLIQUE_SIZE);
+        cliqueSizes[i] = 1 + (stream() % MAX_CLIQUE_SIZE);
     }
 
     long totCliques = 0;
@@ -276,7 +275,7 @@ genScalData_seq (graphSDG* SDGdataPtr)
             long j;
             for (j = 0; j < i; j++) {
 
-                float r = (float)(random_generate(stream) % 1000) / (float)1000;
+                float r = (float)(stream() % 1000) / (float)1000;
                 if (r >= p) {
 
                     startV[i_edgePtr] = i + i_firstVsInClique;
@@ -311,14 +310,14 @@ genScalData_seq (graphSDG* SDGdataPtr)
         } /* for i */
 
         if (i_cliqueSize != 1) {
-            long randNumEdges = (long)(random_generate(stream)
+            long randNumEdges = (long)(stream()
                                        % (2*i_cliqueSize*MAX_PARAL_EDGES));
             long i_paralEdge;
             for (i_paralEdge = 0; i_paralEdge < randNumEdges; i_paralEdge++) {
-                i = (random_generate(stream) % i_cliqueSize);
-                long j = (random_generate(stream) % i_cliqueSize);
+                i = (stream() % i_cliqueSize);
+                long j = (stream() % i_cliqueSize);
                 if ((i != j) && (tmpEdgeCounter[i][j] < MAX_PARAL_EDGES)) {
-                    float r = (float)(random_generate(stream) % 1000) / (float)1000;
+                    float r = (float)(stream() % 1000) / (float)1000;
                     if (r >= p) {
                         /* Copy to edge structure. */
                         startV[i_edgePtr] = i + i_firstVsInClique;
@@ -422,7 +421,7 @@ genScalData_seq (graphSDG* SDGdataPtr)
         ULONGINT_T d;
         for (d = 1, p = PROB_INTERCL_EDGES; d < TOT_VERTICES; d *= 2, p /= 2) {
 
-            float r = (float)(random_generate(stream) % 1000) / (float)1000;
+            float r = (float)(stream() % 1000) / (float)1000;
 
             if (r <= p) {
 
@@ -461,7 +460,7 @@ genScalData_seq (graphSDG* SDGdataPtr)
 
                 if (t1 != t2) {
                     long randNumEdges =
-                        random_generate(stream) % MAX_PARAL_EDGES + 1;
+                        stream() % MAX_PARAL_EDGES + 1;
                     long j;
                     for (j = 0; j < randNumEdges; j++) {
                         startV[i_edgePtr] = tempVertex1;
@@ -472,7 +471,7 @@ genScalData_seq (graphSDG* SDGdataPtr)
 
             } /* r <= p */
 
-            float r0 = (float)(random_generate(stream) % 1000) / (float)1000;
+            float r0 = (float)(stream() % 1000) / (float)1000;
 
             if ((r0 <= p) && (i-d>=0)) {
 
@@ -511,7 +510,7 @@ genScalData_seq (graphSDG* SDGdataPtr)
 
                 if (t1 != t2) {
                     long randNumEdges =
-                        random_generate(stream) % MAX_PARAL_EDGES + 1;
+                        stream() % MAX_PARAL_EDGES + 1;
                     long j;
                     for (j = 0; j < randNumEdges; j++) {
                         startV[i_edgePtr] = tempVertex1;
@@ -566,10 +565,10 @@ genScalData_seq (graphSDG* SDGdataPtr)
     ULONGINT_T numStrWtEdges  = 0;
 
     for (i = 0; i < numEdgesPlaced; i++) {
-        float r = (float)(random_generate(stream) % 1000) / (float)1000;
+        float r = (float)(stream() % 1000) / (float)1000;
         if (r <= p) {
             SDGdataPtr->intWeight[i] =
-                1 + (random_generate(stream) % (MAX_INT_WEIGHT-1));
+                1 + (stream() % (MAX_INT_WEIGHT-1));
         } else {
             SDGdataPtr->intWeight[i] = -1;
             numStrWtEdges++;
@@ -593,7 +592,7 @@ genScalData_seq (graphSDG* SDGdataPtr)
             long j;
             for (j = 0; j < MAX_STRLEN; j++) {
                 SDGdataPtr->strWeight[(-SDGdataPtr->intWeight[i])*MAX_STRLEN+j] =
-                    (char) (1 + random_generate(stream) % 127);
+                    (char) (1 + stream() % 127);
             }
         }
     }
@@ -607,7 +606,7 @@ genScalData_seq (graphSDG* SDGdataPtr)
         assert(SOUGHT_STRING);
     }
 
-    t = random_generate(stream) % numStrWtEdges;
+    t = stream() % numStrWtEdges;
     long j;
     for (j = 0; j < MAX_STRLEN; j++) {
         SOUGHT_STRING[j] =
@@ -753,7 +752,6 @@ genScalData_seq (graphSDG* SDGdataPtr)
 
     } /* SCALE >= 12 */
 
-    random_free(stream);
     free(permV);
 }
 
@@ -774,9 +772,8 @@ genScalData (void* argPtr)
      * STEP 0: Create the permutations required to randomize the vertices
      */
 
-    random_t* stream = PRANDOM_ALLOC();
-    assert(stream);
-    PRANDOM_SEED(stream, myId);
+    std::mt19937 stream;
+    stream.seed(myId);
 
     ULONGINT_T* permV; /* the vars associated with the graph tuple */
 
@@ -803,7 +800,7 @@ genScalData (void* argPtr)
     thread_barrier_wait();
 
     for (i = i_start; i < i_stop; i++) {
-        long t1 = PRANDOM_GENERATE(stream);
+        long t1 = stream();
         long t = i + t1 % (TOT_VERTICES - i);
         if (t != i) {
           __transaction_atomic {
@@ -843,7 +840,7 @@ genScalData (void* argPtr)
 
     /* Generate random clique sizes. */
     for (i = i_start; i < i_stop; i++) {
-        cliqueSizes[i] = 1 + (PRANDOM_GENERATE(stream) % MAX_CLIQUE_SIZE);
+        cliqueSizes[i] = 1 + (stream() % MAX_CLIQUE_SIZE);
     }
 
     thread_barrier_wait();
@@ -1001,7 +998,7 @@ genScalData (void* argPtr)
             long j;
             for (j = 0; j < i; j++) {
 
-                float r = (float)(PRANDOM_GENERATE(stream) % 1000) / (float)1000;
+                float r = (float)(stream() % 1000) / (float)1000;
                 if (r >= p) {
 
                     startV[i_edgePtr] = i + i_firstVsInClique;
@@ -1036,14 +1033,14 @@ genScalData (void* argPtr)
         } /* for i */
 
         if (i_cliqueSize != 1) {
-            long randNumEdges = (long)(PRANDOM_GENERATE(stream)
+            long randNumEdges = (long)(stream()
                                        % (2*i_cliqueSize*MAX_PARAL_EDGES));
             long i_paralEdge;
             for (i_paralEdge = 0; i_paralEdge < randNumEdges; i_paralEdge++) {
-                i = (PRANDOM_GENERATE(stream) % i_cliqueSize);
-                long j = (PRANDOM_GENERATE(stream) % i_cliqueSize);
+                i = (stream() % i_cliqueSize);
+                long j = (stream() % i_cliqueSize);
                 if ((i != j) && (tmpEdgeCounter[i][j] < MAX_PARAL_EDGES)) {
-                    float r = (float)(PRANDOM_GENERATE(stream) % 1000) / (float)1000;
+                    float r = (float)(stream() % 1000) / (float)1000;
                     if (r >= p) {
                         /* Copy to edge structure. */
                         startV[i_edgePtr] = i + i_firstVsInClique;
@@ -1193,7 +1190,7 @@ genScalData (void* argPtr)
         ULONGINT_T d;
         for (d = 1, p = PROB_INTERCL_EDGES; d < TOT_VERTICES; d *= 2, p /= 2) {
 
-            float r = (float)(PRANDOM_GENERATE(stream) % 1000) / (float)1000;
+            float r = (float)(stream() % 1000) / (float)1000;
 
             if (r <= p) {
 
@@ -1232,7 +1229,7 @@ genScalData (void* argPtr)
 
                 if (t1 != t2) {
                     long randNumEdges =
-                        PRANDOM_GENERATE(stream) % MAX_PARAL_EDGES + 1;
+                        stream() % MAX_PARAL_EDGES + 1;
                     long j;
                     for (j = 0; j < randNumEdges; j++) {
                         startV[i_edgePtr] = tempVertex1;
@@ -1243,7 +1240,7 @@ genScalData (void* argPtr)
 
             } /* r <= p */
 
-            float r0 = (float)(PRANDOM_GENERATE(stream) % 1000) / (float)1000;
+            float r0 = (float)(stream() % 1000) / (float)1000;
 
             if ((r0 <= p) && (i-d>=0)) {
 
@@ -1282,7 +1279,7 @@ genScalData (void* argPtr)
 
                 if (t1 != t2) {
                     long randNumEdges =
-                        PRANDOM_GENERATE(stream) % MAX_PARAL_EDGES + 1;
+                        stream() % MAX_PARAL_EDGES + 1;
                     long j;
                     for (j = 0; j < randNumEdges; j++) {
                         startV[i_edgePtr] = tempVertex1;
@@ -1373,10 +1370,10 @@ genScalData (void* argPtr)
     createPartition(0, numEdgesPlaced, myId, numThread, &i_start, &i_stop);
 
     for (i = i_start; i < i_stop; i++) {
-        float r = (float)(PRANDOM_GENERATE(stream) % 1000) / (float)1000;
+        float r = (float)(stream() % 1000) / (float)1000;
         if (r <= p) {
             SDGdataPtr->intWeight[i] =
-                1 + (PRANDOM_GENERATE(stream) % (MAX_INT_WEIGHT-1));
+                1 + (stream() % (MAX_INT_WEIGHT-1));
         } else {
             SDGdataPtr->intWeight[i] = -1;
             numStrWtEdges++;
@@ -1419,7 +1416,7 @@ genScalData (void* argPtr)
             long j;
             for (j = 0; j < MAX_STRLEN; j++) {
                 SDGdataPtr->strWeight[(-SDGdataPtr->intWeight[i])*MAX_STRLEN+j] =
-                    (char) (1 + PRANDOM_GENERATE(stream) % 127);
+                    (char) (1 + stream() % 127);
             }
         }
     }
@@ -1435,7 +1432,7 @@ genScalData (void* argPtr)
             assert(SOUGHT_STRING);
         }
 
-        long t = PRANDOM_GENERATE(stream) % numStrWtEdges;
+        long t = stream() % numStrWtEdges;
         long j;
         for (j = 0; j < MAX_STRLEN; j++) {
             SOUGHT_STRING[j] =
@@ -1634,7 +1631,6 @@ genScalData (void* argPtr)
 
     } /* SCALE >= 12 */
 
-    PRANDOM_FREE(stream);
     if (myId == 0) {
         free(permV);
     }
