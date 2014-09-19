@@ -68,16 +68,12 @@
  * =============================================================================
  */
 
-
-#ifndef CLIENT_H
-#define CLIENT_H 1
+#pragma once
 
 #include <random>
-#include "action.h"
 #include "manager.h"
-#include "tm.h"
 
-typedef struct client {
+struct client_t {
     long id;
     manager_t* managerPtr;
     std::mt19937* randomPtr;
@@ -85,7 +81,7 @@ typedef struct client {
     long numQueryPerTransaction;
     long queryRange;
     long percentUser;
-} client_t;
+};
 
 
 /* =============================================================================
@@ -117,14 +113,3 @@ client_free (client_t* clientPtr);
  */
 void
 client_run (void* argPtr);
-
-
-#endif /* CLIENT_H */
-
-
-/* =============================================================================
- *
- * End of client.h
- *
- * =============================================================================
- */
