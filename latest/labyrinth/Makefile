@@ -1,24 +1,22 @@
 PROG := labyrinth
 
 SRCS += \
-	coordinate.c \
-	grid.c \
-	labyrinth.c \
-	maze.c \
-	router.c
+	coordinate.cc \
+	grid.cc \
+	labyrinth.cc \
+	maze.cc \
+	router.cc
 
 LIBSRCS += \
-	list.c \
-	mt19937ar.c \
-	pair.c \
-	queue.c \
-	random.c \
-	thread.c \
-	vector.c
+	list.cc \
+	pair.cc \
+	queue.cc \
+	thread.cc \
+	vector.cc
 
-OBJS := ${SRCS:.c=.o} ${LIBSRCS:%.c=lib_%.o}
+OBJS := ${SRCS:.cc=.o} ${LIBSRCS:%.cc=lib_%.o}
 
-CFLAGS += -DUSE_EARLY_RELEASE
+CXXFLAGS += -DUSE_EARLY_RELEASE
 
 LDFLAGS += -lm
 

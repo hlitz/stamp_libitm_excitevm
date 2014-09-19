@@ -74,7 +74,6 @@
 #include "coordinate.h"
 #include "pair.h"
 #include "tm.h"
-#include "types.h"
 
 
 /* =============================================================================
@@ -112,15 +111,15 @@ coordinate_free (coordinate_t* coordinatePtr)
  * coordinate_isEqual
  * =============================================================================
  */
-bool_t
+bool
 coordinate_isEqual (coordinate_t* aPtr, coordinate_t* bPtr)
 {
     if ((aPtr->x == bPtr->x) &&
         (aPtr->y == bPtr->y) &&
         (aPtr->z == bPtr->z))
-        return TRUE;
+        return true;
     else
-      return FALSE;
+      return false;
 }
 
 
@@ -169,7 +168,7 @@ coordinate_comparePair (const void* aPtr, const void* bPtr)
  * coordinate_areAdjacent
  * =============================================================================
  */
-bool_t
+bool
 coordinate_areAdjacent (coordinate_t* aPtr, coordinate_t* bPtr)
 {
     long dx = aPtr->x - bPtr->x;
@@ -179,7 +178,7 @@ coordinate_areAdjacent (coordinate_t* aPtr, coordinate_t* bPtr)
     long dy2 = dy * dy;
     long dz2 = dz * dz;
 
-    return (((dx2 + dy2 + dz2) == 1) ? TRUE : FALSE);
+    return (((dx2 + dy2 + dz2) == 1) ? true : false);
 }
 
 

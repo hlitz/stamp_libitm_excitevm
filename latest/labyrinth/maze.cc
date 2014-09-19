@@ -77,7 +77,6 @@
 #include "maze.h"
 #include "queue.h"
 #include "pair.h"
-#include "types.h"
 #include "vector.h"
 
 
@@ -136,7 +135,7 @@ maze_free (maze_t* mazePtr)
  * =============================================================================
  */
 static void
-addToGrid (grid_t* gridPtr, vector_t* vectorPtr, char* type)
+addToGrid (grid_t* gridPtr, vector_t* vectorPtr, const char* type)
 {
     long i;
     long n = vector_getSize(vectorPtr);
@@ -162,7 +161,7 @@ addToGrid (grid_t* gridPtr, vector_t* vectorPtr, char* type)
  * =============================================================================
  */
 long
-maze_read (maze_t* mazePtr, char* inputFileName)
+maze_read (maze_t* mazePtr, const char* inputFileName)
 {
     FILE* inputFile = fopen(inputFileName, "rt");
     if (!inputFile) {
@@ -227,8 +226,8 @@ maze_read (maze_t* mazePtr, char* inputFileName)
                 }
                 pair_t* coordinatePairPtr = pair_alloc(srcPtr, dstPtr);
                 assert(coordinatePairPtr);
-                bool_t status = list_insert(workListPtr, (void*)coordinatePairPtr);
-                assert(status == TRUE);
+                bool status = list_insert(workListPtr, (void*)coordinatePairPtr);
+                assert(status == true);
                 vector_pushBack(srcVectorPtr, (void*)srcPtr);
                 vector_pushBack(dstVectorPtr, (void*)dstPtr);
                 break;
@@ -290,8 +289,8 @@ maze_read (maze_t* mazePtr, char* inputFileName)
  * maze_checkPaths
  * =============================================================================
  */
-bool_t
-maze_checkPaths (maze_t* mazePtr, list_t* pathVectorListPtr, bool_t doPrintPaths)
+bool
+maze_checkPaths (maze_t* mazePtr, list_t* pathVectorListPtr, bool doPrintPaths)
 {
     grid_t* gridPtr = mazePtr->gridPtr;
     long width  = gridPtr->width;
@@ -338,7 +337,7 @@ maze_checkPaths (maze_t* mazePtr, list_t* pathVectorListPtr, bool_t doPrintPaths
             grid_getPointIndices(gridPtr, prevGridPointPtr, &x, &y, &z);
             if (grid_getPoint(testGridPtr, x, y, z) != 0) {
                 grid_free(testGridPtr);
-                return FALSE;
+                return false;
             }
             coordinate_t prevCoordinate;
             grid_getPointIndices(gridPtr,
@@ -358,7 +357,7 @@ maze_checkPaths (maze_t* mazePtr, list_t* pathVectorListPtr, bool_t doPrintPaths
                                      &currCoordinate.z);
                 if (!coordinate_areAdjacent(&currCoordinate, &prevCoordinate)) {
                     grid_free(testGridPtr);
-                    return FALSE;
+                    return false;
                 }
                 prevCoordinate = currCoordinate;
                 long x = currCoordinate.x;
@@ -366,7 +365,7 @@ maze_checkPaths (maze_t* mazePtr, list_t* pathVectorListPtr, bool_t doPrintPaths
                 long z = currCoordinate.z;
                 if (grid_getPoint(testGridPtr, x, y, z) != GRID_POINT_EMPTY) {
                     grid_free(testGridPtr);
-                    return FALSE;
+                    return false;
                 } else {
                     grid_setPoint(testGridPtr, x, y, z, id);
                 }
@@ -376,7 +375,7 @@ maze_checkPaths (maze_t* mazePtr, list_t* pathVectorListPtr, bool_t doPrintPaths
             grid_getPointIndices(gridPtr, lastGridPointPtr, &x, &y, &z);
             if (grid_getPoint(testGridPtr, x, y, z) != 0) {
                 grid_free(testGridPtr);
-                return FALSE;
+                return false;
             }
         } /* iteratate over pathVector */
     } /* iterate over pathVectorList */
@@ -388,7 +387,7 @@ maze_checkPaths (maze_t* mazePtr, list_t* pathVectorListPtr, bool_t doPrintPaths
 
     grid_free(testGridPtr);
 
-    return TRUE;
+    return true;
 }
 
 

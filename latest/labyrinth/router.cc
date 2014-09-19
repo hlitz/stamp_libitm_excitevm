@@ -170,7 +170,7 @@ PexpandToNeighbor (grid_t* myGridPtr,
  */
 //static TM_PURE
 TM_SAFE
-bool_t
+bool
 PdoExpansion (router_t* routerPtr, grid_t* myGridPtr, queue_t* queuePtr,
               coordinate_t* srcPtr, coordinate_t* dstPtr)
 {
@@ -193,13 +193,13 @@ PdoExpansion (router_t* routerPtr, grid_t* myGridPtr, queue_t* queuePtr,
     grid_setPoint(myGridPtr, dstPtr->x, dstPtr->y, dstPtr->z, GRID_POINT_EMPTY);
     long* dstGridPointPtr =
         grid_getPointRef(myGridPtr, dstPtr->x, dstPtr->y, dstPtr->z);
-    bool_t isPathFound = FALSE;
+    bool isPathFound = false;
 
     while (!TMQUEUE_ISEMPTY(queuePtr)) {
 
         long* gridPointPtr = (long*)TMQUEUE_POP(queuePtr);
         if (gridPointPtr == dstGridPointPtr) {
-            isPathFound = TRUE;
+            isPathFound = true;
             break;
         }
 
@@ -245,7 +245,7 @@ void
 traceToNeighbor (grid_t* myGridPtr,
                  point_t* currPtr,
                  point_t* movePtr,
-                 bool_t useMomentum,
+                 bool useMomentum,
                  long bendCost,
                  point_t* nextPtr)
 {
@@ -310,12 +310,12 @@ PdoTraceback (grid_t* gridPtr, grid_t* myGridPtr,
          *
          * Potential Optimization: Only need to check 5 of these
          */
-        traceToNeighbor(myGridPtr, &curr, &MOVE_POSX, TRUE, bendCost, &next);
-        traceToNeighbor(myGridPtr, &curr, &MOVE_POSY, TRUE, bendCost, &next);
-        traceToNeighbor(myGridPtr, &curr, &MOVE_POSZ, TRUE, bendCost, &next);
-        traceToNeighbor(myGridPtr, &curr, &MOVE_NEGX, TRUE, bendCost, &next);
-        traceToNeighbor(myGridPtr, &curr, &MOVE_NEGY, TRUE, bendCost, &next);
-        traceToNeighbor(myGridPtr, &curr, &MOVE_NEGZ, TRUE, bendCost, &next);
+        traceToNeighbor(myGridPtr, &curr, &MOVE_POSX, true, bendCost, &next);
+        traceToNeighbor(myGridPtr, &curr, &MOVE_POSY, true, bendCost, &next);
+        traceToNeighbor(myGridPtr, &curr, &MOVE_POSZ, true, bendCost, &next);
+        traceToNeighbor(myGridPtr, &curr, &MOVE_NEGX, true, bendCost, &next);
+        traceToNeighbor(myGridPtr, &curr, &MOVE_NEGY, true, bendCost, &next);
+        traceToNeighbor(myGridPtr, &curr, &MOVE_NEGZ, true, bendCost, &next);
 
 #ifdef DEBUG
         printf("(%li, %li, %li)\n", next.x, next.y, next.z);
@@ -329,12 +329,12 @@ PdoTraceback (grid_t* gridPtr, grid_t* myGridPtr,
             (curr.z == next.z))
         {
             next.value = curr.value;
-            traceToNeighbor(myGridPtr, &curr, &MOVE_POSX, FALSE, bendCost, &next);
-            traceToNeighbor(myGridPtr, &curr, &MOVE_POSY, FALSE, bendCost, &next);
-            traceToNeighbor(myGridPtr, &curr, &MOVE_POSZ, FALSE, bendCost, &next);
-            traceToNeighbor(myGridPtr, &curr, &MOVE_NEGX, FALSE, bendCost, &next);
-            traceToNeighbor(myGridPtr, &curr, &MOVE_NEGY, FALSE, bendCost, &next);
-            traceToNeighbor(myGridPtr, &curr, &MOVE_NEGZ, FALSE, bendCost, &next);
+            traceToNeighbor(myGridPtr, &curr, &MOVE_POSX, false, bendCost, &next);
+            traceToNeighbor(myGridPtr, &curr, &MOVE_POSY, false, bendCost, &next);
+            traceToNeighbor(myGridPtr, &curr, &MOVE_POSZ, false, bendCost, &next);
+            traceToNeighbor(myGridPtr, &curr, &MOVE_NEGX, false, bendCost, &next);
+            traceToNeighbor(myGridPtr, &curr, &MOVE_NEGY, false, bendCost, &next);
+            traceToNeighbor(myGridPtr, &curr, &MOVE_NEGZ, false, bendCost, &next);
 
             if ((curr.x == next.x) &&
                 (curr.y == next.y) &&
@@ -401,7 +401,7 @@ router_solve (void* argPtr)
 
         pair_free(coordinatePairPtr);
 
-        bool_t success = FALSE;
+        bool success = false;
         vector_t* pointVectorPtr = NULL;
 
 #if 0
@@ -418,15 +418,15 @@ router_solve (void* argPtr)
             if (pointVectorPtr) {
               // [wer210]TM_SAFE, abort inside
               TMGRID_ADDPATH(gridPtr, pointVectorPtr);
-              TM_LOCAL_WRITE(success, TRUE);
+              TM_LOCAL_WRITE(success, true);
             }
           }
         }
 
 #endif
         //[wer210] change the control flow
-        while (TRUE) {
-          success = FALSE;
+        while (true) {
+          success = false;
           // get a snapshot of the grid... may be inconsistent, but that's OK
           grid_copy(myGridPtr, gridPtr);
           /* ok if not most up-to-date */
@@ -436,7 +436,7 @@ router_solve (void* argPtr)
 
             if (pointVectorPtr) {
               // we've got a valid path.  Use a transaction to validate and finalize it
-                bool_t validity = FALSE;
+                bool validity = false;
 
                 __transaction_atomic {
                   validity = TMGRID_ADDPATH(pointVectorPtr);
@@ -444,7 +444,7 @@ router_solve (void* argPtr)
 
               // if the operation was valid, we just finalized the path
               if (validity) {
-                success = TRUE;
+                success = true;
                 break;
               }
 
@@ -470,7 +470,7 @@ router_solve (void* argPtr)
         }
         //////// end of change
         if (success) {
-            bool_t status = PVECTOR_PUSHBACK(myPathVectorPtr,
+            bool status = PVECTOR_PUSHBACK(myPathVectorPtr,
                                              (void*)pointVectorPtr);
             assert(status);
         }

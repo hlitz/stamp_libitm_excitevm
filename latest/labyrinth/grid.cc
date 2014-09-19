@@ -69,16 +69,14 @@
  */
 
 
-#include "tm.h"
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include "coordinate.h"
 #include "grid.h"
-#include "types.h"
 #include "vector.h"
-
+#include "tm.h"
 
 /* ??? Cacheline size is fixed (set to 64 bytes for x86_64). */
 const unsigned long CACHE_LINE_SIZE = 64UL;
@@ -156,17 +154,17 @@ grid_copy (grid_t* dstGridPtr, grid_t* srcGridPtr)
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 grid_isPointValid (grid_t* gridPtr, long x, long y, long z)
 {
     if (x < 0 || x >= gridPtr->width  ||
         y < 0 || y >= gridPtr->height ||
         z < 0 || z >= gridPtr->depth)
     {
-        return FALSE;
+        return false;
     }
 
-    return TRUE;
+    return true;
 }
 
 
@@ -219,11 +217,11 @@ grid_getPoint (grid_t* gridPtr, long x, long y, long z)
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 grid_isPointEmpty (grid_t* gridPtr, long x, long y, long z)
 {
     long value = grid_getPoint(gridPtr, x, y, z);
-    return ((value == GRID_POINT_EMPTY) ? TRUE : FALSE);
+    return ((value == GRID_POINT_EMPTY) ? true : false);
 }
 
 
@@ -232,11 +230,11 @@ grid_isPointEmpty (grid_t* gridPtr, long x, long y, long z)
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 grid_isPointFull (grid_t* gridPtr, long x, long y, long z)
 {
     long value = grid_getPoint(gridPtr, x, y, z);
-    return ((value == GRID_POINT_FULL) ? TRUE : FALSE);
+    return ((value == GRID_POINT_FULL) ? true : false);
 }
 
 
@@ -278,7 +276,7 @@ grid_addPath (grid_t* gridPtr, vector_t* pointVectorPtr)
  */
 TM_SAFE
 //void
-bool_t
+bool
 TMgrid_addPath (vector_t* pointVectorPtr)
 {
     long i;
@@ -298,7 +296,7 @@ TMgrid_addPath (vector_t* pointVectorPtr)
       long* gridPointPtr = (long*)vector_at(pointVectorPtr, i);
       long value = (long)TM_SHARED_READ(*gridPointPtr);
       if (value != GRID_POINT_EMPTY) {
-        return FALSE;
+        return false;
       }
       //TM_SHARED_WRITE(*gridPointPtr, (long)GRID_POINT_FULL);
     }
@@ -307,7 +305,7 @@ TMgrid_addPath (vector_t* pointVectorPtr)
       long* gridPointPtr = (long*)vector_at(pointVectorPtr, i);
       TM_SHARED_WRITE(*gridPointPtr, (long)GRID_POINT_FULL);
     }
-    return TRUE;
+    return true;
 }
 
 

@@ -73,7 +73,6 @@
 #define GRID_H 1
 
 
-#include "types.h"
 #include "vector.h"
 
 
@@ -119,7 +118,7 @@ grid_copy (grid_t* dstGridPtr, grid_t* srcGridPtr);
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 grid_isPointValid (grid_t* gridPtr, long x, long y, long z);
 
 
@@ -158,7 +157,7 @@ grid_getPoint (grid_t* gridPtr, long x, long y, long z);
  */
 //[wer]
 TM_SAFE
-bool_t
+bool
 grid_isPointEmpty (grid_t* gridPtr, long x, long y, long z);
 
 
@@ -168,7 +167,7 @@ grid_isPointEmpty (grid_t* gridPtr, long x, long y, long z);
  */
 //[wer]
 TM_SAFE
-bool_t
+bool
 grid_isPointFull (grid_t* gridPtr, long x, long y, long z);
 
 
@@ -195,7 +194,7 @@ grid_addPath (grid_t* gridPtr, vector_t* pointVectorPtr);
  */
 TM_SAFE
 //void
-bool_t
+bool
 TMgrid_addPath (vector_t* pointVectorPtr);
 
 
