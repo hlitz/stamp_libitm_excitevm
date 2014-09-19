@@ -134,7 +134,7 @@ customer_free (  customer_t* customerPtr)
  * -- Returns TRUE if success, else FALSE
  * =============================================================================
  */
-TM_SAFE bool_t
+TM_SAFE bool
 customer_addReservationInfo (customer_t* customerPtr,
                              reservation_type_t type, long id, long price)
 {
@@ -156,7 +156,7 @@ customer_addReservationInfo (customer_t* customerPtr,
  */
 //[wer210] called only in manager.c, cancel() which is used to cancel a
 //         flight/car/room, which never happens...
-TM_SAFE bool_t
+TM_SAFE bool
 customer_removeReservationInfo (customer_t* customerPtr,
                                 reservation_type_t type, long id)
 {
@@ -176,7 +176,7 @@ customer_removeReservationInfo (customer_t* customerPtr,
     if (reservationInfoPtr == NULL) {
         return FALSE;
     }
-    bool_t status = TMLIST_REMOVE(reservationInfoListPtr,
+    bool status = TMLIST_REMOVE(reservationInfoListPtr,
                                   (void*)&findReservationInfo);
 
     //[wer210] get rid of restart()

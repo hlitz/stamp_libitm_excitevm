@@ -109,7 +109,7 @@ customer_free (  customer_t* customerPtr);
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 customer_addReservationInfo (customer_t* customerPtr,
                              reservation_type_t type, long id, long price);
 
@@ -120,7 +120,7 @@ customer_addReservationInfo (customer_t* customerPtr,
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 customer_removeReservationInfo (customer_t* customerPtr,
                                 reservation_type_t type, long id);
 

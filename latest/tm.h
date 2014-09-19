@@ -31,12 +31,6 @@
 # define ITM_REGPARM
 #endif
 
-#if 0
-extern
-TM_PURE
-void _ITM_abortTransaction(int) ITM_REGPARM __attribute__((noreturn));
-#endif
-
 /* Additional annotations */
 /* strncmp can be defined as a macro (FORTIFY_LEVEL) */
 #ifdef strncmp
@@ -51,7 +45,6 @@ TM_PURE
 void __assert_fail (__const char *__assertion, __const char *__file,
                            unsigned int __line, __const char *__function)
      __attribute__ ((__noreturn__));
-
 
 #endif /* TM_H */
 

@@ -116,7 +116,7 @@ manager_free (manager_t* managerPtr);
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 manager_addCar (manager_t* managerPtr, long carId, long numCar, long price);
 
 
@@ -130,7 +130,7 @@ manager_addCar (manager_t* managerPtr, long carId, long numCar, long price);
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 manager_deleteCar (  manager_t* managerPtr, long carId, long numCar);
 
 
@@ -142,7 +142,7 @@ manager_deleteCar (  manager_t* managerPtr, long carId, long numCar);
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 manager_addRoom (manager_t* managerPtr, long roomId, long numRoom, long price);
 
 
@@ -156,7 +156,7 @@ manager_addRoom (manager_t* managerPtr, long roomId, long numRoom, long price);
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 manager_deleteRoom (  manager_t* managerPtr, long roomId, long numRoom);
 
 
@@ -168,11 +168,11 @@ manager_deleteRoom (  manager_t* managerPtr, long roomId, long numRoom);
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 manager_addFlight (
                    manager_t* managerPtr, long flightId, long numSeat, long price);
 
-bool_t
+bool
 manager_addFlight_seq (manager_t* managerPtr, long flightId, long numSeat, long price);
 
 
@@ -184,7 +184,7 @@ manager_addFlight_seq (manager_t* managerPtr, long flightId, long numSeat, long 
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 manager_deleteFlight (  manager_t* managerPtr, long flightId);
 
 
@@ -195,7 +195,7 @@ manager_deleteFlight (  manager_t* managerPtr, long flightId);
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 manager_addCustomer (  manager_t* managerPtr, long customerId);
 
 
@@ -207,7 +207,7 @@ manager_addCustomer (  manager_t* managerPtr, long customerId);
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 manager_deleteCustomer (  manager_t* managerPtr, long customerId);
 
 
@@ -307,7 +307,7 @@ manager_queryCustomerBill (  manager_t* managerPtr, long customerId);
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 manager_reserveCar (
                     manager_t* managerPtr, long customerId, long carId);
 
@@ -319,7 +319,7 @@ manager_reserveCar (
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 manager_reserveRoom (
                      manager_t* managerPtr, long customerId, long roomId);
 
@@ -331,7 +331,7 @@ manager_reserveRoom (
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 manager_reserveFlight (
                        manager_t* managerPtr, long customerId, long flightId);
 
@@ -343,7 +343,7 @@ manager_reserveFlight (
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 manager_cancelCar (
                    manager_t* managerPtr, long customerId, long carId);
 
@@ -355,7 +355,7 @@ manager_cancelCar (
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 manager_cancelRoom (
                     manager_t* managerPtr, long customerId, long roomId);
 
@@ -367,7 +367,7 @@ manager_cancelRoom (
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 manager_cancelFlight (manager_t* managerPtr, long customerId, long flightId);
 
 

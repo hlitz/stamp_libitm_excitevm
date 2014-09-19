@@ -136,7 +136,7 @@ reservation_info_compare (reservation_info_t* aPtr, reservation_info_t* bPtr);
  */
 TM_SAFE
 reservation_t*
-reservation_alloc (  long id, long price, long numTotal, bool_t* success);
+reservation_alloc (  long id, long price, long numTotal, bool* success);
 
 
 /* =============================================================================
@@ -146,8 +146,8 @@ reservation_alloc (  long id, long price, long numTotal, bool_t* success);
  * =============================================================================
  */
 TM_SAFE
-bool_t
-reservation_addToTotal (  reservation_t* reservationPtr, long num, bool_t* success);
+bool
+reservation_addToTotal (  reservation_t* reservationPtr, long num, bool* success);
 
 
 /* =============================================================================
@@ -156,7 +156,7 @@ reservation_addToTotal (  reservation_t* reservationPtr, long num, bool_t* succe
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 reservation_make (  reservation_t* reservationPtr);
 
 
@@ -166,7 +166,7 @@ reservation_make (  reservation_t* reservationPtr);
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 reservation_cancel (  reservation_t* reservationPtr);
 
 
@@ -177,7 +177,7 @@ reservation_cancel (  reservation_t* reservationPtr);
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 reservation_updatePrice (  reservation_t* reservationPtr, long newPrice);
 
 

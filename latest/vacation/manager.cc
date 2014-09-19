@@ -93,15 +93,15 @@ long
 queryPrice (  MAP_T* tablePtr, long id);
 
 TM_SAFE
-bool_t
+bool
 reserve ( MAP_T* tablePtr, MAP_T* customerTablePtr, long customerId, long id, reservation_type_t type);
 
 TM_SAFE
-bool_t
+bool
 cancel ( MAP_T* tablePtr, MAP_T* customerTablePtr, long customerId, long id, reservation_type_t type);
 
 TM_SAFE
-bool_t
+bool
 addReservation (  MAP_T* tablePtr, long id, long num, long price);
 
 /* =============================================================================
@@ -183,13 +183,13 @@ manager_free (manager_t* managerPtr)
  */
 //[wer210] return value not used before, now indicationg aborts.
 TM_SAFE
-bool_t
+bool
 addReservation (MAP_T* tablePtr, long id, long num, long price)
 {
     reservation_t* reservationPtr;
     reservationPtr = (reservation_t*)TMMAP_FIND(tablePtr, id);
 
-    bool_t success = TRUE;
+    bool success = TRUE;
     if (reservationPtr == NULL) {
         /* Create new reservation */
         if (num < 1 || price < 0) {
@@ -214,7 +214,7 @@ addReservation (MAP_T* tablePtr, long id, long num, long price)
       }
 
       if ((long)TM_SHARED_READ(reservationPtr->numTotal) == 0) {
-        bool_t status = TMMAP_REMOVE(tablePtr, id);
+        bool status = TMMAP_REMOVE(tablePtr, id);
         if (status == FALSE) {
           //_ITM_abortTransaction(2);
           return FALSE;
@@ -240,7 +240,7 @@ addReservation (MAP_T* tablePtr, long id, long num, long price)
  * =============================================================================
  */
 //[wer210] Return value not used before.
-TM_SAFE bool_t
+TM_SAFE bool
 manager_addCar (manager_t* managerPtr, long carId, long numCars, long price)
 {
     return addReservation(  managerPtr->carTablePtr, carId, numCars, price);
@@ -256,7 +256,7 @@ manager_addCar (manager_t* managerPtr, long carId, long numCars, long price)
  * -- Returns TRUE on success, else FALSE
  * =============================================================================
  */
-TM_SAFE bool_t
+TM_SAFE bool
 manager_deleteCar (  manager_t* managerPtr, long carId, long numCar)
 {
     /* -1 keeps old price */
@@ -271,7 +271,7 @@ manager_deleteCar (  manager_t* managerPtr, long carId, long numCar)
  * -- Returns TRUE on success, else FALSE
  * =============================================================================
  */
-TM_SAFE bool_t
+TM_SAFE bool
 manager_addRoom (manager_t* managerPtr, long roomId, long numRoom, long price)
 {
     return addReservation(  managerPtr->roomTablePtr, roomId, numRoom, price);
@@ -288,7 +288,7 @@ manager_addRoom (manager_t* managerPtr, long roomId, long numRoom, long price)
  * -- Returns TRUE on success, else FALSE
  * =============================================================================
  */
-TM_SAFE bool_t
+TM_SAFE bool
 manager_deleteRoom (manager_t* managerPtr, long roomId, long numRoom)
 {
     /* -1 keeps old price */
@@ -303,7 +303,7 @@ manager_deleteRoom (manager_t* managerPtr, long roomId, long numRoom)
  * -- Returns TRUE on success, FALSE on failure
  * =============================================================================
  */
-TM_SAFE bool_t
+TM_SAFE bool
 manager_addFlight (manager_t* managerPtr, long flightId, long numSeat, long price)
 {
     return addReservation(managerPtr->flightTablePtr, flightId, numSeat, price);
@@ -319,7 +319,7 @@ manager_addFlight (manager_t* managerPtr, long flightId, long numSeat, long pric
  * =============================================================================
  */
 //[wer210] return not used before, make it to indicate aborts
-TM_SAFE bool_t
+TM_SAFE bool
 manager_deleteFlight (  manager_t* managerPtr, long flightId)
 {
     reservation_t* reservationPtr;
@@ -351,11 +351,11 @@ manager_deleteFlight (  manager_t* managerPtr, long flightId)
 //[wer210] Function is called inside a transaction in client.c
 //         But return value of this function was never used,
 //         so I make it to return true all the time except when need to abort.
-TM_SAFE bool_t
+TM_SAFE bool
 manager_addCustomer (  manager_t* managerPtr, long customerId)
 {
     customer_t* customerPtr;
-    bool_t status;
+    bool status;
 
     if (TMMAP_CONTAINS(managerPtr->customerTablePtr, customerId)) {
       //return FALSE;
@@ -385,14 +385,14 @@ manager_addCustomer (  manager_t* managerPtr, long customerId)
  */
 //[wer210] Again, the return values were not used (except for test cases below)
 //         So I make it alway returning true, unless need to abort a transaction.
-TM_SAFE bool_t
+TM_SAFE bool
 manager_deleteCustomer (  manager_t* managerPtr, long customerId)
 {
     customer_t* customerPtr;
     MAP_T* reservationTables[NUM_RESERVATION_TYPE];
     list_t* reservationInfoListPtr;
     list_iter_t it;
-    bool_t status;
+    bool status;
 
     customerPtr = (customer_t*)TMMAP_FIND(managerPtr->customerTablePtr, customerId);
     if (customerPtr == NULL) {
@@ -600,7 +600,7 @@ manager_queryCustomerBill (  manager_t* managerPtr, long customerId)
 //[wer210] Again, the original return values are not used. So I modified return values
 // to indicate if should restart a transaction.
 TM_SAFE
-bool_t
+bool
 reserve (MAP_T* tablePtr, MAP_T* customerTablePtr,
          long customerId, long id, reservation_type_t type)
 {
@@ -628,7 +628,7 @@ reserve (MAP_T* tablePtr, MAP_T* customerTablePtr,
                                        (long)reservationPtr->price))
     {
       /* Undo previous successful reservation */
-      bool_t status = RESERVATION_CANCEL(reservationPtr);
+      bool status = RESERVATION_CANCEL(reservationPtr);
       if (status == FALSE) {
         //_ITM_abortTransaction(2);
         return FALSE;
@@ -645,7 +645,7 @@ reserve (MAP_T* tablePtr, MAP_T* customerTablePtr,
  * -- Returns TRUE on success, else FALSE
  * =============================================================================
  */
-TM_SAFE bool_t
+TM_SAFE bool
 manager_reserveCar (  manager_t* managerPtr, long customerId, long carId)
 {
     return reserve(managerPtr->carTablePtr,
@@ -662,7 +662,7 @@ manager_reserveCar (  manager_t* managerPtr, long customerId, long carId)
  * -- Returns TRUE on success, else FALSE
  * =============================================================================
  */
-TM_SAFE bool_t
+TM_SAFE bool
 manager_reserveRoom (  manager_t* managerPtr, long customerId, long roomId)
 {
     return reserve(managerPtr->roomTablePtr,
@@ -679,7 +679,7 @@ manager_reserveRoom (  manager_t* managerPtr, long customerId, long roomId)
  * -- Returns TRUE on success, else FALSE
  * =============================================================================
  */
-TM_SAFE bool_t
+TM_SAFE bool
 manager_reserveFlight (manager_t* managerPtr, long customerId, long flightId)
 {
     return reserve(managerPtr->flightTablePtr,
@@ -699,7 +699,7 @@ manager_reserveFlight (manager_t* managerPtr, long customerId, long flightId)
 //[wer210] was a "static" function, invoked by three functions below
 //         however, never called.
 TM_SAFE
-bool_t
+bool
 cancel (MAP_T* tablePtr, MAP_T* customerTablePtr,
         long customerId, long id, reservation_type_t type)
 {
@@ -722,7 +722,7 @@ cancel (MAP_T* tablePtr, MAP_T* customerTablePtr,
 
     if (!CUSTOMER_REMOVE_RESERVATION_INFO(customerPtr, type, id)) {
         /* Undo previous successful cancellation */
-      bool_t status = RESERVATION_MAKE(reservationPtr);
+      bool status = RESERVATION_MAKE(reservationPtr);
       if (status == FALSE) {
         //_ITM_abortTransaction(2);
         return FALSE;
@@ -739,7 +739,7 @@ cancel (MAP_T* tablePtr, MAP_T* customerTablePtr,
  * -- Returns TRUE on success, else FALSE
  * =============================================================================
  */
-TM_SAFE bool_t
+TM_SAFE bool
 manager_cancelCar (  manager_t* managerPtr, long customerId, long carId)
 {
     return cancel(managerPtr->carTablePtr,
@@ -756,7 +756,7 @@ manager_cancelCar (  manager_t* managerPtr, long customerId, long carId)
  * -- Returns TRUE on success, else FALSE
  * =============================================================================
  */
-TM_SAFE bool_t
+TM_SAFE bool
 manager_cancelRoom (  manager_t* managerPtr, long customerId, long roomId)
 {
     return cancel(managerPtr->roomTablePtr,
@@ -774,7 +774,7 @@ manager_cancelRoom (  manager_t* managerPtr, long customerId, long roomId)
  * -- Returns TRUE on success, else FALSE
  * =============================================================================
  */
-TM_SAFE bool_t
+TM_SAFE bool
 manager_cancelFlight (manager_t* managerPtr, long customerId, long flightId)
 {
     return cancel(managerPtr->flightTablePtr,

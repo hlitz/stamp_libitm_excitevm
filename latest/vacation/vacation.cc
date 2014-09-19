@@ -73,6 +73,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <getopt.h>
+#include <random>
 #include "client.h"
 #include "customer.h"
 #include "list.h"
@@ -80,7 +81,6 @@
 #include "map.h"
 #include "memory.h"
 #include "operation.h"
-#include "random.h"
 #include "reservation.h"
 #include "thread.h"
 #include "timer.h"
@@ -200,8 +200,8 @@ parseArgs (long argc, char* const argv[])
  * -- Wrapper function
  * =============================================================================
  */
-static bool_t
-addCustomer (manager_t* managerPtr, long id)
+static bool
+addCustomer (manager_t* managerPtr, long id, long, long)
 {
     return manager_addCustomer(managerPtr, id);
 }
@@ -217,9 +217,9 @@ initializeManager ()
     manager_t* managerPtr;
     long i;
     long numRelation;
-    random_t* randomPtr;
+    std::mt19937* randomPtr;
     long* ids;
-    bool_t (*manager_add[])(manager_t*, long, long, long) = {
+    bool (*manager_add[])(manager_t*, long, long, long) = {
         &manager_addCar,
         &manager_addFlight,
         &manager_addRoom,
@@ -231,7 +231,7 @@ initializeManager ()
     printf("Initializing manager... ");
     fflush(stdout);
 
-    randomPtr = random_alloc();
+    randomPtr = new std::mt19937();
     assert(randomPtr != NULL);
 
     managerPtr = manager_alloc();
@@ -247,8 +247,8 @@ initializeManager ()
 
         /* Shuffle ids */
         for (i = 0; i < numRelation; i++) {
-            long x = random_generate(randomPtr) % numRelation;
-            long y = random_generate(randomPtr) % numRelation;
+            long x = randomPtr->operator()() % numRelation;
+            long y = randomPtr->operator()() % numRelation;
             long tmp = ids[x];
             ids[x] = ids[y];
             ids[y] = tmp;
@@ -256,10 +256,10 @@ initializeManager ()
 
         /* Populate table */
         for (i = 0; i < numRelation; i++) {
-            bool_t status;
+            bool status;
             long id = ids[i];
-            long num = ((random_generate(randomPtr) % 5) + 1) * 100;
-            long price = ((random_generate(randomPtr) % 5) * 10) + 50;
+            long num = ((randomPtr->operator()() % 5) + 1) * 100;
+            long price = ((randomPtr->operator()() % 5) * 10) + 50;
             status = manager_add[t](managerPtr, id, num, price);
             assert(status);
         }
@@ -269,7 +269,7 @@ initializeManager ()
     puts("done.");
     fflush(stdout);
 
-    random_free(randomPtr);
+    delete randomPtr;
     free(ids);
 
     return managerPtr;
@@ -283,7 +283,7 @@ initializeManager ()
 static client_t**
 initializeClients (manager_t* managerPtr)
 {
-    random_t* randomPtr;
+    std::mt19937* randomPtr;
     client_t** clients;
     long i;
     long numClient = (long)global_params[PARAM_CLIENTS];
@@ -298,7 +298,7 @@ initializeClients (manager_t* managerPtr)
     printf("Initializing clients... ");
     fflush(stdout);
 
-    randomPtr = random_alloc();
+    randomPtr = new std::mt19937();
     assert(randomPtr != NULL);
 
     clients = (client_t**)malloc(numClient * sizeof(client_t*));
@@ -327,7 +327,7 @@ initializeClients (manager_t* managerPtr)
     printf("    Percent user        = %li\n", percentUser);
     fflush(stdout);
 
-    random_free(randomPtr);
+    delete randomPtr;
 
     return clients;
 }
@@ -351,7 +351,7 @@ checkTables (manager_t* managerPtr)
         managerPtr->roomTablePtr,
     };
     long numTable = sizeof(tables) / sizeof(tables[0]);
-    bool_t (*manager_add[])(manager_t*, long, long, long) = {
+    bool (*manager_add[])(manager_t*, long, long, long) = {
         &manager_addCar,
         &manager_addFlight,
         &manager_addRoom

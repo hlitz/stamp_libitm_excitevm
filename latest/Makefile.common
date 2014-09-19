@@ -2,21 +2,19 @@
 TMBUILD ?= obj
 
 # ======== Defines ========
-CC	:= gcc
-#CPPFLAGS += -DNDEBUG
-CPPFLAGS += -I../lib -I../
-CPPFLAGS += 
-CFLAGS   += -Wall -Wextra -g
-CFLAGS   += -fgnu-tm
-CFLAGS   += -O2
+CXX	:= g++
+CXXFLAGS += -I../lib -I../
+CXXFLAGS += 
+CXXFLAGS   += -Wall -Wextra -g
+CXXFLAGS   += -fgnu-tm
+CXXFLAGS   += -O2 -std=c++11
 
-LD	:= gcc
+LD	:= g++
 LDFLAGS  += -lpthread
 LDFLAGS  += -litm
-LIBDEPS  += 
 
 # ======== Rules ========
-OBJDIR = ../../$(TMBUILD)/$(PROG)/
+OBJDIR = ../$(TMBUILD)/$(PROG)/
 
 _OBJS = $(patsubst %,$(OBJDIR)/%,$(OBJS))
 _PROG = $(OBJDIR)/$(PROG)
@@ -31,12 +29,12 @@ $(PROG): $(_PROG)
 clean:
 	$(RM) $(_OBJS) $(_PROG)
 
-$(_PROG): $(_OBJS) $(LIBDEPS)
+$(_PROG): $(_OBJS)
 	$(LD) $^ $(LDFLAGS) -o $(_PROG)
 
-$(OBJDIR)/%.o: %.c *.h ../lib/*.h
+$(OBJDIR)/%.o: %.cc *.h ../lib/*.h
 	@mkdir -p $(@D)
-	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-$(OBJDIR)/lib_%.o: ../lib/%.c ../lib/*.h
-	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+$(OBJDIR)/lib_%.o: ../lib/%.cc ../lib/*.h
+	$(CXX) $(CXXFLAGS) -c $< -o $@

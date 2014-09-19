@@ -83,7 +83,7 @@
  */
 //static void
 TM_SAFE
-bool_t
+bool
 checkReservation (  reservation_t* reservationPtr);
 
 /* =============================================================================
@@ -137,7 +137,7 @@ reservation_info_compare (reservation_info_t* aPtr, reservation_info_t* bPtr)
 
 //static void
 TM_SAFE
-bool_t
+bool
 checkReservation (  reservation_t* reservationPtr)
 {
     long numUsed = (long)TM_SHARED_READ(reservationPtr->numUsed);
@@ -180,7 +180,7 @@ checkReservation (  reservation_t* reservationPtr)
  * =============================================================================
  */
 TM_SAFE reservation_t*
-reservation_alloc (long id, long numTotal, long price, bool_t* success)
+reservation_alloc (long id, long numTotal, long price, bool* success)
 {
     reservation_t* reservationPtr;
 
@@ -204,8 +204,8 @@ reservation_alloc (long id, long numTotal, long price, bool_t* success)
  * -- Returns TRUE on success, else FALSE
  * =============================================================================
  */
-TM_SAFE bool_t
-reservation_addToTotal (  reservation_t* reservationPtr, long num, bool_t* success)
+TM_SAFE bool
+reservation_addToTotal (  reservation_t* reservationPtr, long num, bool* success)
 {
   long numFree = (long)TM_SHARED_READ(reservationPtr->numFree);
 
@@ -229,7 +229,7 @@ reservation_addToTotal (  reservation_t* reservationPtr, long num, bool_t* succe
  * -- Returns TRUE on success, else FALSE
  * =============================================================================
  */
-TM_SAFE bool_t
+TM_SAFE bool
 reservation_make (  reservation_t* reservationPtr)
 {
     long numFree = (long)TM_SHARED_READ(reservationPtr->numFree);
@@ -253,7 +253,7 @@ reservation_make (  reservation_t* reservationPtr)
  * -- Returns TRUE on success, else FALSE
  * =============================================================================
  */
-TM_SAFE bool_t
+TM_SAFE bool
 reservation_cancel (reservation_t* reservationPtr)
 {
     long numUsed = (long)TM_SHARED_READ(reservationPtr->numUsed);
@@ -282,7 +282,7 @@ reservation_cancel (reservation_t* reservationPtr)
  * =============================================================================
  */
 //[wer210] returns were not used before, so use it to indicate aborts
-TM_SAFE bool_t
+TM_SAFE bool
 reservation_updatePrice (  reservation_t* reservationPtr, long newPrice)
 {
     if (newPrice < 0) {
@@ -296,20 +296,6 @@ reservation_updatePrice (  reservation_t* reservationPtr, long newPrice)
     if (CHECK_RESERVATION(reservationPtr))
       return TRUE;
     else return FALSE;
-}
-
-
-
-/* =============================================================================
- * reservation_compare
- * -- Returns -1 if A < B, 0 if A = B, 1 if A > B
- * =============================================================================
- */
-static
-long
-reservation_compare (reservation_t* aPtr, reservation_t* bPtr)
-{
-    return (aPtr->id - bPtr->id);
 }
 
 
@@ -334,6 +320,18 @@ reservation_free (reservation_t* reservationPtr)
 
 #include <assert.h>
 #include <stdio.h>
+
+/* =============================================================================
+ * reservation_compare
+ * -- Returns -1 if A < B, 0 if A = B, 1 if A > B
+ * =============================================================================
+ */
+static
+long
+reservation_compare (reservation_t* aPtr, reservation_t* bPtr)
+{
+    return (aPtr->id - bPtr->id);
+}
 
 
 int

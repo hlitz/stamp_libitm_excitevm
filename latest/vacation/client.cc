@@ -98,14 +98,14 @@ client_alloc (long id,
         return NULL;
     }
 
-    clientPtr->randomPtr = random_alloc();
+    clientPtr->randomPtr = new std::mt19937();
     if (clientPtr->randomPtr == NULL) {
         return NULL;
     }
 
     clientPtr->id = id;
     clientPtr->managerPtr = managerPtr;
-    random_seed(clientPtr->randomPtr, id);
+    clientPtr->randomPtr->seed(id);
     clientPtr->numOperation = numOperation;
     clientPtr->numQueryPerTransaction = numQueryPerTransaction;
     clientPtr->queryRange = queryRange;
@@ -159,7 +159,7 @@ client_run (void* argPtr)
     client_t* clientPtr = ((client_t**)argPtr)[myId];
 
     manager_t* managerPtr = clientPtr->managerPtr;
-    random_t*  randomPtr  = clientPtr->randomPtr;
+    std::mt19937*  randomPtr  = clientPtr->randomPtr;
 
     long numOperation           = clientPtr->numOperation;
     long numQueryPerTransaction = clientPtr->numQueryPerTransaction;
@@ -171,11 +171,9 @@ client_run (void* argPtr)
     long* ops    = (long*)malloc(numQueryPerTransaction * sizeof(long));
     long* prices = (long*)malloc(numQueryPerTransaction * sizeof(long));
 
-    long i;
+    for (long i = 0; i < numOperation; i++) {
 
-    for (i = 0; i < numOperation; i++) {
-
-        long r = random_generate(randomPtr) % 100;
+        long r = randomPtr->operator()() % 100;
         action_t action = selectAction(r, percentUser);
 
         switch (action) {
@@ -183,14 +181,14 @@ client_run (void* argPtr)
                 long maxPrices[NUM_RESERVATION_TYPE] = { -1, -1, -1 };
                 long maxIds[NUM_RESERVATION_TYPE] = { -1, -1, -1 };
                 long n;
-                long numQuery = random_generate(randomPtr) % numQueryPerTransaction + 1;
-                long customerId = random_generate(randomPtr) % queryRange + 1;
+                long numQuery = randomPtr->operator()() % numQueryPerTransaction + 1;
+                long customerId = randomPtr->operator()() % queryRange + 1;
                 for (n = 0; n < numQuery; n++) {
-                    types[n] = random_generate(randomPtr) % NUM_RESERVATION_TYPE;
-                    ids[n] = (random_generate(randomPtr) % queryRange) + 1;
+                    types[n] = randomPtr->operator()() % NUM_RESERVATION_TYPE;
+                    ids[n] = (randomPtr->operator()() % queryRange) + 1;
                 }
-                bool_t isFound = FALSE;
-                bool_t done = TRUE;
+                bool isFound = FALSE;
+                bool done = TRUE;
                 //[wer210] I modified here to remove _ITM_abortTransaction().
                 while (1) {
                   __transaction_atomic {
@@ -251,8 +249,8 @@ client_run (void* argPtr)
             }
 
             case ACTION_DELETE_CUSTOMER: {
-                long customerId = random_generate(randomPtr) % queryRange + 1;
-                bool_t done = TRUE;
+                long customerId = randomPtr->operator()() % queryRange + 1;
+                bool done = TRUE;
                 while (1) {
                   __transaction_atomic {
                     long bill = MANAGER_QUERY_CUSTOMER_BILL(managerPtr, customerId);
@@ -267,17 +265,17 @@ client_run (void* argPtr)
             }
 
             case ACTION_UPDATE_TABLES: {
-                long numUpdate = random_generate(randomPtr) % numQueryPerTransaction + 1;
+                long numUpdate = randomPtr->operator()() % numQueryPerTransaction + 1;
                 long n;
                 for (n = 0; n < numUpdate; n++) {
-                    types[n] = random_generate(randomPtr) % NUM_RESERVATION_TYPE;
-                    ids[n] = (random_generate(randomPtr) % queryRange) + 1;
-                    ops[n] = random_generate(randomPtr) % 2;
+                    types[n] = randomPtr->operator()() % NUM_RESERVATION_TYPE;
+                    ids[n] = (randomPtr->operator()() % queryRange) + 1;
+                    ops[n] = randomPtr->operator()() % 2;
                     if (ops[n]) {
-                        prices[n] = ((random_generate(randomPtr) % 5) * 10) + 50;
+                        prices[n] = ((randomPtr->operator()() % 5) * 10) + 50;
                     }
                 }
-                bool_t done = TRUE;
+                bool done = TRUE;
                 while (1) {
                   __transaction_atomic {
                     for (n = 0; n < numUpdate; n++) {
