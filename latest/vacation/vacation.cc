@@ -85,7 +85,6 @@
 #include "thread.h"
 #include "timer.h"
 #include "tm.h"
-#include "types.h"
 #include "utility.h"
 
 enum param_types {

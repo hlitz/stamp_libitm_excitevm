@@ -72,8 +72,7 @@
 #ifndef QUEUE_H
 #define QUEUE_H 1
 
-
-#include "random.h"
+#include <random>
 #include "tm.h"
 #include "types.h"
 
@@ -130,7 +129,7 @@ queue_clear (queue_t* queuePtr);
 //         outside tx in yada, yada.c: initializeWork().
 TM_PURE
 void
-queue_shuffle (queue_t* queuePtr, random_t* randomPtr);
+queue_shuffle (queue_t* queuePtr, std::mt19937* randomPtr);
 
 
 /* =============================================================================

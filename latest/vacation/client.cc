@@ -75,7 +75,6 @@
 #include "manager.h"
 #include "reservation.h"
 #include "thread.h"
-#include "types.h"
 
 
 /* =============================================================================
@@ -187,8 +186,8 @@ client_run (void* argPtr)
                     types[n] = randomPtr->operator()() % NUM_RESERVATION_TYPE;
                     ids[n] = (randomPtr->operator()() % queryRange) + 1;
                 }
-                bool isFound = FALSE;
-                bool done = TRUE;
+                bool isFound = false;
+                bool done = true;
                 //[wer210] I modified here to remove _ITM_abortTransaction().
                 while (1) {
                   __transaction_atomic {
@@ -219,7 +218,7 @@ client_run (void* argPtr)
                       if (price > maxPrices[t]) {
                         maxPrices[t] = price;
                         maxIds[t] = id;
-                        isFound = TRUE;
+                        isFound = true;
                       }
                     } /* for n */
 
@@ -250,7 +249,7 @@ client_run (void* argPtr)
 
             case ACTION_DELETE_CUSTOMER: {
                 long customerId = randomPtr->operator()() % queryRange + 1;
-                bool done = TRUE;
+                bool done = true;
                 while (1) {
                   __transaction_atomic {
                     long bill = manager_queryCustomerBill(managerPtr, customerId);
@@ -275,7 +274,7 @@ client_run (void* argPtr)
                         prices[n] = ((randomPtr->operator()() % 5) * 10) + 50;
                     }
                 }
-                bool done = TRUE;
+                bool done = true;
                 while (1) {
                   __transaction_atomic {
                     for (n = 0; n < numUpdate; n++) {

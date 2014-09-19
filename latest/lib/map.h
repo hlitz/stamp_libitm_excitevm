@@ -76,7 +76,6 @@
 
 #include <stdlib.h>
 #include "pair.h"
-#include "types.h"
 
 
 #if defined(MAP_USE_HASHTABLE)

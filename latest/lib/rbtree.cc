@@ -1120,7 +1120,7 @@ getNode ()
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 rbtree_insert (rbtree_t* r, void* key, void* val)
 {
     node_t* node = getNode();
@@ -1128,7 +1128,7 @@ rbtree_insert (rbtree_t* r, void* key, void* val)
     if (ex != NULL) {
         releaseNode(node);
     }
-    return ((ex == NULL) ? TRUE : FALSE);
+    return ((ex == NULL) ? true : false);
 }
 
 
@@ -1138,7 +1138,7 @@ rbtree_insert (rbtree_t* r, void* key, void* val)
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 rbtree_delete (rbtree_t* r, void* key)
 {
     node_t* node = NULL;
@@ -1149,7 +1149,7 @@ rbtree_delete (rbtree_t* r, void* key)
     if (node != NULL) {
         releaseNode(node);
     }
-    return ((node != NULL) ? TRUE : FALSE);
+    return ((node != NULL) ? true : false);
 }
 
 
@@ -1159,7 +1159,7 @@ rbtree_delete (rbtree_t* r, void* key)
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 rbtree_update (rbtree_t* r, void* key, void* val)
 {
     node_t* nn = getNode();
@@ -1167,9 +1167,9 @@ rbtree_update (rbtree_t* r, void* key, void* val)
     if (ex != NULL) {
         STF(ex, v, val);
         releaseNode(nn);
-        return TRUE;
+        return true;
     }
-    return FALSE;
+    return false;
 }
 
 
@@ -1193,7 +1193,7 @@ rbtree_get (rbtree_t* r, void* key) {
  * =============================================================================
  */
 TM_SAFE
-long
+bool
 rbtree_contains (  rbtree_t* r, void* key)
 {
     node_t* n = LOOKUP(r, key);

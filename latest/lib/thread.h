@@ -75,10 +75,6 @@
 
 #include <pthread.h>
 #include <stdlib.h>
-#include "types.h"
-#ifdef OTM
-#include "omp.h"
-#endif
 
 #ifdef __cplusplus
 extern "C" {

@@ -77,7 +77,6 @@
 #include "memory.h"
 #include "reservation.h"
 #include "tm.h"
-#include "types.h"
 
 
 /* =============================================================================
@@ -139,7 +138,7 @@ customer_addReservationInfo (customer_t* customerPtr,
                              reservation_type_t type, long id, long price)
 {
     reservation_info_t* reservationInfoPtr;
-    reservationInfoPtr = RESERVATION_INFO_ALLOC(type, id, price);
+    reservationInfoPtr = reservation_info_alloc(type, id, price);
     assert(reservationInfoPtr != NULL);
 
     list_t* reservationInfoListPtr =
@@ -174,20 +173,20 @@ customer_removeReservationInfo (customer_t* customerPtr,
                                          &findReservationInfo);
 
     if (reservationInfoPtr == NULL) {
-        return FALSE;
+        return false;
     }
     bool status = TMLIST_REMOVE(reservationInfoListPtr,
                                   (void*)&findReservationInfo);
 
     //[wer210] get rid of restart()
-    if (status == FALSE) {
+    if (status == false) {
       //_ITM_abortTransaction(2);
-      return FALSE;
+      return false;
     }
 
-    RESERVATION_INFO_FREE(reservationInfoPtr);
+    reservation_info_free(reservationInfoPtr);
 
-    return TRUE;
+    return true;
 }
 
 

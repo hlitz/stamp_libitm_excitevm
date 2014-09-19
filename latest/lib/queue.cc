@@ -72,7 +72,6 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
-#include "random.h"
 #include "tm.h"
 #include "types.h"
 #include "queue.h"

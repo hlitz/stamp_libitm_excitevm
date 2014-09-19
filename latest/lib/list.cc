@@ -74,7 +74,6 @@
 #include <stdlib.h>
 #include <assert.h>
 #include "list.h"
-#include "types.h"
 #include "tm.h"
 
 #ifdef __cplusplus
@@ -133,11 +132,11 @@ list_iter_reset (list_iter_t* itPtr, list_t* listPtr)
  */
 // [wer210] removed the second junk parameter
 TM_SAFE
-bool_t
+bool
 //list_iter_hasNext (list_iter_t* itPtr, list_t* listPtr)
 list_iter_hasNext (list_iter_t* itPtr)
 {
-    return (((*itPtr)->nextPtr != NULL) ? TRUE : FALSE);
+    return (((*itPtr)->nextPtr != NULL) ? true : false);
 }
 
 /* =============================================================================
@@ -250,7 +249,7 @@ list_free (  list_t* listPtr)
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 list_isEmpty (list_t* listPtr)
 {
     return (listPtr->head.nextPtr == NULL);
@@ -321,7 +320,7 @@ list_find (list_t* listPtr, void* dataPtr)
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 list_insert (list_t* listPtr, void* dataPtr)
 {
     list_node_t* prevPtr;
@@ -335,13 +334,13 @@ list_insert (list_t* listPtr, void* dataPtr)
 #ifdef LIST_NO_DUPLICATES
     if ((currPtr != NULL) &&
         listPtr->compare(currPtr->dataPtr, dataPtr) == 0) {
-        return FALSE;
+        return false;
     }
 #endif
 
     nodePtr = allocNode(dataPtr);
     if (nodePtr == NULL) {
-        return FALSE;
+        return false;
     }
 
     // shared_writes
@@ -349,7 +348,7 @@ list_insert (list_t* listPtr, void* dataPtr)
     prevPtr->nextPtr = nodePtr;
     listPtr->size++;
 
-    return TRUE;
+    return true;
 }
 
 
@@ -359,7 +358,7 @@ list_insert (list_t* listPtr, void* dataPtr)
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 list_remove (list_t* listPtr, void* dataPtr)
 {
     list_node_t* prevPtr;
@@ -376,10 +375,10 @@ list_remove (list_t* listPtr, void* dataPtr)
         freeNode(nodePtr);
         listPtr->size--;
         assert(listPtr->size >= 0);
-        return TRUE;
+        return true;
     }
 
-    return FALSE;
+    return false;
 }
 
 

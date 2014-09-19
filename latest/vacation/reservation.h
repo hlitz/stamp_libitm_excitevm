@@ -69,34 +69,30 @@
  * =============================================================================
  */
 
-
-#ifndef RESERVATION_H
-#define RESERVATION_H 1
-
+#pragma once
 
 #include "tm.h"
-#include "types.h"
 
-typedef enum reservation_type {
+enum reservation_type_t {
     RESERVATION_CAR,
     RESERVATION_FLIGHT,
     RESERVATION_ROOM,
     NUM_RESERVATION_TYPE
-} reservation_type_t;
+};
 
-typedef struct reservation_info {
+struct reservation_info_t {
     reservation_type_t type;
     long id;
     long price; /* holds price at time reservation was made */
-} reservation_info_t;
+};
 
-typedef struct reservation {
+struct reservation_t {
     long id;
     long numUsed;
     long numFree;
     long numTotal;
     long price;
-} reservation_t;
+};
 
 
 /* =============================================================================
@@ -189,28 +185,3 @@ reservation_updatePrice (  reservation_t* reservationPtr, long newPrice);
 TM_SAFE
 void
 reservation_free (reservation_t* reservationPtr);
-
-
-#define RESERVATION_INFO_ALLOC(type, id, price)    \
-    reservation_info_alloc(  type, id, price)
-#define RESERVATION_INFO_FREE(r)    reservation_info_free(  r)
-#define RESERVATION_ALLOC(id, price, tot, success)      \
-    reservation_alloc(  id, price, tot, success)
-#define RESERVATION_ADD_TO_TOTAL(r, num, success)       \
-    reservation_addToTotal(  r, num, success)
-#define RESERVATION_MAKE(r)      reservation_make(  r)
-#define RESERVATION_CANCEL(r)    reservation_cancel(  r)
-#define RESERVATION_UPDATE_PRICE(r, price) \
-    reservation_updatePrice(  r, price)
-#define RESERVATION_FREE(r)      reservation_free(r)
-
-
-#endif /* RESERVATION_H */
-
-
-/* =============================================================================
- *
- * End of reservation.h
- *
- * =============================================================================
- */

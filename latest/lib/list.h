@@ -75,8 +75,6 @@
 #define LIST_H 1
 
 #include "tm.h"
-#include "types.h"
-
 
 #ifdef __cplusplus
 extern "C" {
@@ -111,7 +109,7 @@ list_iter_reset (  list_iter_t* itPtr, list_t* listPtr);
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 //list_iter_hasNext (  list_iter_t* itPtr, list_t* listPtr);
 list_iter_hasNext (  list_iter_t* itPtr);
 
@@ -151,7 +149,7 @@ list_free (list_t* listPtr);
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 list_isEmpty (list_t* listPtr);
 
 
@@ -181,7 +179,7 @@ list_find (  list_t* listPtr, void* dataPtr);
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 list_insert (list_t* listPtr, void* dataPtr);
 
 
@@ -191,7 +189,7 @@ list_insert (list_t* listPtr, void* dataPtr);
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 list_remove (  list_t* listPtr, void* dataPtr);
 
 

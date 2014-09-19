@@ -69,20 +69,15 @@
  * =============================================================================
  */
 
-
-#ifndef CUSTOMER_H
-#define CUSTOMER_H 1
-
+#pragma once
 
 #include "list.h"
 #include "reservation.h"
-#include "tm.h"
-#include "types.h"
 
-typedef struct customer {
+struct customer_t {
     long id;
     list_t* reservationInfoListPtr;
-} customer_t;
+};
 
 
 /* =============================================================================
@@ -133,22 +128,3 @@ customer_removeReservationInfo (customer_t* customerPtr,
 TM_SAFE
 long
 customer_getBill (  customer_t* customerPtr);
-
-#define CUSTOMER_ALLOC(id)         customer_alloc(id)
-#define CUSTOMER_ADD_RESERVATION_INFO(cust, type, id, price)       \
-    customer_addReservationInfo(  cust, type, id, price)
-#define CUSTOMER_REMOVE_RESERVATION_INFO(cust, type, id) \
-    customer_removeReservationInfo(  cust, type, id)
-#define CUSTOMER_GET_BILL(cust)    customer_getBill(  cust)
-#define CUSTOMER_FREE(cust)        customer_free(  cust)
-
-
-#endif /* CUSTOMER_H */
-
-
-/* =============================================================================
- *
- * End of customer.h
- *
- * =============================================================================
- */

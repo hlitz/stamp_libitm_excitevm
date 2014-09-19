@@ -85,8 +85,6 @@
 
 
 #include "tm.h"
-#include "types.h"
-
 
 #ifdef __cplusplus
 extern "C" {
@@ -128,7 +126,7 @@ rbtree_free (rbtree_t* r);
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 rbtree_insert (rbtree_t* r, void* key, void* val);
 
 
@@ -137,7 +135,7 @@ rbtree_insert (rbtree_t* r, void* key, void* val);
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 rbtree_delete (rbtree_t* r, void* key);
 
 
@@ -147,7 +145,7 @@ rbtree_delete (rbtree_t* r, void* key);
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 rbtree_update (rbtree_t* r, void* key, void* val);
 
 
@@ -165,7 +163,7 @@ rbtree_get (rbtree_t* r, void* key);
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 rbtree_contains (  rbtree_t* r, void* key);
 
 

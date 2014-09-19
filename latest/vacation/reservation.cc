@@ -75,7 +75,6 @@
 #include "memory.h"
 #include "reservation.h"
 #include "tm.h"
-#include "types.h"
 
 /* =============================================================================
  * DECLARATION OF TM_SAFE FUNCTIONS
@@ -143,33 +142,33 @@ checkReservation (  reservation_t* reservationPtr)
     long numUsed = (long)TM_SHARED_READ(reservationPtr->numUsed);
     if (numUsed < 0) {
       //_ITM_abortTransaction(2);
-      return FALSE;
+      return false;
     }
 
     long numFree = (long)TM_SHARED_READ(reservationPtr->numFree);
     if (numFree < 0) {
       //_ITM_abortTransaction(2);
-      return FALSE;
+      return false;
     }
 
     long numTotal = (long)TM_SHARED_READ(reservationPtr->numTotal);
     if (numTotal < 0) {
       //_ITM_abortTransaction(2);
-      return FALSE;
+      return false;
     }
 
     if ((numUsed + numFree) != numTotal) {
       //_ITM_abortTransaction(2);
-      return FALSE;
+      return false;
     }
 
     long price = (long)TM_SHARED_READ(reservationPtr->price);
     if (price < 0) {
       //_ITM_abortTransaction(2);
-      return FALSE;
+      return false;
     }
 
-    return TRUE;
+    return true;
 }
 #define CHECK_RESERVATION(reservation) \
     checkReservation(reservation)
@@ -210,7 +209,7 @@ reservation_addToTotal (  reservation_t* reservationPtr, long num, bool* success
   long numFree = (long)TM_SHARED_READ(reservationPtr->numFree);
 
     if (numFree + num < 0) {
-        return FALSE;
+        return false;
     }
 
     TM_SHARED_WRITE(reservationPtr->numFree, (numFree + num));
@@ -220,7 +219,7 @@ reservation_addToTotal (  reservation_t* reservationPtr, long num, bool* success
 
     *success = CHECK_RESERVATION(reservationPtr);
 
-    return TRUE;
+    return true;
 }
 
 
@@ -235,7 +234,7 @@ reservation_make (  reservation_t* reservationPtr)
     long numFree = (long)TM_SHARED_READ(reservationPtr->numFree);
 
     if (numFree < 1) {
-        return FALSE;
+        return false;
     }
 
     TM_SHARED_WRITE(reservationPtr->numUsed,
@@ -244,7 +243,7 @@ reservation_make (  reservation_t* reservationPtr)
     TM_SHARED_WRITE(reservationPtr->numFree, (numFree - 1));
 
     CHECK_RESERVATION(reservationPtr);
-    return TRUE;
+    return true;
 }
 
 
@@ -259,7 +258,7 @@ reservation_cancel (reservation_t* reservationPtr)
     long numUsed = (long)TM_SHARED_READ(reservationPtr->numUsed);
 
     if (numUsed < 1) {
-        return FALSE;
+        return false;
     }
 
     TM_SHARED_WRITE(reservationPtr->numUsed, (numUsed - 1));
@@ -267,10 +266,10 @@ reservation_cancel (reservation_t* reservationPtr)
     ((long)TM_SHARED_READ(reservationPtr->numFree) + 1));
 
     //[wer210] Note here, return false, instead of abort in check_reservation
-    if (CHECK_RESERVATION(reservationPtr) == FALSE)
-      return FALSE;
+    if (CHECK_RESERVATION(reservationPtr) == false)
+      return false;
 
-    return TRUE;
+    return true;
 }
 
 
@@ -287,15 +286,15 @@ reservation_updatePrice (  reservation_t* reservationPtr, long newPrice)
 {
     if (newPrice < 0) {
       //return FALSE;
-      return TRUE;
+      return true;
     }
 
     TM_SHARED_WRITE(reservationPtr->price, newPrice);
 
     //[wer210]
     if (CHECK_RESERVATION(reservationPtr))
-      return TRUE;
-    else return FALSE;
+      return true;
+    else return false;
 }
 
 

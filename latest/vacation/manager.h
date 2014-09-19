@@ -72,7 +72,6 @@
 #pragma once
 
 #include "map.h"
-#include "types.h"
 
 struct manager_t {
     MAP_T* carTablePtr;
