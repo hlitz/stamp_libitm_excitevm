@@ -69,22 +69,17 @@
  * =============================================================================
  */
 
-
-#ifndef MANAGER_H
-#define MANAGER_H 1
-
+#pragma once
 
 #include "map.h"
-#include "tm.h"
 #include "types.h"
 
-typedef struct manager {
+struct manager_t {
     MAP_T* carTablePtr;
     MAP_T* roomTablePtr;
     MAP_T* flightTablePtr;
     MAP_T* customerTablePtr;
-} manager_t;
-
+};
 
 /* =============================================================================
  * manager_alloc
@@ -93,7 +88,6 @@ typedef struct manager {
 manager_t*
 manager_alloc ();
 
-
 /* =============================================================================
  * manager_free
  * =============================================================================
@@ -101,12 +95,10 @@ manager_alloc ();
 void
 manager_free (manager_t* managerPtr);
 
-
 /* =============================================================================
  * ADMINISTRATIVE INTERFACE
  * =============================================================================
  */
-
 
 /* =============================================================================
  * manager_addCar
@@ -332,8 +324,7 @@ manager_reserveRoom (
  */
 TM_SAFE
 bool
-manager_reserveFlight (
-                       manager_t* managerPtr, long customerId, long flightId);
+manager_reserveFlight (manager_t* managerPtr, long customerId, long flightId);
 
 
 /* =============================================================================
@@ -344,8 +335,7 @@ manager_reserveFlight (
  */
 TM_SAFE
 bool
-manager_cancelCar (
-                   manager_t* managerPtr, long customerId, long carId);
+manager_cancelCar (manager_t* managerPtr, long customerId, long carId);
 
 
 /* =============================================================================
@@ -356,8 +346,7 @@ manager_cancelCar (
  */
 TM_SAFE
 bool
-manager_cancelRoom (
-                    manager_t* managerPtr, long customerId, long roomId);
+manager_cancelRoom (manager_t* managerPtr, long customerId, long roomId);
 
 
 /* =============================================================================
@@ -369,58 +358,3 @@ manager_cancelRoom (
 TM_SAFE
 bool
 manager_cancelFlight (manager_t* managerPtr, long customerId, long flightId);
-
-
-#define MANAGER_ADD_CAR(mgr, id, num, price) \
-    manager_addCar(  mgr, id, num, price)
-#define MANAGER_DELETE_CAR(mgr, id, num) \
-    manager_deleteCar(  mgr, id, num)
-#define MANAGER_ADD_ROOM(mgr, id, num, price) \
-    manager_addRoom(  mgr, id, num, price)
-#define MANAGER_DELETE_ROOM(mgr, id, num) \
-    manager_deleteRoom(  mgr, id, num)
-#define MANAGER_ADD_FLIGHT(mgr, id, num, price) \
-    manager_addFlight(  mgr, id, num, price)
-#define MANAGER_DELETE_FLIGHT(mgr, id) \
-    manager_deleteFlight(  mgr, id)
-#define MANAGER_ADD_CUSTOMER(mgr, id)           \
-    manager_addCustomer(  mgr, id)
-#define MANAGER_DELETE_CUSTOMER(mgr, id)        \
-    manager_deleteCustomer(  mgr, id)
-#define MANAGER_QUERY_CAR(mgr, id)              \
-    manager_queryCar(  mgr, id)
-#define MANAGER_QUERY_CAR_PRICE(mgr, id)        \
-    manager_queryCarPrice(  mgr, id)
-#define MANAGER_QUERY_ROOM(mgr, id)             \
-    manager_queryRoom(  mgr, id)
-#define MANAGER_QUERY_ROOM_PRICE(mgr, id)       \
-    manager_queryRoomPrice(  mgr, id)
-#define MANAGER_QUERY_FLIGHT(mgr, id)           \
-    manager_queryFlight(  mgr, id)
-#define MANAGER_QUERY_FLIGHT_PRICE(mgr, id)     \
-    manager_queryFlightPrice(  mgr, id)
-#define MANAGER_QUERY_CUSTOMER_BILL(mgr, id)    \
-    manager_queryCustomerBill(  mgr, id)
-#define MANAGER_RESERVE_CAR(mgr, cust, id)      \
-    manager_reserveCar(  mgr, cust, id)
-#define MANAGER_RESERVE_ROOM(mgr, cust, id)     \
-    manager_reserveRoom(  mgr, cust, id)
-#define MANAGER_RESERVE_FLIGHT(mgr, cust, id)       \
-    manager_reserveFlight(  mgr, cust, id)
-#define MANAGER_CANCEL_CAR(mgr, cust, id) \
-    manager_cancelCar(  mgr, cust, id)
-#define MANAGER_CANCEL_ROOM(mgr, cust, id) \
-    manager_cancelRoom(  mgr, cust, id)
-#define MANAGER_CANCEL_FLIGHT(mgr, cust, id) \
-    manager_cancelFlight(mgr, cust, id)
-
-
-#endif /* MANAGER_H */
-
-
-/* =============================================================================
- *
- * End of manager.h
- *
- * =============================================================================
- */

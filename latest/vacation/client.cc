@@ -198,18 +198,18 @@ client_run (void* argPtr)
                       long price = -1;
                       switch (t) {
                        case RESERVATION_CAR:
-                        if (MANAGER_QUERY_CAR(managerPtr, id) >= 0) {
-                          price = MANAGER_QUERY_CAR_PRICE(managerPtr, id);
+                        if (manager_queryCar(managerPtr, id) >= 0) {
+                          price = manager_queryCarPrice(managerPtr, id);
                         }
                         break;
                        case RESERVATION_FLIGHT:
-                        if (MANAGER_QUERY_FLIGHT(managerPtr, id) >= 0) {
-                          price = MANAGER_QUERY_FLIGHT_PRICE(managerPtr, id);
+                        if (manager_queryFlight(managerPtr, id) >= 0) {
+                          price = manager_queryFlightPrice(managerPtr, id);
                         }
                         break;
                        case RESERVATION_ROOM:
-                        if (MANAGER_QUERY_ROOM(managerPtr, id) >= 0) {
-                          price = MANAGER_QUERY_ROOM_PRICE(managerPtr, id);
+                        if (manager_queryRoom(managerPtr, id) >= 0) {
+                          price = manager_queryRoomPrice(managerPtr, id);
                         }
                         break;
                        default:
@@ -224,20 +224,20 @@ client_run (void* argPtr)
                     } /* for n */
 
                     if (isFound) {
-                      done = done && MANAGER_ADD_CUSTOMER(managerPtr, customerId);
+                      done = done && manager_addCustomer(managerPtr, customerId);
                     }
 
                     if (maxIds[RESERVATION_CAR] > 0) {
-                      done = done && MANAGER_RESERVE_CAR(managerPtr,
+                      done = done && manager_reserveCar(managerPtr,
                                                   customerId, maxIds[RESERVATION_CAR]);
                     }
 
                     if (maxIds[RESERVATION_FLIGHT] > 0) {
-                      done = done && MANAGER_RESERVE_FLIGHT(managerPtr,
+                      done = done && manager_reserveFlight(managerPtr,
                                                      customerId, maxIds[RESERVATION_FLIGHT]);
                     }
                     if (maxIds[RESERVATION_ROOM] > 0) {
-                      done = done && MANAGER_RESERVE_ROOM(managerPtr,
+                      done = done && manager_reserveRoom(managerPtr,
                                                    customerId, maxIds[RESERVATION_ROOM]);
                     }
                     if (done) break;
@@ -253,9 +253,9 @@ client_run (void* argPtr)
                 bool done = TRUE;
                 while (1) {
                   __transaction_atomic {
-                    long bill = MANAGER_QUERY_CUSTOMER_BILL(managerPtr, customerId);
+                    long bill = manager_queryCustomerBill(managerPtr, customerId);
                     if (bill >= 0) {
-                      done = done && MANAGER_DELETE_CUSTOMER(managerPtr, customerId);
+                      done = done && manager_deleteCustomer(managerPtr, customerId);
                     }
                     if(done) break;
                     else __transaction_cancel;
@@ -286,13 +286,13 @@ client_run (void* argPtr)
                         long newPrice = prices[n];
                         switch (t) {
                          case RESERVATION_CAR:
-                          done = done && MANAGER_ADD_CAR(managerPtr, id, 100, newPrice);
+                          done = done && manager_addCar(managerPtr, id, 100, newPrice);
                           break;
                          case RESERVATION_FLIGHT:
-                          done = done && MANAGER_ADD_FLIGHT(managerPtr, id, 100, newPrice);
+                          done = done && manager_addFlight(managerPtr, id, 100, newPrice);
                           break;
                          case RESERVATION_ROOM:
-                          done = done && MANAGER_ADD_ROOM(managerPtr, id, 100, newPrice);
+                          done = done && manager_addRoom(managerPtr, id, 100, newPrice);
                           break;
                          default:
                           assert(0);
@@ -300,13 +300,13 @@ client_run (void* argPtr)
                       } else { /* do delete */
                         switch (t) {
                          case RESERVATION_CAR:
-                          done = done && MANAGER_DELETE_CAR(managerPtr, id, 100);
+                          done = done && manager_deleteCar(managerPtr, id, 100);
                           break;
                          case RESERVATION_FLIGHT:
-                          done = done && MANAGER_DELETE_FLIGHT(managerPtr, id);
+                          done = done && manager_deleteFlight(managerPtr, id);
                           break;
                          case RESERVATION_ROOM:
-                          done = done && MANAGER_DELETE_ROOM(managerPtr, id, 100);
+                          done = done && manager_deleteRoom(managerPtr, id, 100);
                           break;
                          default:
                           assert(0);
