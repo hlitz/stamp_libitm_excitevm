@@ -73,7 +73,6 @@
 #include <assert.h>
 #include "heap.h"
 #include "tm.h"
-#include "types.h"
 
 struct heap {
     void** elements;
@@ -166,11 +165,11 @@ void siftUp (heap_t* heapPtr, long startIndex)
 
 /* =============================================================================
  * heap_insert
- * -- Returns FALSE on failure
+ * -- Returns false on failure
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 heap_insert (heap_t* heapPtr, void* dataPtr)
 {
     long size = heapPtr->size;
@@ -180,7 +179,7 @@ heap_insert (heap_t* heapPtr, void* dataPtr)
         long newCapacity = capacity * 2;
         void** newElements = (void**)malloc(newCapacity * sizeof(void*));
         if (newElements == NULL) {
-            return FALSE;
+            return false;
         }
         heapPtr->capacity = newCapacity;
         long i;
@@ -197,18 +196,18 @@ heap_insert (heap_t* heapPtr, void* dataPtr)
     heapPtr->elements[size] = dataPtr;
     siftUp(heapPtr, size);
 
-    return TRUE;
+    return true;
 }
 
 
 /* =============================================================================
  * TMheap_insert
- * -- Returns FALSE on failure
+ * -- Returns false on failure
  * =============================================================================
  */
 #if 0
 TM_SAFE
-bool_t
+bool
 TMheap_insert (  heap_t* heapPtr, void* dataPtr)
 {
     long size = (long)TM_SHARED_READ(heapPtr->size);
@@ -218,7 +217,7 @@ TMheap_insert (  heap_t* heapPtr, void* dataPtr)
         long newCapacity = capacity * 2;
         void** newElements = (void**)TM_MALLOC(newCapacity * sizeof(void*));
         if (newElements == NULL) {
-            return FALSE;
+            return false;
         }
         TM_SHARED_WRITE(heapPtr->capacity, newCapacity);
         long i;
@@ -236,7 +235,7 @@ TMheap_insert (  heap_t* heapPtr, void* dataPtr)
     TM_SHARED_WRITE_P(elements[size], dataPtr);
     siftUp(heapPtr, size);
 
-    return TRUE;
+    return true;
 }
 #endif
 
@@ -376,7 +375,7 @@ heap_remove (heap_t* heapPtr)
  * heap_isValid
  * =============================================================================
  */
-bool_t
+bool
 heap_isValid (heap_t* heapPtr)
 {
     long size = heapPtr->size;
@@ -386,11 +385,11 @@ heap_isValid (heap_t* heapPtr)
     long i;
     for (i = 1; i < size; i++) {
         if (compare(elements[i+1], elements[PARENT(i+1)]) > 0) {
-            return FALSE;
+            return false;
         }
     }
 
-    return TRUE;
+    return true;
 }
 
 

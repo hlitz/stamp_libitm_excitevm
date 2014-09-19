@@ -78,10 +78,8 @@
 #include "map.h"
 #include "mesh.h"
 #include "queue.h"
-#include "random.h"
 #include "set.h"
 #include "tm.h"
-#include "types.h"
 #include "utility.h"
 
 
@@ -155,7 +153,7 @@ TMmesh_insert (mesh_t* meshPtr, element_t* elementPtr, MAP_T* edgeMapPtr)
         edge_t* edgePtr = element_getEdge(elementPtr, i);
         if (!MAP_CONTAINS(edgeMapPtr, (void*)edgePtr)) {
             /* Record existance of this edge */
-            bool_t isSuccess;
+            bool isSuccess;
             isSuccess =
                 MAP_INSERT(edgeMapPtr, (void*)edgePtr, (void*)elementPtr);
             assert(isSuccess);
@@ -163,7 +161,7 @@ TMmesh_insert (mesh_t* meshPtr, element_t* elementPtr, MAP_T* edgeMapPtr)
             /*
              * Shared edge; update each element's neighborList
              */
-            bool_t isSuccess;
+            bool isSuccess;
             element_t* sharerPtr = (element_t*)MAP_FIND(edgeMapPtr, edgePtr);
             assert(sharerPtr); /* cannot be shared by >2 elements */
             TMELEMENT_ADDNEIGHBOR(elementPtr, sharerPtr);
@@ -226,12 +224,12 @@ TMmesh_remove (mesh_t* meshPtr, element_t* elementPtr)
 
       //list_t* neighborNeighborListPtr = element_getNeighborListPtr(neighborPtr);
       list_t* neighborNeighborListPtr = neighborPtr->neighborListPtr;
-        bool_t status = TMLIST_REMOVE(neighborNeighborListPtr, elementPtr);
+        bool status = TMLIST_REMOVE(neighborNeighborListPtr, elementPtr);
         assert(status);
     }
 
-    //TMELEMENT_SETISGARBAGE(elementPtr, TRUE);
-    elementPtr->isGarbage = TRUE;
+    //TMELEMENT_SETISGARBAGE(elementPtr, true);
+    elementPtr->isGarbage = true;
 
     //if (!TMELEMENT_ISREFERENCED(elementPtr)) {
     if (!elementPtr->isReferenced) {
@@ -245,7 +243,7 @@ TMmesh_remove (mesh_t* meshPtr, element_t* elementPtr)
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 TMmesh_insertBoundary (mesh_t* meshPtr, edge_t* boundaryPtr)
 {
     return TMSET_INSERT(meshPtr->boundarySetPtr, boundaryPtr);
@@ -257,7 +255,7 @@ TMmesh_insertBoundary (mesh_t* meshPtr, edge_t* boundaryPtr)
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 TMmesh_removeBoundary (mesh_t* meshPtr, edge_t* boundaryPtr)
 {
     return TMSET_REMOVE(meshPtr->boundarySetPtr, boundaryPtr);
@@ -279,14 +277,14 @@ createElement (mesh_t* meshPtr,
 
     if (numCoordinate == 2) {
         edge_t* boundaryPtr = element_getEdge(elementPtr, 0);
-        bool_t status = SET_INSERT(meshPtr->boundarySetPtr, boundaryPtr);
+        bool status = SET_INSERT(meshPtr->boundarySetPtr, boundaryPtr);
         assert(status);
     }
 
     TMmesh_insert(meshPtr, elementPtr, edgeMapPtr);
 
     if (element_isBad(elementPtr)) {
-        bool_t status = queue_push(meshPtr->initBadQueuePtr, (void*)elementPtr);
+        bool status = queue_push(meshPtr->initBadQueuePtr, (void*)elementPtr);
         assert(status);
     }
  }
@@ -301,7 +299,7 @@ createElement (mesh_t* meshPtr,
  * =============================================================================
  */
 long
-mesh_read (mesh_t* meshPtr, char* fileNamePrefix)
+mesh_read (mesh_t* meshPtr, const char* fileNamePrefix)
 {
     FILE* inputFile;
     coordinate_t* coordinates;
@@ -439,7 +437,7 @@ mesh_getBad (mesh_t* meshPtr)
  * =============================================================================
  */
 void
-mesh_shuffleBad (mesh_t* meshPtr, random_t* randomPtr)
+mesh_shuffleBad (mesh_t* meshPtr, std::mt19937* randomPtr)
 {
     queue_shuffle(meshPtr->initBadQueuePtr, randomPtr);
 }
@@ -449,7 +447,7 @@ mesh_shuffleBad (mesh_t* meshPtr, random_t* randomPtr)
  * mesh_check
  * =============================================================================
  */
-bool_t
+bool
 mesh_check (mesh_t* meshPtr, long expectedNumElement)
 {
     queue_t* searchQueuePtr;
@@ -476,7 +474,7 @@ mesh_check (mesh_t* meshPtr, long expectedNumElement)
         element_t* currentElementPtr;
         list_iter_t it;
         list_t* neighborListPtr;
-        bool_t isSuccess;
+        bool isSuccess;
 
         currentElementPtr = (element_t*)queue_pop(searchQueuePtr);
         if (MAP_CONTAINS(visitedMapPtr, (void*)currentElementPtr)) {
@@ -497,7 +495,7 @@ mesh_check (mesh_t* meshPtr, long expectedNumElement)
              * Continue breadth-first search
              */
             if (!MAP_CONTAINS(visitedMapPtr, (void*)neighborElementPtr)) {
-                bool_t isSuccess;
+                bool isSuccess;
                 isSuccess = queue_push(searchQueuePtr,
                                        (void*)neighborElementPtr);
                 assert(isSuccess);
@@ -516,7 +514,7 @@ mesh_check (mesh_t* meshPtr, long expectedNumElement)
 
     return ((numBadTriangle > 0 ||
              numFalseNeighbor > 0 ||
-             numElement != expectedNumElement) ? FALSE : TRUE);
+             numElement != expectedNumElement) ? false : true);
 }
 
 

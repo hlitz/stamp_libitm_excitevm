@@ -1116,7 +1116,7 @@ getNode ()
 
 /* =============================================================================
  * rbtree_insert
- * -- Returns TRUE on success
+ * -- Returns true on success
  * =============================================================================
  */
 TM_SAFE
@@ -1134,7 +1134,7 @@ rbtree_insert (rbtree_t* r, void* key, void* val)
 
 /* =============================================================================
  * rbtree_delete
- * -- Returns TRUE if key exists
+ * -- Returns true if key exists
  * =============================================================================
  */
 TM_SAFE
@@ -1155,7 +1155,7 @@ rbtree_delete (rbtree_t* r, void* key)
 
 /* =============================================================================
  * rbtree_update
- * -- Return FALSE if had to insert node first
+ * -- Return false if had to insert node first
  * =============================================================================
  */
 TM_SAFE

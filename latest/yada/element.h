@@ -77,7 +77,6 @@
 #include "list.h"
 #include "pair.h"
 #include "tm.h"
-#include "types.h"
 
 
 typedef pair_t         edge_t;
@@ -92,10 +91,10 @@ struct element {
     coordinate_t midpoints[3]; /* midpoint of each edge */
     double radii[3];           /* half of edge length */
     edge_t* encroachedEdgePtr; /* opposite obtuse angle */
-    bool_t isSkinny;
+    bool isSkinny;
     list_t* neighborListPtr;
-    bool_t isGarbage;
-    bool_t isReferenced;
+    bool isGarbage;
+    bool isReferenced;
 };
 typedef struct element element_t;
 
@@ -212,7 +211,7 @@ element_heapCompare (const void* aPtr, const void* bPtr);
  */
 //TM_PURE
 TM_SAFE
-bool_t
+bool
 element_isInCircumCircle (element_t* elementPtr, coordinate_t* coordinatePtr);
 
 
@@ -240,7 +239,7 @@ element_getEncroachedPtr (element_t* elementPtr);
  * element_isSkinny
  * =============================================================================
  */
-bool_t
+bool
 element_isSkinny (element_t* elementPtr);
 
 
@@ -251,7 +250,7 @@ element_isSkinny (element_t* elementPtr);
  */
 //TM_PURE
 TM_SAFE
-bool_t
+bool
 element_isBad (element_t* elementPtr);
 
 
@@ -261,7 +260,7 @@ element_isBad (element_t* elementPtr);
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 TMelement_isReferenced (  element_t* elementPtr);
 
 
@@ -272,7 +271,7 @@ TMelement_isReferenced (  element_t* elementPtr);
  */
 TM_SAFE
 void
-TMelement_setIsReferenced (  element_t* elementPtr, bool_t status);
+TMelement_setIsReferenced (  element_t* elementPtr, bool status);
 
 
 
@@ -283,7 +282,7 @@ TMelement_setIsReferenced (  element_t* elementPtr, bool_t status);
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 TMelement_isGarbage (  element_t* elementPtr);
 
 
@@ -294,7 +293,7 @@ TMelement_isGarbage (  element_t* elementPtr);
  */
 TM_SAFE
 void
-TMelement_setIsGarbage (  element_t* elementPtr, bool_t status);
+TMelement_setIsGarbage (  element_t* elementPtr, bool status);
 
 
 /* =============================================================================
@@ -344,10 +343,10 @@ element_getNewPoint (element_t* elementPtr, coordinate_t* ret);
 /* =============================================================================
  * element_checkAngles
  *
- * Return FALSE if minimum angle constraint not met
+ * Return false if minimum angle constraint not met
  * =============================================================================
  */
-bool_t
+bool
 element_checkAngles (element_t* elementPtr);
 
 

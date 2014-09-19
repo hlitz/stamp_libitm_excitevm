@@ -78,7 +78,6 @@
 #include "element.h"
 #include "pair.h"
 #include "tm.h"
-#include "types.h"
 
 #if defined(TEST_ELEMENT) || defined(TEST_MESH)
 double global_angleConstraint = 20.0;
@@ -122,7 +121,7 @@ minimizeCoordinates (element_t* elementPtr)
 
 /* =============================================================================
  * checkAngles
- * -- Sets isSkinny to TRUE if the angle constraint is not met
+ * -- Sets isSkinny to true if the angle constraint is not met
  * =============================================================================
  */
 //[wer210]This should be TM_SAFE, as it is called inside a TM_safe function.
@@ -135,8 +134,8 @@ checkAngles (element_t* elementPtr)
     double minAngle = 180.0;
 
     assert(numCoordinate == 2 || numCoordinate == 3);
-    elementPtr->isReferenced = FALSE;
-    elementPtr->isSkinny = FALSE;
+    elementPtr->isReferenced = false;
+    elementPtr->isSkinny = false;
     elementPtr->encroachedEdgePtr = NULL;
 
     if (numCoordinate == 3) {
@@ -152,7 +151,7 @@ checkAngles (element_t* elementPtr)
                 elementPtr->encroachedEdgePtr = &elementPtr->edges[(i + 1) % 3];
             }
             if (angle < angleConstraint) {
-                elementPtr->isSkinny = TRUE;
+                elementPtr->isSkinny = true;
             }
             if (angle < minAngle) {
                 minAngle = angle;
@@ -386,8 +385,8 @@ TMelement_alloc (  coordinate_t* coordinates, long numCoordinate)
         initEdges(elementPtr, numCoordinate);
         elementPtr->neighborListPtr = TMLIST_ALLOC(element_listCompare);
         assert(elementPtr->neighborListPtr);
-        elementPtr->isGarbage = FALSE;
-        elementPtr->isReferenced = FALSE;
+        elementPtr->isGarbage = false;
+        elementPtr->isReferenced = false;
     }
 
     return elementPtr;
@@ -526,11 +525,11 @@ element_heapCompare (const void* aPtr, const void* bPtr)
  */
 //TM_PURE
 TM_SAFE
-bool_t
+bool
 element_isInCircumCircle (element_t* elementPtr, coordinate_t* coordinatePtr)
 {
     double distance = coordinate_distance(coordinatePtr, &elementPtr->circumCenter);
-    return ((distance <= elementPtr->circumRadius) ? TRUE : FALSE);
+    return ((distance <= elementPtr->circumRadius) ? true : false);
 }
 
 
@@ -539,10 +538,10 @@ element_isInCircumCircle (element_t* elementPtr, coordinate_t* coordinatePtr)
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 isEncroached (element_t* elementPtr)
 {
-    return ((elementPtr->encroachedEdgePtr != NULL) ? TRUE : FALSE);
+    return ((elementPtr->encroachedEdgePtr != NULL) ? true : false);
 }
 
 
@@ -574,11 +573,11 @@ element_getEncroachedPtr (element_t* elementPtr)
  * element_isSkinny
  * =============================================================================
  */
-bool_t
+bool
 TM_SAFE
 element_isSkinny (element_t* elementPtr)
 {
-    return ((elementPtr->isSkinny) ? TRUE : FALSE);
+    return ((elementPtr->isSkinny) ? true : false);
 }
 
 
@@ -588,11 +587,11 @@ element_isSkinny (element_t* elementPtr)
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 element_isBad (element_t* elementPtr)
 {
     return ((isEncroached(elementPtr) || element_isSkinny(elementPtr)) ?
-            TRUE : FALSE);
+            true : false);
 }
 
 
@@ -603,10 +602,10 @@ element_isBad (element_t* elementPtr)
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 TMelement_isReferenced (  element_t* elementPtr)
 {
-    return (bool_t)TM_SHARED_READ(elementPtr->isReferenced);
+    return (bool)TM_SHARED_READ(elementPtr->isReferenced);
 }
 
 
@@ -616,7 +615,7 @@ TMelement_isReferenced (  element_t* elementPtr)
  */
 TM_SAFE
 void
-TMelement_setIsReferenced (  element_t* elementPtr, bool_t status)
+TMelement_setIsReferenced (  element_t* elementPtr, bool status)
 {
     TM_SHARED_WRITE(elementPtr->isReferenced, status);
 }
@@ -629,10 +628,10 @@ TMelement_setIsReferenced (  element_t* elementPtr, bool_t status)
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 TMelement_isGarbage (  element_t* elementPtr)
 {
-    return (bool_t)TM_SHARED_READ(elementPtr->isGarbage);
+    return (bool)TM_SHARED_READ(elementPtr->isGarbage);
 }
 
 
@@ -642,7 +641,7 @@ TMelement_isGarbage (  element_t* elementPtr)
  */
 TM_SAFE
 void
-TMelement_setIsGarbage (  element_t* elementPtr, bool_t status)
+TMelement_setIsGarbage (  element_t* elementPtr, bool status)
 {
     TM_SHARED_WRITE(elementPtr->isGarbage, status);
 }
@@ -741,10 +740,10 @@ element_getNewPoint (element_t* elementPtr, coordinate_t* ret)
 /* =============================================================================
  * element_checkAngles
  *
- * Return FALSE if minimum angle constraint not met
+ * Return false if minimum angle constraint not met
  * =============================================================================
  */
-bool_t
+bool
 element_checkAngles (element_t* elementPtr)
 {
     long numCoordinate = elementPtr->numCoordinate;
@@ -758,12 +757,12 @@ element_checkAngles (element_t* elementPtr)
                                             &coordinates[(i + 1) % 3],
                                             &coordinates[(i + 2) % 3]);
             if (angle < angleConstraint) {
-                return FALSE;
+                return false;
             }
         }
     }
 
-    return TRUE;
+    return true;
 }
 
 

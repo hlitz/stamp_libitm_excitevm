@@ -74,7 +74,6 @@
 
 
 #include "tm.h"
-#include "types.h"
 
 typedef struct heap heap_t;
 
@@ -100,11 +99,11 @@ heap_free (heap_t* heapPtr);
 
 /* =============================================================================
  * heap_insert
- * -- Returns FALSE on failure
+ * -- Returns false on failure
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 heap_insert (heap_t* heapPtr, void* dataPtr);
 
 /* =============================================================================
@@ -122,7 +121,7 @@ heap_remove (heap_t* heapPtr);
  * =============================================================================
  */
 // [wer210] never called
-bool_t
+bool
 heap_isValid (heap_t* heapPtr);
 
 

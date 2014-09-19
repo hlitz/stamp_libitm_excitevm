@@ -74,7 +74,6 @@
 
 
 #include "tm.h"
-#include "types.h"
 
 
 #ifdef __cplusplus
@@ -120,21 +119,21 @@ vector_at (vector_t* vectorPtr, long i);
 
 /* =============================================================================
  * vector_pushBack
- * -- Returns FALSE if fail, else TRUE
+ * -- Returns false if fail, else true
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 vector_pushBack (vector_t* vectorPtr, void* dataPtr);
 
 
 /* =============================================================================
  * vector_pushBack
- * -- Returns FALSE if fail, else TRUE
+ * -- Returns false if fail, else true
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 vector_pushBack (vector_t* vectorPtr, void* dataPtr);
 
 
@@ -181,7 +180,7 @@ vector_sort (vector_t* vectorPtr, int TM_SAFE (*compare) (const void*, const voi
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 vector_copy (vector_t* dstVectorPtr, vector_t* srcVectorPtr);
 
 

@@ -69,7 +69,6 @@
  */
 
 
-#include "tm.h"
 #include <assert.h>
 #include <stdlib.h>
 #include "region.h"
@@ -79,7 +78,7 @@
 #include "map.h"
 #include "queue.h"
 #include "mesh.h"
-
+#include "tm.h"
 
 struct region {
     coordinate_t centerCoordinate;
@@ -110,7 +109,7 @@ element_t*
 TMgrowRegion (element_t* centerElementPtr,
               region_t* regionPtr,
               MAP_T* edgeMapPtr,
-              bool_t* success);
+              bool* success);
 
 /* =============================================================================
  * Pregion_alloc
@@ -164,9 +163,9 @@ TM_SAFE
 void
 TMaddToBadVector (  vector_t* badVectorPtr, element_t* badElementPtr)
 {
-    bool_t status = PVECTOR_PUSHBACK(badVectorPtr, (void*)badElementPtr);
+    bool status = PVECTOR_PUSHBACK(badVectorPtr, (void*)badElementPtr);
     assert(status);
-    TMELEMENT_SETISREFERENCED(badElementPtr, TRUE);
+    TMELEMENT_SETISREFERENCED(badElementPtr, true);
 }
 
 
@@ -231,7 +230,7 @@ TMretriangulate (element_t* elementPtr,
         assert(bElementPtr);
         TMMESH_INSERT(meshPtr, bElementPtr, edgeMapPtr);
 
-        bool_t status;
+        bool status;
         status = TMMESH_REMOVEBOUNDARY(meshPtr, element_getEdge(elementPtr, 0));
         assert(status);
         status = TMMESH_INSERTBOUNDARY(meshPtr, element_getEdge(aElementPtr, 0));
@@ -287,14 +286,14 @@ element_t*
 TMgrowRegion (element_t* centerElementPtr,
               region_t* regionPtr,
               MAP_T* edgeMapPtr,
-              bool_t* success)
+              bool* success)
 {
-  *success = TRUE;
-    bool_t isBoundary = FALSE;
+  *success = true;
+    bool isBoundary = false;
 
     //TM_SAFE
     if (element_getNumEdge(centerElementPtr) == 1) {
-        isBoundary = TRUE;
+        isBoundary = true;
         //TMprints("enter here\n");
     }
 
@@ -339,7 +338,7 @@ TMgrowRegion (element_t* centerElementPtr,
                         return neighborElementPtr;
                     } else {
                         /* Continue breadth-first search */
-                        bool_t isSuccess;
+                        bool isSuccess;
                         isSuccess = TMQUEUE_PUSH(expandQueuePtr,(void*)neighborElementPtr);
                         assert(isSuccess);
                     }
@@ -349,7 +348,7 @@ TMgrowRegion (element_t* centerElementPtr,
                         element_getCommonEdge(neighborElementPtr, currentElementPtr);
                     if (!borderEdgePtr) {
                       //_ITM_abortTransaction(2); // TM_restart
-                      *success = FALSE;
+                      *success = false;
                       return NULL;
                     }
                     TMLIST_INSERT(borderListPtr,(void*)borderEdgePtr); /* no duplicates */
@@ -374,7 +373,7 @@ TMgrowRegion (element_t* centerElementPtr,
  */
 TM_SAFE
 long
-TMregion_refine (region_t* regionPtr, element_t* elementPtr, mesh_t* meshPtr, bool_t* success)
+TMregion_refine (region_t* regionPtr, element_t* elementPtr, mesh_t* meshPtr, bool* success)
 {
 
     long numDelta = 0L;
@@ -395,7 +394,7 @@ TMregion_refine (region_t* regionPtr, element_t* elementPtr, mesh_t* meshPtr, bo
                                           success);
 
         if (encroachElementPtr) {
-            TMELEMENT_SETISREFERENCED(encroachElementPtr, TRUE);
+            TMELEMENT_SETISREFERENCED(encroachElementPtr, true);
             numDelta += TMregion_refine(regionPtr,
                                         encroachElementPtr,
                                         meshPtr,
@@ -456,7 +455,7 @@ TMregion_transferBad (region_t* regionPtr, heap_t* workHeapPtr)
         if (TMELEMENT_ISGARBAGE(badElementPtr)) {
             TMELEMENT_FREE(badElementPtr);
         } else {
-            bool_t status = TMHEAP_INSERT(workHeapPtr, (void*)badElementPtr);
+            bool status = TMHEAP_INSERT(workHeapPtr, (void*)badElementPtr);
             assert(status);
         }
     }

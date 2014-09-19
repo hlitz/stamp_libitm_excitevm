@@ -111,7 +111,7 @@ TMhashtable_iter_reset (
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 TMhashtable_iter_hasNext (
                           hashtable_iter_t* itPtr, hashtable_t* hashtablePtr)
 {
@@ -123,13 +123,13 @@ TMhashtable_iter_hasNext (
     for (bucket = itPtr->bucket; bucket < numBucket; /* inside body */) {
         list_t* chainPtr = buckets[bucket];
         if (TMLIST_ITER_HASNEXT(&it)) {
-            return TRUE;
+            return true;
         }
         /* May use dummy bucket; see allocBuckets() */
         TMLIST_ITER_RESET(&it, buckets[++bucket]);
     }
 
-    return FALSE;
+    return false;
 }
 
 
@@ -284,21 +284,21 @@ TMhashtable_free (  hashtable_t* hashtablePtr)
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 TMhashtable_isEmpty (  hashtable_t* hashtablePtr)
 {
 #ifdef HASHTABLE_SIZE_FIELD
-    return ((TM_SHARED_READ(hashtablePtr->size) == 0) ? TRUE : FALSE);
+    return ((TM_SHARED_READ(hashtablePtr->size) == 0) ? true : false);
 #else
     long i;
 
     for (i = 0; i < hashtablePtr->numBucket; i++) {
         if (!TMLIST_ISEMPTY(hashtablePtr->buckets[i])) {
-            return FALSE;
+            return false;
         }
     }
 
-    return TRUE;
+    return true;
 #endif
 }
 
@@ -333,7 +333,7 @@ TMhashtable_getSize (  hashtable_t* hashtablePtr)
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 TMhashtable_containsKey (  hashtable_t* hashtablePtr, void* keyPtr)
 {
     pair_t* pairPtr;
@@ -348,7 +348,7 @@ TMhashtable_containsKey (  hashtable_t* hashtablePtr, void* keyPtr)
     findPair.firstPtr = keyPtr;
     pairPtr = (pair_t*)TMLIST_FIND(hashtablePtr->buckets[i], &findPair);
 
-    return ((pairPtr != NULL) ? TRUE : FALSE);
+    return ((pairPtr != NULL) ? true : false);
 }
 
 
@@ -391,7 +391,7 @@ TMhashtable_find (  hashtable_t* hashtablePtr, void* keyPtr)
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 TMhashtable_insert (
                     hashtable_t* hashtablePtr, void* keyPtr, void* dataPtr)
 {
@@ -407,18 +407,18 @@ TMhashtable_insert (
     findPair.firstPtr = keyPtr;
     pair_t* pairPtr = (pair_t*)TMLIST_FIND(hashtablePtr->buckets[i], &findPair);
     if (pairPtr != NULL) {
-        return FALSE;
+        return false;
     }
 
     pair_t* insertPtr = TMPAIR_ALLOC(keyPtr, dataPtr);
     if (insertPtr == NULL) {
-        return FALSE;
+        return false;
     }
 
     /* Add new entry  */
-    if (TMLIST_INSERT(hashtablePtr->buckets[i], insertPtr) == FALSE) {
+    if (TMLIST_INSERT(hashtablePtr->buckets[i], insertPtr) == false) {
         TMPAIR_FREE(insertPtr);
-        return FALSE;
+        return false;
     }
 
 #ifdef HASHTABLE_SIZE_FIELD
@@ -427,18 +427,18 @@ TMhashtable_insert (
     TM_SHARED_WRITE(hashtablePtr->size, newSize);
 #endif
 
-    return TRUE;
+    return true;
 }
 
 
 
 /* =============================================================================
  * TMhashtable_remove
- * -- Returns TRUE if successful, else FALSE
+ * -- Returns true if successful, else false
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 TMhashtable_remove (  hashtable_t* hashtablePtr, void* keyPtr)
 {
     long numBucket = hashtablePtr->numBucket;
@@ -456,10 +456,10 @@ TMhashtable_remove (  hashtable_t* hashtablePtr, void* keyPtr)
     removePair.firstPtr = keyPtr;
     pairPtr = (pair_t*)TMLIST_FIND(chainPtr, &removePair);
     if (pairPtr == NULL) {
-        return FALSE;
+        return false;
     }
 
-    bool_t status = TMLIST_REMOVE(chainPtr, &removePair);
+    bool status = TMLIST_REMOVE(chainPtr, &removePair);
     assert(status);
     TMPAIR_FREE(pairPtr);
 
@@ -469,7 +469,7 @@ TMhashtable_remove (  hashtable_t* hashtablePtr, void* keyPtr)
     assert(hashtablePtr->size >= 0);
 #endif
 
-    return TRUE;
+    return true;
 }
 
 

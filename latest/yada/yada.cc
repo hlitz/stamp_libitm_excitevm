@@ -87,7 +87,7 @@
 #define PARAM_DEFAULT_ANGLE       (15.0)
 
 
-char*    global_inputPrefix     = PARAM_DEFAULT_INPUTPREFIX;
+const char*    global_inputPrefix     = PARAM_DEFAULT_INPUTPREFIX;
 long     global_numThread       = PARAM_DEFAULT_NUMTHREAD;
 double   global_angleConstraint = PARAM_DEFAULT_ANGLE;
 mesh_t*  global_meshPtr;
@@ -160,10 +160,10 @@ parseArgs (long argc, char* const argv[])
 static long
 initializeWork (heap_t* workHeapPtr, mesh_t* meshPtr)
 {
-    random_t* randomPtr = random_alloc();
-    random_seed(randomPtr, 0);
+    std::mt19937* randomPtr = new std::mt19937();
+    randomPtr->seed(0);
     mesh_shuffleBad(meshPtr, randomPtr);
-    random_free(randomPtr);
+    delete randomPtr;
 
     long numBad = 0;
 
@@ -173,9 +173,9 @@ initializeWork (heap_t* workHeapPtr, mesh_t* meshPtr)
             break;
         }
         numBad++;
-        bool_t status = heap_insert(workHeapPtr, (void*)elementPtr);
+        bool status = heap_insert(workHeapPtr, (void*)elementPtr);
         assert(status);
-        TMelement_setIsReferenced(elementPtr, TRUE);
+        TMelement_setIsReferenced(elementPtr, true);
     }
 
     return numBad;
@@ -186,7 +186,7 @@ initializeWork (heap_t* workHeapPtr, mesh_t* meshPtr)
  * =============================================================================
  */
 static void
-process ()
+process (void*)
 {
     heap_t* workHeapPtr = global_workHeapPtr;
     mesh_t* meshPtr = global_meshPtr;
@@ -209,7 +209,7 @@ process ()
             break;
         }
 
-        bool_t isGarbage;
+        bool isGarbage;
         __transaction_atomic {
           isGarbage = TMELEMENT_ISGARBAGE(elementPtr);
         }
@@ -223,7 +223,7 @@ process ()
 
         long numAdded;
         //[wer210] changed the control flow to get rid of self-abort
-        bool_t success = TRUE;
+        bool success = true;
         while (1) {
           __transaction_atomic {
             // TM_SAFE: PVECTOR_CLEAR (regionPtr->badVectorPtr);
@@ -236,7 +236,7 @@ process ()
         }
 
         __transaction_atomic {
-          TMELEMENT_SETISREFERENCED(elementPtr, FALSE);
+          TMELEMENT_SETISREFERENCED(elementPtr, false);
           isGarbage = TMELEMENT_ISGARBAGE(elementPtr);
         }
         if (isGarbage) {
@@ -327,9 +327,9 @@ int main (int argc, char** argv)
     fflush(stdout);
 
 #if 0
-    bool_t isSuccess = mesh_check(global_meshPtr, finalNumElement);
+    bool isSuccess = mesh_check(global_meshPtr, finalNumElement);
 #else
-    bool_t isSuccess = TRUE;
+    bool isSuccess = true;
 #endif
     printf("Final mesh is %s\n", (isSuccess ? "valid." : "INVALID!"));
     fflush(stdout);

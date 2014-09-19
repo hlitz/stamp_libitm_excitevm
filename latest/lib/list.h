@@ -145,7 +145,7 @@ list_free (list_t* listPtr);
 
 /* =============================================================================
  * list_isEmpty
- * -- Return TRUE if list is empty, else FALSE
+ * -- Return true if list is empty, else false
  * =============================================================================
  */
 TM_SAFE
@@ -175,7 +175,7 @@ list_find (  list_t* listPtr, void* dataPtr);
 
 /* =============================================================================
  * TMlist_insert
- * -- Return TRUE on success, else FALSE
+ * -- Return true on success, else false
  * =============================================================================
  */
 TM_SAFE
@@ -185,7 +185,7 @@ list_insert (list_t* listPtr, void* dataPtr);
 
 /* =============================================================================
  * TMlist_remove
- * -- Returns TRUE if successful, else FALSE
+ * -- Returns true if successful, else false
  * =============================================================================
  */
 TM_SAFE

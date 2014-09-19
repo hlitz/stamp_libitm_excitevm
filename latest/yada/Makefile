@@ -1,48 +1,46 @@
 PROG := yada
 
 SRCS += \
-	coordinate.c \
-	element.c \
-	mesh.c \
-	region.c \
-	yada.c
+	coordinate.cc \
+	element.cc \
+	mesh.cc \
+	region.cc \
+	yada.cc
 
 LIBSRCS += \
-	avltree.c \
-	heap.c \
-	list.c \
-	mt19937ar.c \
-	pair.c \
-	queue.c \
-	random.c \
-	rbtree.c \
-	thread.c \
-	vector.c
+	avltree.cc \
+	heap.cc \
+	list.cc \
+	pair.cc \
+	queue.cc \
+	rbtree.cc \
+	thread.cc \
+	vector.cc
 
-OBJS := ${SRCS:.c=.o} ${LIBSRCS:%.c=lib_%.o}
+OBJS := ${SRCS:.cc=.o} ${LIBSRCS:%.cc=lib_%.o}
 
-CFLAGS += -DLIST_NO_DUPLICATES
-CFLAGS += -DMAP_USE_AVLTREE
-CFLAGS += -DSET_USE_RBTREE
+CXXFLAGS += -DLIST_NO_DUPLICATES
+CXXFLAGS += -DMAP_USE_AVLTREE
+CXXFLAGS += -DSET_USE_RBTREE
 
 LDFLAGS += -lm
 
 include ../Makefile.common
 
 .PHONY: test_coordinate
-test_coordinate: CFLAGS += -DTEST_COORDINATE
+test_coordinate: CXXFLAGS += -DTEST_COORDINATE
 test_coordinate:
-	$(CC) $(CFLAGS) coordinate.c -lm -o $@
+	$(CC) $(CXXFLAGS) coordinate.cc -lm -o $@
 
 .PHONY: test_element
-test_element: CFLAGS += -DTEST_ELEMENT
-test_element: LIB_SRCS := $(LIB)/{heap,list,pair,avltree}.c
+test_element: CXXFLAGS += -DTEST_ELEMENT
+test_element: LIB_SRCS := $(LIB)/{heap,list,pair,avltree}.cc
 test_element:
-	$(CC) $(CFLAGS) element.c coordinate.c $(LIB_SRCS) -lm -o $@
+	$(CC) $(CXXFLAGS) element.cc coordinate.cc $(LIB_SRCS) -lm -o $@
 
 .PHONY: test_mesh
-test_mesh: CFLAGS += -DTEST_MESH
-test_mesh: LIB_SRCS := $(LIB)/{heap,list,pair,avltree,queue,rbtree,random,mt19937ar}.c
+test_mesh: CXXFLAGS += -DTEST_MESH
+test_mesh: LIB_SRCS := $(LIB)/{heap,list,pair,avltree,queue,rbtree,random,mt19937ar}.cc
 test_mesh:
-	$(CC) $(CFLAGS) mesh.c element.c coordinate.c $(LIB_SRCS) -lm -o $@
+	$(CC) $(CXXFLAGS) mesh.cc element.cc coordinate.cc $(LIB_SRCS) -lm -o $@
 

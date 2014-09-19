@@ -131,34 +131,34 @@ bitmap_free (bitmap_t* bitmapPtr)
 /* =============================================================================
  * bitmap_set
  * -- Sets ith bit to 1
- * -- Returns TRUE on success, else FALSE
+ * -- Returns true on success, else false
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 bitmap_set (bitmap_t* bitmapPtr, long i)
 {
     if ((i < 0) || (i >= bitmapPtr->numBit))
-        return FALSE;
+        return false;
     bitmapPtr->bits[i/NUM_BIT_PER_WORD] |= (1UL << (i % NUM_BIT_PER_WORD));
-    return TRUE;
+    return true;
 }
 
 
 /* =============================================================================
  * bitmap_clear
  * -- Clears ith bit to 0
- * -- Returns TRUE on success, else FALSE
+ * -- Returns true on success, else false
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 bitmap_clear (bitmap_t* bitmapPtr, long i)
 {
     if ((i < 0) || (i >= bitmapPtr->numBit))
-        return FALSE;
+        return false;
     bitmapPtr->bits[i/NUM_BIT_PER_WORD] &= ~(1UL << (i % NUM_BIT_PER_WORD));
-    return TRUE;
+    return true;
 }
 
 
@@ -181,37 +181,37 @@ bitmap_clearAll (bitmap_t* bitmapPtr)
 
 /* =============================================================================
  * bitmap_isClear
- * -- Returns TRUE if ith bit is clear, else FALSE
+ * -- Returns true if ith bit is clear, else false
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 bitmap_isClear (bitmap_t* bitmapPtr, long i)
 {
     if ((i >= 0) && (i < bitmapPtr->numBit) &&
         !(bitmapPtr->bits[i/NUM_BIT_PER_WORD] & (1UL << (i % NUM_BIT_PER_WORD)))) {
-        return TRUE;
+        return true;
     }
 
-    return FALSE;
+    return false;
 }
 
 
 /* =============================================================================
  * bitmap_isSet
- * -- Returns TRUE if ith bit is set, else FALSE
+ * -- Returns true if ith bit is set, else false
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 bitmap_isSet (bitmap_t* bitmapPtr, long i)
 {
     if ((i >= 0) && (i < bitmapPtr->numBit) &&
         (bitmapPtr->bits[i/NUM_BIT_PER_WORD] & (1UL << (i % NUM_BIT_PER_WORD)))) {
-        return TRUE;
+        return true;
     }
 
-    return FALSE;
+    return false;
 }
 
 

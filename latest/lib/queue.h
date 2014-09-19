@@ -74,7 +74,6 @@
 
 #include <random>
 #include "tm.h"
-#include "types.h"
 
 
 #ifdef __cplusplus
@@ -108,7 +107,7 @@ queue_free (  queue_t* queuePtr);
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 queue_isEmpty (  queue_t* queuePtr);
 
 
@@ -137,7 +136,7 @@ queue_shuffle (queue_t* queuePtr, std::mt19937* randomPtr);
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 queue_push (  queue_t* queuePtr, void* dataPtr);
 
 /* =============================================================================

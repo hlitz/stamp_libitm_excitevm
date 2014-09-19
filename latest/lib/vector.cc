@@ -72,7 +72,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "tm.h"
-#include "types.h"
 #include "utility.h"
 #include "vector.h"
 
@@ -139,11 +138,11 @@ vector_at (vector_t* vectorPtr, long i)
 
 /* =============================================================================
  * vector_pushBack
- * -- Returns FALSE if fail, else TRUE
+ * -- Returns false if fail, else true
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 vector_pushBack (vector_t* vectorPtr, void* dataPtr)
 {
     if (vectorPtr->size == vectorPtr->capacity) {
@@ -151,7 +150,7 @@ vector_pushBack (vector_t* vectorPtr, void* dataPtr)
         long newCapacity = vectorPtr->capacity * 2;
         void** newElements = (void**)malloc(newCapacity * sizeof(void*));
         if (newElements == NULL) {
-            return FALSE;
+            return false;
         }
         vectorPtr->capacity = newCapacity;
         for (i = 0; i < vectorPtr->size; i++) {
@@ -161,7 +160,7 @@ vector_pushBack (vector_t* vectorPtr, void* dataPtr)
         vectorPtr->elements = newElements;
     }
     vectorPtr->elements[vectorPtr->size++] = dataPtr;
-    return TRUE;
+    return true;
 }
 
 
@@ -254,7 +253,7 @@ vector_sort (vector_t* vectorPtr, int TM_SAFE (*compare) (const void*, const voi
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 vector_copy (vector_t* dstVectorPtr, vector_t* srcVectorPtr)
 {
     long dstCapacity = dstVectorPtr->capacity;
@@ -263,7 +262,7 @@ vector_copy (vector_t* dstVectorPtr, vector_t* srcVectorPtr)
         long srcCapacity = srcVectorPtr->capacity;
         void** elements = (void**)malloc(srcCapacity * sizeof(void*));
         if (elements == NULL)
-            return FALSE;
+            return false;
 
         free(dstVectorPtr->elements);
         dstVectorPtr->elements = elements;
@@ -274,7 +273,7 @@ vector_copy (vector_t* dstVectorPtr, vector_t* srcVectorPtr)
            (srcSize * sizeof(void*)));
     dstVectorPtr->size = srcSize;
 
-    return TRUE;
+    return true;
 }
 
 

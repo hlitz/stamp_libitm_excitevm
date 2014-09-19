@@ -72,10 +72,9 @@
 #ifndef MESH_H
 #define MESH_H 1
 
-
+#include <random>
 #include "element.h"
 #include "map.h"
-#include "random.h"
 #include "tm.h"
 #include "vector.h"
 
@@ -123,7 +122,7 @@ TMmesh_remove ( mesh_t* meshPtr, element_t* elementPtr);
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 TMmesh_insertBoundary ( mesh_t* meshPtr, edge_t* boundaryPtr);
 
 
@@ -132,7 +131,7 @@ TMmesh_insertBoundary ( mesh_t* meshPtr, edge_t* boundaryPtr);
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 TMmesh_removeBoundary ( mesh_t* meshPtr, edge_t* boundaryPtr);
 
 
@@ -145,7 +144,7 @@ TMmesh_removeBoundary ( mesh_t* meshPtr, edge_t* boundaryPtr);
  * =============================================================================
  */
 long
-mesh_read (mesh_t* meshPtr, char* fileNamePrefix);
+mesh_read (mesh_t* meshPtr, const char* fileNamePrefix);
 
 
 /* =============================================================================
@@ -162,14 +161,14 @@ mesh_getBad (mesh_t* meshPtr);
  * =============================================================================
  */
 void
-mesh_shuffleBad (mesh_t* meshPtr, random_t* randomPtr);
+mesh_shuffleBad (mesh_t* meshPtr, std::mt19937* randomPtr);
 
 
 /* =============================================================================
  * mesh_check
  * =============================================================================
  */
-bool_t
+bool
 mesh_check (mesh_t* meshPtr, long expectedNumElement);
 
 

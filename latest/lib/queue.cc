@@ -73,7 +73,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "tm.h"
-#include "types.h"
 #include "queue.h"
 
 
@@ -133,14 +132,14 @@ queue_free (queue_t* queuePtr)
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 queue_isEmpty (queue_t* queuePtr)
 {
     long pop      = queuePtr->pop;
     long push     = queuePtr->push;
     long capacity = queuePtr->capacity;
 
-    return (((pop + 1) % capacity == push) ? TRUE : FALSE);
+    return (((pop + 1) % capacity == push) ? true : false);
 }
 
 /* =============================================================================
@@ -162,7 +161,7 @@ queue_clear (queue_t* queuePtr)
  */
 TM_PURE // [wer] queue_shuffle has to be TM_PURE, use random()
 void
-queue_shuffle (queue_t* queuePtr, random_t* randomPtr)
+queue_shuffle (queue_t* queuePtr, std::mt19937* randomPtr)
 {
     long pop      = queuePtr->pop;
     long push     = queuePtr->push;
@@ -179,8 +178,8 @@ queue_shuffle (queue_t* queuePtr, random_t* randomPtr)
     long i;
     long base = pop + 1;
     for (i = 0; i < numElement; i++) {
-        long r1 = random_generate(randomPtr) % numElement;
-        long r2 = random_generate(randomPtr) % numElement;
+        long r1 = randomPtr->operator()() % numElement;
+        long r2 = randomPtr->operator()() % numElement;
         long i1 = (base + r1) % capacity;
         long i2 = (base + r2) % capacity;
         void* tmp = elements[i1];
@@ -195,7 +194,7 @@ queue_shuffle (queue_t* queuePtr, random_t* randomPtr)
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 queue_push (queue_t* queuePtr, void* dataPtr)
 {
     long pop      = queuePtr->pop;
@@ -211,7 +210,7 @@ queue_push (queue_t* queuePtr, void* dataPtr)
         long newCapacity = capacity * QUEUE_GROWTH_FACTOR;
         void** newElements = (void**)malloc(newCapacity * sizeof(void*));
         if (newElements == NULL) {
-            return FALSE;
+            return false;
         }
 
         long dst = 0;
@@ -243,7 +242,7 @@ queue_push (queue_t* queuePtr, void* dataPtr)
     queuePtr->elements[push] = dataPtr;
     queuePtr->push = newPush;
 
-    return TRUE;
+    return true;
 }
 
 

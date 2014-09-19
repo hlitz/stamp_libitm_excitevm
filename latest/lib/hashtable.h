@@ -139,7 +139,7 @@ TMhashtable_iter_reset (
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 TMhashtable_iter_hasNext (
                           hashtable_iter_t* itPtr, hashtable_t* hashtablePtr);
 
@@ -186,7 +186,7 @@ TMhashtable_free (  hashtable_t* hashtablePtr);
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 TMhashtable_isEmpty (  hashtable_t* hashtablePtr);
 
 
@@ -206,7 +206,7 @@ TMhashtable_getSize (  hashtable_t* hashtablePtr);
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 TMhashtable_containsKey (  hashtable_t* hashtablePtr, void* keyPtr);
 
 
@@ -226,18 +226,18 @@ TMhashtable_find (  hashtable_t* hashtablePtr, void* keyPtr);
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 TMhashtable_insert (hashtable_t* hashtablePtr, void* keyPtr, void* dataPtr);
 
 
 
 /* =============================================================================
  * TMhashtable_remove
- * -- Returns TRUE if successful, else FALSE
+ * -- Returns true if successful, else false
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 TMhashtable_remove (hashtable_t* hashtablePtr, void* keyPtr);
 
 

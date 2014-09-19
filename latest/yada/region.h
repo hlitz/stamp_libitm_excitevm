@@ -111,7 +111,7 @@ Pregion_free (region_t* regionPtr);
 TM_SAFE
 long
 TMregion_refine (region_t* regionPtr, element_t* elementPtr, mesh_t* meshPtr,
-                 bool_t* success);
+                 bool* success);
 
 
 /* =============================================================================
