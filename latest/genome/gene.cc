@@ -72,9 +72,9 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <random>
 #include "gene.h"
 #include "nucleotide.h"
-#include "random.h"
 #include "tm.h"
 
 
@@ -118,7 +118,7 @@ gene_alloc (long length)
  * =============================================================================
  */
 void
-gene_create (gene_t* genePtr, random_t* randomPtr)
+gene_create (gene_t* genePtr, std::mt19937* randomPtr)
 {
     long length;
     char* contents;
@@ -138,7 +138,7 @@ gene_create (gene_t* genePtr, random_t* randomPtr)
 
     for (i = 0; i < length; i++) {
         contents[i] =
-            nucleotides[(random_generate(randomPtr)% NUCLEOTIDE_NUM_TYPE)];
+            nucleotides[(randomPtr->operator()()% NUCLEOTIDE_NUM_TYPE)];
     }
 }
 
@@ -176,7 +176,7 @@ main ()
     gene_t* gene3Ptr;
     random_t* randomPtr;
 
-    bool_t status = memory_init(1, 4, 2);
+    bool status = memory_init(1, 4, 2);
     assert(status);
 
     puts("Starting...");

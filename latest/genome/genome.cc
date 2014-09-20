@@ -74,8 +74,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <random>
 #include "gene.h"
-#include "random.h"
 #include "segments.h"
 #include "sequencer.h"
 #include "thread.h"
@@ -198,9 +198,9 @@ int main (int argc, char** argv)
 
     thread_startup(numThread);
 
-    random_t* randomPtr = random_alloc();
+    std::mt19937* randomPtr = new std::mt19937();
     assert(randomPtr != NULL);
-    random_seed(randomPtr, 0);
+    randomPtr->seed(0);
 
     gene_t* genePtr = gene_alloc(geneLength);
     assert( genePtr != NULL);
@@ -255,7 +255,7 @@ int main (int argc, char** argv)
     sequencer_free(sequencerPtr);
     segments_free(segmentsPtr);
     gene_free(genePtr);
-    random_free(randomPtr);
+    delete randomPtr;
     puts("done.");
     fflush(stdout);
 

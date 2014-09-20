@@ -78,8 +78,6 @@
  */
 
 
-#include "tm.h"
-
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
@@ -91,21 +89,21 @@
 #include "thread.h"
 #include "utility.h"
 #include "vector.h"
-#include "types.h"
+#include "tm.h"
 
 
-struct endInfoEntry {
-    bool_t isEnd;
+struct endInfoEntry_t {
+    bool isEnd;
     long jumpToNext;
 };
 
-struct constructEntry {
-    bool_t isStart;
+struct constructEntry_t {
+    bool isStart;
     char* segment;
-    ulong_t endHash;
-    struct constructEntry* startPtr;
-    struct constructEntry* nextPtr;
-    struct constructEntry* endPtr;
+    unsigned long endHash;
+    constructEntry_t* startPtr;
+    constructEntry_t* nextPtr;
+    constructEntry_t* endPtr;
     long overlap;
     long length;
 };
@@ -117,10 +115,10 @@ struct constructEntry {
  * =============================================================================
  */
 TM_SAFE
-ulong_t
+unsigned long
 hashString (char* str)
 {
-    ulong_t hash = 0;
+    unsigned long hash = 0;
     long c;
 
     /* Note: Do not change this hashing scheme */
@@ -128,7 +126,7 @@ hashString (char* str)
         hash = c + (hash << 6) + (hash << 16) - hash;
     }
 
-    return (ulong_t)hash;
+    return (unsigned long)hash;
 }
 
 
@@ -140,22 +138,22 @@ hashString (char* str)
 //[wer] need to be TM_SAFE
 TM_SAFE
 //__attibute__ ((transaction_pure))
-ulong_t
+unsigned long
 hashSegment (const void* keyPtr)
 {
-  //return (ulong_t)hash_sdbm((char*)keyPtr); /* can be any "good" hash function */
+  //return (unsigned long)hash_sdbm((char*)keyPtr); /* can be any "good" hash function */
 
   //[wer] I replaced hash_sdbm with the above sdbm function, which is TM_SAFE
-  ulong_t hash = 0;
+  unsigned long hash = 0;
     long c;
-    char* str = keyPtr;
+    const char* str = (const char*)keyPtr;
 
     /* Note: Do not change this hashing scheme */
    while ((c = *str++) != '\0') {
         hash = c + (hash << 6) + (hash << 16) - hash;
     }
 
-   return (ulong_t)hash;
+   return (unsigned long)hash;
 
 }
 
@@ -237,7 +235,7 @@ sequencer_alloc (long geneLength, long segmentLength, segments_t* segmentsPtr)
         (endInfoEntry_t*)malloc(maxNumUniqueSegment * sizeof(endInfoEntry_t));
     for (i = 0; i < maxNumUniqueSegment; i++) {
         endInfoEntry_t* endInfoEntryPtr = &sequencerPtr->endInfoEntries[i];
-        endInfoEntryPtr->isEnd = TRUE;
+        endInfoEntryPtr->isEnd = true;
         endInfoEntryPtr->jumpToNext = 1;
     }
     sequencerPtr->startHashToConstructEntryTables =
@@ -262,7 +260,7 @@ sequencer_alloc (long geneLength, long segmentLength, segments_t* segmentsPtr)
     }
     for (i= 0; i < maxNumUniqueSegment; i++) {
         constructEntry_t* constructEntryPtr = &sequencerPtr->constructEntries[i];
-        constructEntryPtr->isStart = TRUE;
+        constructEntryPtr->isStart = true;
         constructEntryPtr->segment = NULL;
         constructEntryPtr->endHash = 0;
         constructEntryPtr->startPtr = constructEntryPtr;
@@ -402,8 +400,8 @@ sequencer_run (void* argPtr)
                 (char*)((pair_t*)list_iter_next(&it))->firstPtr;
             constructEntry_t* constructEntryPtr;
             long j;
-            ulong_t startHash;
-            bool_t status;
+            unsigned long startHash;
+            bool status;
 
             /* Find an empty constructEntries entry */
             __transaction_atomic {
@@ -426,15 +424,15 @@ sequencer_run (void* argPtr)
              * and compute all of them here.
              */
             /* constructEntryPtr is local now */
-            constructEntryPtr->endHash = (ulong_t)hashString(&segment[1]);
+            constructEntryPtr->endHash = (unsigned long)hashString(&segment[1]);
 
             startHash = 0;
             for (j = 1; j < segmentLength; j++) {
-                startHash = (ulong_t)segment[j-1] +
+                startHash = (unsigned long)segment[j-1] +
                             (startHash << 6) + (startHash << 16) - startHash;
                 __transaction_atomic {
                   status = TMTABLE_INSERT(startHashToConstructEntryTables[j],
-                                          (ulong_t)startHash,
+                                          (unsigned long)startHash,
                                           (void*)constructEntryPtr );
                 }
                 assert(status);
@@ -443,11 +441,11 @@ sequencer_run (void* argPtr)
             /*
              * For looking up construct entries quickly
              */
-            startHash = (ulong_t)segment[j-1] +
+            startHash = (unsigned long)segment[j-1] +
                         (startHash << 6) + (startHash << 16) - startHash;
             __transaction_atomic {
               status = TMTABLE_INSERT(hashToConstructEntryTable,
-                                      (ulong_t)startHash,
+                                      (unsigned long)startHash,
                                       (void*)constructEntryPtr);
             }
             assert(status);
@@ -493,7 +491,7 @@ sequencer_run (void* argPtr)
             constructEntry_t* endConstructEntryPtr =
                 &constructEntries[entryIndex];
             char* endSegment = endConstructEntryPtr->segment;
-            ulong_t endHash = endConstructEntryPtr->endHash;
+            unsigned long endHash = endConstructEntryPtr->endHash;
 
             list_t* chainPtr = buckets[endHash % numBucket]; /* buckets: constant data */
             list_iter_t it;
@@ -517,13 +515,13 @@ sequencer_run (void* argPtr)
                                &endSegment[segmentLength - substringLength],
                                substringLength) == 0))
                   {
-                    TM_SHARED_WRITE(startConstructEntryPtr->isStart, FALSE);
+                    TM_SHARED_WRITE(startConstructEntryPtr->isStart, false);
 
                     constructEntry_t* startConstructEntry_endPtr;
                     constructEntry_t* endConstructEntry_startPtr;
 
                     /* Update endInfo (appended something so no longer end) */
-                    TM_LOCAL_WRITE(endInfoEntries[entryIndex].isEnd, FALSE);
+                    TM_LOCAL_WRITE(endInfoEntries[entryIndex].isEnd, false);
 
                     /* Update segment chain construct info */
                     startConstructEntry_endPtr =
@@ -580,14 +578,14 @@ sequencer_run (void* argPtr)
                 if (endInfoEntries[0].isEnd) {
                     constructEntry_t* constructEntryPtr = &constructEntries[0];
                     char* segment = constructEntryPtr->segment;
-                    constructEntryPtr->endHash = (ulong_t)hashString(&segment[index]);
+                    constructEntryPtr->endHash = (unsigned long)hashString(&segment[index]);
                 }
                 /* Continue scanning (do not reset i) */
                 for (j = 0; i < numUniqueSegment; i+=endInfoEntries[i].jumpToNext) {
                     if (endInfoEntries[i].isEnd) {
                         constructEntry_t* constructEntryPtr = &constructEntries[i];
                         char* segment = constructEntryPtr->segment;
-                        constructEntryPtr->endHash = (ulong_t)hashString(&segment[index]);
+                        constructEntryPtr->endHash = (unsigned long)hashString(&segment[index]);
                         endInfoEntries[j].jumpToNext = MAX(1, (i - j));
                         j = i;
                     }
@@ -903,7 +901,7 @@ createSegments (char* segments[])
     segmentsPtr->contentsPtr = vector_alloc(1);
 
     while (segments[i] != NULL) {
-        bool_t status = vector_pushBack(segmentsPtr->contentsPtr,
+        bool status = vector_pushBack(segmentsPtr->contentsPtr,
                                         (void*)segments[i]);
         assert(status);
         i++;
@@ -937,7 +935,7 @@ tester (char* gene, char* segments[])
 int
 main ()
 {
-    bool_t status = memory_init(1, 4, 2);
+    bool status = memory_init(1, 4, 2);
     assert(status);
     thread_startup(1);
 

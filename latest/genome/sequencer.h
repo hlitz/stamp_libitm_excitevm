@@ -11,48 +11,48 @@
  *
  * For the license of bayes/sort.h and bayes/sort.c, please see the header
  * of the files.
- * 
+ *
  * ------------------------------------------------------------------------
- * 
+ *
  * For the license of kmeans, please see kmeans/LICENSE.kmeans
- * 
+ *
  * ------------------------------------------------------------------------
- * 
+ *
  * For the license of ssca2, please see ssca2/COPYRIGHT
- * 
+ *
  * ------------------------------------------------------------------------
- * 
+ *
  * For the license of lib/mt19937ar.c and lib/mt19937ar.h, please see the
  * header of the files.
- * 
+ *
  * ------------------------------------------------------------------------
- * 
+ *
  * For the license of lib/rbtree.h and lib/rbtree.c, please see
  * lib/LEGALNOTICE.rbtree and lib/LICENSE.rbtree
- * 
+ *
  * ------------------------------------------------------------------------
- * 
+ *
  * Unless otherwise noted, the following license applies to STAMP files:
- * 
+ *
  * Copyright (c) 2007, Stanford University
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
- * 
+ *
  *     * Redistributions of source code must retain the above copyright
  *       notice, this list of conditions and the following disclaimer.
- * 
+ *
  *     * Redistributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in
  *       the documentation and/or other materials provided with the
  *       distribution.
- * 
+ *
  *     * Neither the name of Stanford University nor the names of its
  *       contributors may be used to endorse or promote products derived
  *       from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY STANFORD UNIVERSITY ``AS IS'' AND ANY
  * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -68,10 +68,7 @@
  * =============================================================================
  */
 
-
-#ifndef SEQUENCER_H
-#define SEQUENCER_H 1
-
+#pragma once
 
 #include "hashtable.h"
 #include "segments.h"
@@ -79,11 +76,11 @@
 #include "tm.h"
 
 
-typedef struct endInfoEntry endInfoEntry_t;
-typedef struct constructEntry constructEntry_t;
+struct endInfoEntry_t;
+struct constructEntry_t;
 
 
-typedef struct sequencer {
+struct sequencer_t {
 
 /* public: */
 
@@ -107,15 +104,15 @@ typedef struct sequencer {
     /* For deallocation */
     long segmentLength;
 
-} sequencer_t;
+};
 
 
-typedef struct sequencer_run_arg {
+struct sequencer_run_arg_t {
     sequencer_t* sequencerPtr;
     segments_t* segmentsPtr;
     long preAllocLength;
     char* returnSequence; /* variable stores return value */
-} sequencer_run_arg_t;
+};
 
 
 /* =============================================================================
@@ -142,14 +139,3 @@ sequencer_run (void* argPtr);
  */
 void
 sequencer_free (sequencer_t* sequencerPtr);
-
-
-#endif /* SEQUENCER_H */
-
-
-/* =============================================================================
- *
- * End of sequencer.h
- *
- * =============================================================================
- */

@@ -69,19 +69,15 @@
  * =============================================================================
  */
 
-
-#ifndef TABLE_H
-#define TABLE_H 1
-
+#pragma once
 
 #include "list.h"
-#include "types.h"
 
 
-typedef struct table {
+struct table_t {
     list_t** buckets;
     long numBucket;
-} table_t;
+};
 
 
 /* =============================================================================
@@ -95,21 +91,21 @@ table_alloc (long numBucket, long (*compare)(const void*, const void*));
 
 /* =============================================================================
  * table_insert
- * -- Returns TRUE if successful, else FALSE
+ * -- Returns true if successful, else false
  * =============================================================================
  */
 TM_SAFE
-bool_t
-table_insert (table_t* tablePtr, ulong_t hash, void* dataPtr);
+bool
+table_insert (table_t* tablePtr, unsigned long hash, void* dataPtr);
 
 
 /* =============================================================================
  * table_remove
- * -- Returns TRUE if successful, else FALSE
+ * -- Returns true if successful, else false
  * =============================================================================
  */
-bool_t
-table_remove (table_t* tablePtr, ulong_t hash, void* dataPtr);
+bool
+table_remove (table_t* tablePtr, unsigned long hash, void* dataPtr);
 
 
 /* =============================================================================
@@ -121,14 +117,3 @@ table_free (table_t* tablePtr);
 
 
 #define TMTABLE_INSERT(t, h, d)         table_insert(t, h, d)
-
-
-#endif /* TABLE_H */
-
-
-/* =============================================================================
- *
- * End of table.h
- *
- * =============================================================================
- */

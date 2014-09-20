@@ -1,27 +1,25 @@
 PROG := genome
 
 SRCS += \
-	gene.c \
-	genome.c \
-	segments.c \
-	sequencer.c \
-	table.c
+	gene.cc \
+	genome.cc \
+	segments.cc \
+	sequencer.cc \
+	table.cc
 
 LIBSRCS += \
-	bitmap.c \
-	hash.c \
-	hashtable.c \
-	pair.c \
-	random.c \
-	list.c \
-	mt19937ar.c \
-	thread.c \
-	vector.c
+	bitmap.cc \
+	hash.cc \
+	hashtable.cc \
+	pair.cc \
+	list.cc \
+	thread.cc \
+	vector.cc
 
-OBJS := ${SRCS:.c=.o} ${LIBSRCS:%.c=lib_%.o}
+OBJS := ${SRCS:.cc=.o} ${LIBSRCS:%.cc=lib_%.o}
 
-CFLAGS += -DLIST_NO_DUPLICATES
-CFLAGS += -DCHUNK_STEP1=12
+CXXFLAGS += -DLIST_NO_DUPLICATES
+CXXFLAGS += -DCHUNK_STEP1=12
 
 include ../Makefile.common
 

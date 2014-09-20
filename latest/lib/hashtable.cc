@@ -86,7 +86,6 @@
 #include "hashtable.h"
 #include "list.h"
 #include "pair.h"
-#include "types.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -212,7 +211,7 @@ TMallocBuckets (
 TM_SAFE
 hashtable_t*
 TMhashtable_alloc (long initNumBucket,
-                   ulong_t (*hash)(const void*),
+                   unsigned long (*hash)(const void*),
                    long (*comparePairs)(const pair_t*, const pair_t*),
                    long resizeRatio,
                    long growthFactor)
@@ -339,8 +338,8 @@ TMhashtable_containsKey (  hashtable_t* hashtablePtr, void* keyPtr)
     pair_t* pairPtr;
     pair_t findPair;
     unsigned long i;
-    //ulong_t (*hash)(const void*) TM_IFUNC_DECL = hashtablePtr->hash;
-    ulong_t (*hash)(const void*) TM_SAFE = hashtablePtr->hash;
+    //unsigned long (*hash)(const void*) TM_IFUNC_DECL = hashtablePtr->hash;
+    unsigned long (*hash)(const void*) TM_SAFE = hashtablePtr->hash;
 
     TM_IFUNC_CALL1(i, hash, keyPtr);
     i = i % hashtablePtr->numBucket;
@@ -365,8 +364,8 @@ TMhashtable_find (  hashtable_t* hashtablePtr, void* keyPtr)
     pair_t* pairPtr;
     pair_t findPair;
     unsigned long i;
-    //ulong_t (*hash)(const void*) TM_IFUNC_DECL = hashtablePtr->hash;
-    ulong_t (*hash)(const void*) TM_SAFE = hashtablePtr->hash;
+    //unsigned long (*hash)(const void*) TM_IFUNC_DECL = hashtablePtr->hash;
+    unsigned long (*hash)(const void*) TM_SAFE = hashtablePtr->hash;
 
     TM_IFUNC_CALL1(i, hash, keyPtr);
     i = i % hashtablePtr->numBucket;
@@ -395,8 +394,8 @@ bool
 TMhashtable_insert (
                     hashtable_t* hashtablePtr, void* keyPtr, void* dataPtr)
 {
-  //ulong_t (*hash)(const void*) TM_IFUNC_DECL = hashtablePtr->hash;
-    ulong_t (*hash)(const void*) TM_SAFE = hashtablePtr->hash;
+  //unsigned long (*hash)(const void*) TM_IFUNC_DECL = hashtablePtr->hash;
+    unsigned long (*hash)(const void*) TM_SAFE = hashtablePtr->hash;
     long numBucket = hashtablePtr->numBucket;
     unsigned long i;
 
@@ -442,8 +441,8 @@ bool
 TMhashtable_remove (  hashtable_t* hashtablePtr, void* keyPtr)
 {
     long numBucket = hashtablePtr->numBucket;
-    //ulong_t (*hash)(const void*) TM_IFUNC_DECL = hashtablePtr->hash;
-    ulong_t (*hash)(const void*) TM_SAFE = hashtablePtr->hash;
+    //unsigned long (*hash)(const void*) TM_IFUNC_DECL = hashtablePtr->hash;
+    unsigned long (*hash)(const void*) TM_SAFE = hashtablePtr->hash;
     unsigned long i;
     list_t* chainPtr;
     pair_t* pairPtr;
@@ -483,10 +482,10 @@ TMhashtable_remove (  hashtable_t* hashtablePtr, void* keyPtr)
 #include <stdio.h>
 
 
-static ulong_t
+static unsigned long
 hash (const void* keyPtr)
 {
-    return ((ulong_t)(*(long*)keyPtr));
+    return ((unsigned long)(*(long*)keyPtr));
 }
 
 

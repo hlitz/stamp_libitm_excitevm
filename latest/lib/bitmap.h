@@ -69,12 +69,9 @@
  */
 
 
-#ifndef BITMAP_H
-#define BITMAP_H 1
-
+#pragma once
 
 #include "tm.h"
-#include "types.h"
 
 
 #ifdef __cplusplus
@@ -82,11 +79,11 @@ extern "C" {
 #endif
 
 
-typedef struct bitmap {
+struct bitmap_t {
     long numBit;
     long numWord;
-    ulong_t* bits;
-} bitmap_t;
+    unsigned long* bits;
+};
 
 
 /* =============================================================================
@@ -236,14 +233,3 @@ bitmap_toggleAll (bitmap_t* bitmapPtr);
 #ifdef __cplusplus
 }
 #endif
-
-
-#endif /* BITMAP_H */
-
-
-/* =============================================================================
- *
- * End of bitmap.h
- *
- * =============================================================================
- */

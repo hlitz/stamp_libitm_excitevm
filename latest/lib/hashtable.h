@@ -81,15 +81,11 @@
  */
 
 
-#ifndef HASHTABLE_H
-#define HASHTABLE_H 1
-
+#pragma once
 
 #include "list.h"
 #include "pair.h"
 #include "tm.h"
-#include "types.h"
-
 
 #ifdef __cplusplus
 extern "C" {
@@ -108,7 +104,7 @@ typedef struct hashtable {
     long size;
 #endif
     //[wer210] the hash function and comparator should be TM_SAFE
-    TM_SAFE ulong_t (*hash)(const void*);
+    TM_SAFE unsigned long (*hash)(const void*);
     TM_SAFE long (*comparePairs)(const pair_t*, const pair_t*);
     long resizeRatio;
     long growthFactor;
@@ -164,7 +160,7 @@ TM_SAFE
 hashtable_t*
 TMhashtable_alloc (
                    long initNumBucket,
-                   ulong_t (*hash)(const void*),
+                   unsigned long (*hash)(const void*),
                    long (*comparePairs)(const pair_t*, const pair_t*),
                    long resizeRatio,
                    long growthFactor);
@@ -256,14 +252,3 @@ TMhashtable_remove (hashtable_t* hashtablePtr, void* keyPtr);
 #ifdef __cplusplus
 }
 #endif
-
-
-#endif /* HASHTABLE_H */
-
-
-/* =============================================================================
- *
- * End of hashtable.h
- *
- * =============================================================================
- */
