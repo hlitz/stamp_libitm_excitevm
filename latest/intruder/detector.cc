@@ -79,7 +79,7 @@
 #include "vector.h"
 
 
-struct detector {
+struct detector_t {
     dictionary_t* dictionaryPtr;
     vector_t* preprocessorVectorPtr;
 };
@@ -160,7 +160,7 @@ Pdetector_free (detector_t* detectorPtr)
 void
 detector_addPreprocessor (detector_t* detectorPtr, preprocessor_t p)
 {
-    bool_t status = vector_pushBack(detectorPtr->preprocessorVectorPtr,
+    bool status = vector_pushBack(detectorPtr->preprocessorVectorPtr,
                                     (void*)p);
     assert(status);
 }
@@ -170,7 +170,7 @@ detector_addPreprocessor (detector_t* detectorPtr, preprocessor_t p)
  * detector_process
  * =============================================================================
  */
-error_t
+int_error_t
 detector_process (detector_t* detectorPtr, char* str)
 {
     /*

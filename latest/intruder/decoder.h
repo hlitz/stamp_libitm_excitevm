@@ -68,14 +68,12 @@
  * =============================================================================
  */
 
-#ifndef DECODER_H
-#define DECODER_H 1
-
+#pragma once
 
 #include "error.h"
 #include "tm.h"
 
-typedef struct decoder decoder_t;
+struct decoder_t;
 
 
 /* =============================================================================
@@ -99,7 +97,7 @@ decoder_free (decoder_t* decoderPtr);
  * =============================================================================
  */
 TM_SAFE
-error_t
+int_error_t
 TMdecoder_process (  decoder_t* decoderPtr, char* bytes, long numByte);
 
 
@@ -115,14 +113,3 @@ TMdecoder_getComplete (  decoder_t* decoderPtr, long* decodedFlowIdPtr);
 
 #define TMDECODER_PROCESS(d, b, n)      TMdecoder_process(d, b, n)
 #define TMDECODER_GETCOMPLETE(d, f)     TMdecoder_getComplete(d, f)
-
-
-#endif /* DECODER_H */
-
-
-/* =============================================================================
- *
- * End of decoder.h
- *
- * =============================================================================
- */

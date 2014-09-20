@@ -73,20 +73,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <random>
 #include "detector.h"
 #include "dictionary.h"
 #include "map.h"
 #include "packet.h"
 #include "queue.h"
-#include "random.h"
 #include "stream.h"
 #include "tm.h"
 #include "vector.h"
 
 
-struct stream {
+struct stream_t {
     long percentAttack;
-    random_t* randomPtr;
+    std::mt19937* randomPtr;
     vector_t* allocVectorPtr;
     queue_t* packetQueuePtr;
     MAP_T* attackMapPtr;
@@ -106,7 +106,7 @@ stream_alloc (long percentAttack)
     if (streamPtr) {
         assert(percentAttack >= 0 && percentAttack <= 100);
         streamPtr->percentAttack = percentAttack;
-        streamPtr->randomPtr = random_alloc();
+        streamPtr->randomPtr = new std::mt19937();
         assert(streamPtr->randomPtr);
         streamPtr->allocVectorPtr = vector_alloc(1);
         assert(streamPtr->allocVectorPtr);
@@ -139,7 +139,7 @@ stream_free (stream_t* streamPtr)
     MAP_FREE(streamPtr->attackMapPtr);
     queue_free(streamPtr->packetQueuePtr);
     vector_free(streamPtr->allocVectorPtr);
-    random_free(streamPtr->randomPtr);
+    delete streamPtr->randomPtr;
     free(streamPtr);
 }
 
@@ -153,18 +153,18 @@ stream_free (stream_t* streamPtr)
 static void
 splitIntoPackets (char* str,
                   long flowId,
-                  random_t* randomPtr,
+                  std::mt19937* randomPtr,
                   vector_t* allocVectorPtr,
                   queue_t* packetQueuePtr)
 {
     long numByte = strlen(str);
-    long numPacket = random_generate(randomPtr) % numByte + 1;
+    long numPacket = randomPtr->operator()() % numByte + 1;
 
     long numDataByte = numByte / numPacket;
 
     long p;
     for (p = 0; p < (numPacket - 1); p++) {
-        bool_t status;
+        bool status;
         char* bytes = (char*)malloc(PACKET_HEADER_LENGTH + numDataByte);
         assert(bytes);
         status = vector_pushBack(allocVectorPtr, (void*)bytes);
@@ -179,7 +179,7 @@ splitIntoPackets (char* str,
         assert(status);
     }
 
-    bool_t status;
+    bool status;
     long lastNumDataByte = numDataByte + numByte % numPacket;
     char* bytes = (char*)malloc(PACKET_HEADER_LENGTH + lastNumDataByte);
     assert(bytes);
@@ -211,7 +211,7 @@ stream_generate (stream_t* streamPtr,
     long numAttack = 0;
 
     long      percentAttack  = streamPtr->percentAttack;
-    random_t* randomPtr      = streamPtr->randomPtr;
+    std::mt19937* randomPtr      = streamPtr->randomPtr;
     vector_t* allocVectorPtr = streamPtr->allocVectorPtr;
     queue_t*  packetQueuePtr = streamPtr->packetQueuePtr;
     MAP_T*    attackMapPtr   = streamPtr->attackMapPtr;
@@ -220,7 +220,7 @@ stream_generate (stream_t* streamPtr,
     assert(detectorPtr);
     detector_addPreprocessor(detectorPtr, &preprocessor_toLower);
 
-    random_seed(randomPtr, seed);
+    randomPtr->seed(seed);
     queue_clear(packetQueuePtr);
 
     long range = '~' - ' ' + 1;
@@ -230,10 +230,10 @@ stream_generate (stream_t* streamPtr,
     for (f = 1; f <= numFlow; f++) {
         char* str;
         //[wer210] added cast to long
-        if ((long)(random_generate(randomPtr) % 100) < percentAttack) {
-            long s = random_generate(randomPtr) % global_numDefaultSignature;
+        if ((long)(randomPtr->operator()() % 100) < percentAttack) {
+            long s = randomPtr->operator()() % global_numDefaultSignature;
             str = dictionary_get(dictionaryPtr, s);
-            bool_t status =
+            bool status =
                 MAP_INSERT(attackMapPtr, (void*)f, (void*)str);
             assert(status);
             numAttack++;
@@ -241,21 +241,21 @@ stream_generate (stream_t* streamPtr,
             /*
              * Create random string
              */
-            long length = (random_generate(randomPtr) % maxLength) + 1;
+            long length = (randomPtr->operator()() % maxLength) + 1;
             str = (char*)malloc((length + 1) * sizeof(char));
-            bool_t status = vector_pushBack(allocVectorPtr, (void*)str);
+            bool status = vector_pushBack(allocVectorPtr, (void*)str);
             assert(status);
             long l;
             for (l = 0; l < length; l++) {
-                str[l] = ' ' + (char)(random_generate(randomPtr) % range);
+                str[l] = ' ' + (char)(randomPtr->operator()() % range);
             }
             str[l] = '\0';
             char* str2 = (char*)malloc((length + 1) * sizeof(char));
             assert(str2);
             strcpy(str2, str);
-            error_t error = detector_process(detectorPtr, str2); /* updates in-place */
+            int_error_t error = detector_process(detectorPtr, str2); /* updates in-place */
             if (error == ERROR_SIGNATURE) {
-                bool_t status = MAP_INSERT(attackMapPtr,
+                bool status = MAP_INSERT(attackMapPtr,
                                            (void*)f,
                                            (void*)str);
                 assert(status);
@@ -292,7 +292,7 @@ stream_getPacket (stream_t* streamPtr)
  * stream_isAttack
  * =============================================================================
  */
-bool_t
+bool
 stream_isAttack (stream_t* streamPtr, long flowId)
 {
     return MAP_CONTAINS(streamPtr->attackMapPtr, (void*)flowId);

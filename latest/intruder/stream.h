@@ -68,14 +68,12 @@
  * =============================================================================
  */
 
-
-#ifndef STREAM_H
-#define STREAM_H 1
+#pragma once
 
 #include "dictionary.h"
 #include "tm.h"
 
-typedef struct stream stream_t;
+struct stream_t;
 
 
 /* =============================================================================
@@ -122,18 +120,8 @@ stream_getPacket (stream_t* streamPtr);
  * stream_isAttack
  * =============================================================================
  */
-bool_t
+bool
 stream_isAttack (stream_t* streamPtr, long flowId);
 
 
 #define TMSTREAM_GETPACKET(s)           stream_getPacket( s)
-
-#endif /* STREAM_H */
-
-
-/* =============================================================================
- *
- * End of stream.h
- *
- * =============================================================================
- */

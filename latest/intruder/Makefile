@@ -1,56 +1,48 @@
 PROG := intruder
 
 SRCS += \
-	decoder.c \
-	detector.c \
-	dictionary.c \
-	intruder.c \
-	packet.c \
-	preprocessor.c \
-	stream.c
+	decoder.cc \
+	detector.cc \
+	dictionary.cc \
+	intruder.cc \
+	packet.cc \
+	preprocessor.cc \
+	stream.cc
 
-LIBSRCS += \
-	list.c \
-	mt19937ar.c \
-	pair.c \
-	queue.c \
-	random.c \
-	rbtree.c \
-	thread.c \
-	vector.c
+LIBSRCS += list.cc pair.cc queue.cc rbtree.cc thread.cc vector.cc
 
-OBJS := ${SRCS:.c=.o} ${LIBSRCS:%.c=lib_%.o}
+OBJS := ${SRCS:.cc=.o} ${LIBSRCS:%.cc=lib_%.o}
 
-CFLAGS += -DMAP_USE_RBTREE
+CXXFLAGS += -DMAP_USE_RBTREE
 
 include ../Makefile.common
 
 .PHONY: test_decoder
-test_decoder: CFLAGS += -DTEST_DECODER -O0
-test_decoder: LIB_SRCS := $(LIB)/{list,mt19937ar,queue,random,rbtree}.c
+test_decoder: CXXFLAGS += -DTEST_DECODER -O0
+test_decoder: LIB_SRCS := $(LIB)/{list,mt19937ar,queue,random,rbtree}.cc
 test_decoder:
-	$(CC) $(CFLAGS) decoder.c packet.c $(LIB_SRCS) -o $@
+	$(CC) $(CXXFLAGS) decoder.cc packet.cc $(LIB_SRCS) -o $@
 
 .PHONY: test_detector
-test_detector: CFLAGS += -DTEST_DETECTOR -O0
-test_detector: LIB_SRCS := $(LIB)/vector.c
+test_detector: CXXFLAGS += -DTEST_DETECTOR -O0
+test_detector: LIB_SRCS := $(LIB)/vector.cc
 test_detector:
-	$(CC) $(CFLAGS) detector.c dictionary.c preprocessor.c $(LIB_SRCS) -o $@
+	$(CC) $(CXXFLAGS) detector.cc dictionary.cc preprocessor.cc $(LIB_SRCS) -o $@
 
 .PHONY: test_dictionary
-test_dictionary: CFLAGS += -DTEST_DICTIONARY -O0
-test_dictionary: LIB_SRCS := $(LIB)/vector.c
+test_dictionary: CXXFLAGS += -DTEST_DICTIONARY -O0
+test_dictionary: LIB_SRCS := $(LIB)/vector.cc
 test_dictionary:
-	$(CC) $(CFLAGS) dictionary.c $(LIB_SRCS) -o $@
+	$(CC) $(CXXFLAGS) dictionary.cc $(LIB_SRCS) -o $@
 
 .PHONY: test_preprocessor
-test_preprocessor: CFLAGS += -DTEST_PREPROCESSOR -O0
+test_preprocessor: CXXFLAGS += -DTEST_PREPROCESSOR -O0
 test_preprocessor:
-	$(CC) $(CFLAGS) preprocessor.c -o $@
+	$(CC) $(CXXFLAGS) preprocessor.cc -o $@
 
 .PHONY: test_stream
-test_stream: CFLAGS += -DTEST_STREAM -O0
-test_stream: LIB_SRCS := $(LIB)/{mt19937ar,pair,queue,random,rbtree,vector}.c
+test_stream: CXXFLAGS += -DTEST_STREAM -O0
+test_stream: LIB_SRCS := $(LIB)/{mt19937ar,pair,queue,random,rbtree,vector}.cc
 test_stream:
-	$(CC) $(CFLAGS) stream.c detector.c dictionary.c preprocessor.c $(LIB_SRCS) -o $@
+	$(CC) $(CXXFLAGS) stream.cc detector.cc dictionary.cc preprocessor.cc $(LIB_SRCS) -o $@
 

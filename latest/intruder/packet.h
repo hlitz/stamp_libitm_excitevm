@@ -68,18 +68,15 @@
  * =============================================================================
  */
 
+#pragma once
 
-#ifndef PACKET_H
-#define PACKET_H 1
-
-
-typedef struct packet {
+struct packet_t {
     long flowId;
     long fragmentId;
     long numFragment;
     long length;
     char data[];
-} packet_t;
+};
 
 
 #define PACKET_HEADER_LENGTH (sizeof(packet_t)) /* no data */
@@ -101,14 +98,3 @@ packet_compareFlowId (const void* aPtr, const void* bPtr);
 __attribute__ ((transaction_safe))
 long
 packet_compareFragmentId (const void* aPtr, const void* bPtr);
-
-
-#endif /* PACKET_H */
-
-
-/* =============================================================================
- *
- * End of packet.h
- *
- * =============================================================================
- */

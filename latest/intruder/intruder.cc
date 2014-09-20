@@ -215,7 +215,7 @@ processPackets (void* argPtr)
         packet_t* packetPtr = (packet_t*)bytes;
         long flowId = packetPtr->flowId;
 
-        error_t error;
+        int_error_t error;
         __transaction_atomic {
           error = TMDECODER_PROCESS(decoderPtr,
                                     bytes,
@@ -227,7 +227,7 @@ processPackets (void* argPtr)
              * Currently, stream_generate() does not create these errors.
              */
             assert(0);
-            bool_t status = PVECTOR_PUSHBACK(errorVectorPtr, (void*)flowId);
+            bool status = PVECTOR_PUSHBACK(errorVectorPtr, (void*)flowId);
             assert(status);
         }
 
@@ -238,10 +238,10 @@ processPackets (void* argPtr)
         }
         //TMprint("3.\n");
         if (data) {
-            error_t error = PDETECTOR_PROCESS(detectorPtr, data);
+            int_error_t error = PDETECTOR_PROCESS(detectorPtr, data);
             free(data);
             if (error) {
-                bool_t status = PVECTOR_PUSHBACK(errorVectorPtr,
+                bool status = PVECTOR_PUSHBACK(errorVectorPtr,
                                                  (void*)decodedFlowId);
                 assert(status);
             }
@@ -337,7 +337,7 @@ int main (int argc, char** argv)
         numFound += numError;
         for (e = 0; e < numError; e++) {
             long flowId = (long)vector_at(errorVectorPtr, e);
-            bool_t status = stream_isAttack(streamPtr, flowId);
+            bool status = stream_isAttack(streamPtr, flowId);
             assert(status);
         }
     }

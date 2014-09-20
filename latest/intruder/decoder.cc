@@ -78,7 +78,6 @@
 #include "packet.h"
 #include "queue.h"
 #include "tm.h"
-#include "types.h"
 
 __attribute__ ((transaction_pure))
 void TM_print(char* s)
@@ -86,15 +85,15 @@ void TM_print(char* s)
   printf("%s", s);
 }
 
-struct decoder {
+struct decoder_t {
     MAP_T* fragmentedMapPtr;  /* contains list of packet_t* */
     queue_t* decodedQueuePtr; /* contains decoded_t* */
 };
 
-typedef struct decoded {
+struct decoded_t {
     long flowId;
     char* data;
-} decoded_t;
+};
 
 
 /* =============================================================================
@@ -138,10 +137,10 @@ decoder_free (decoder_t* decoderPtr)
  */
 //[wer] this function was problematic to write-back algorithms.
 TM_SAFE
-error_t
+int_error_t
 TMdecoder_process (  decoder_t* decoderPtr, char* bytes, long numByte)
 {
-    bool_t status;
+    bool status;
 
     /*
      * Basic error checking
