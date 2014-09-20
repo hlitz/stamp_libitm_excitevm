@@ -113,7 +113,7 @@ TMnet_applyOperation (
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 TMnet_hasEdge (  net_t* netPtr, long fromId, long toId);
 
 
@@ -123,7 +123,7 @@ TMnet_hasEdge (  net_t* netPtr, long fromId, long toId);
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 TMnet_isPath (
               net_t* netPtr,
               long fromId,
@@ -136,7 +136,7 @@ TMnet_isPath (
  * net_isCycle
  * =============================================================================
  */
-bool_t
+bool
 net_isCycle (net_t* netPtr);
 
 
@@ -164,7 +164,7 @@ net_getChildIdListPtr (net_t* netPtr, long id);
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 TMnet_findAncestors (net_t* netPtr,
                      long id,
                      bitmap_t* ancestorBitmapPtr,
@@ -178,7 +178,7 @@ TMnet_findAncestors (net_t* netPtr,
  * =============================================================================
  */
 TM_SAFE
-bool_t
+bool
 TMnet_findDescendants (net_t* netPtr,
                        long id,
                        bitmap_t* descendantBitmapPtr,
@@ -193,7 +193,7 @@ void
 net_generateRandomEdges (net_t* netPtr,
                          long maxNumParent,
                          long percentParent,
-                         random_t* randomPtr);
+                         std::mt19937* randomPtr);
 
 
 #define TMNET_APPLYOPERATION(net, op, from, to)     TMnet_applyOperation(net, \

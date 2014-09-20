@@ -298,7 +298,7 @@ makeNode (long parentIndex,
         adtree_vary_t* varyPtr =
             makeVary(parentIndex, v, start, numRecord, dataPtr);
         assert(varyPtr);
-        bool_t status = vector_pushBack(varyVectorPtr, (void*)varyPtr);
+        bool status = vector_pushBack(varyVectorPtr, (void*)varyPtr);
         assert(status);
     }
 
@@ -377,7 +377,7 @@ getCount (adtree_node_t* nodePtr,
         for (qq = 0; qq < numQuery; qq++) {
             if (qq != q) {
               //[wer] TM_SAFE call
-                bool_t status = vector_pushBack(superQueryVectorPtr,
+                bool status = vector_pushBack(superQueryVectorPtr,
                                                 vector_at(queryVectorPtr, qq));
                 assert(status);
             }
@@ -492,7 +492,7 @@ adtree_getCount (adtree_t* adtreePtr, vector_t* queryVectorPtr)
 static void printNode (adtree_node_t* nodePtr);
 static void printVary (adtree_vary_t* varyPtr);
 
-bool_t global_doPrint = FALSE;
+bool global_doPrint = false;
 
 
 static void
@@ -576,7 +576,7 @@ countData (data_t* dataPtr, vector_t* queryVectorPtr)
     long numRecord = dataPtr->numRecord;
     for (r = 0; r < numRecord; r++) {
         char* record = data_getRecord(dataPtr, r);
-        bool_t isMatch = TRUE;
+        bool isMatch = true;
         long q;
         for (q = 0; q < numQuery; q++) {
             query_t* queryPtr = (query_t*)vector_at(queryVectorPtr, q);
@@ -584,7 +584,7 @@ countData (data_t* dataPtr, vector_t* queryVectorPtr)
             if ((queryValue != QUERY_VALUE_WILDCARD) &&
                 ((char)queryValue) != record[queryPtr->index])
             {
-                isMatch = FALSE;
+                isMatch = false;
                 break;
             }
         }
@@ -622,7 +622,7 @@ testCount (adtree_t* adtreePtr,
     long i;
     for (i = 1; i < numVar; i++) {
         query.index = index + i;
-        bool_t status = vector_pushBack(queryVectorPtr, (void*)&query);
+        bool status = vector_pushBack(queryVectorPtr, (void*)&query);
         assert(status);
 
         query.value = 0;

@@ -77,7 +77,6 @@
 #include "thread.h"
 #include "timer.h"
 #include "tm.h"
-#include "types.h"
 
 enum param_types {
     PARAM_EDGE    = (unsigned char)'e',
@@ -263,9 +262,9 @@ int main (int argc, char** argv)
     printf("Generating data... ");
     fflush(stdout);
 
-    random_t* randomPtr = random_alloc();
+    std::mt19937* randomPtr = new std::mt19937();
     assert(randomPtr);
-    random_seed(randomPtr, randomSeed);
+    randomPtr->seed(randomSeed);
 
     data_t* dataPtr = data_alloc(numVar, numRecord, randomPtr);
     assert(dataPtr);
@@ -333,7 +332,7 @@ int main (int argc, char** argv)
      * Check solution
      */
 
-    bool_t status = net_isCycle(learnerPtr->netPtr);
+    bool status = net_isCycle(learnerPtr->netPtr);
     assert(!status);
 
 #ifndef SIMULATOR
@@ -347,7 +346,7 @@ int main (int argc, char** argv)
      */
 
     fflush(stdout);
-    random_free(randomPtr);
+    delete randomPtr;
 #ifndef SIMULATOR
     adtree_free(adtreePtr);
     learner_free(learnerPtr);

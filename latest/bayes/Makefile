@@ -1,53 +1,46 @@
 PROG := bayes
 
 SRCS += \
-	adtree.c \
-	bayes.c \
-	data.c \
-	learner.c \
-	net.c \
-	sort.c
+	adtree.cc \
+	bayes.cc \
+	data.cc \
+	learner.cc \
+	net.cc \
+	sort.cc
 
-LIBSRCS += \
-	bitmap.c \
-	list.c \
-	mt19937ar.c \
-	queue.c \
-	random.c \
-	thread.c \
-	vector.c
+LIBSRCS += bitmap.cc list.cc queue.cc thread.cc vector.cc
 
-OBJS    := ${SRCS:.c=.o} ${LIBSRCS:%.c=lib_%.o}
+OBJS    := ${SRCS:.cc=.o} ${LIBSRCS:%.cc=lib_%.o}
 
-CFLAGS  += -DLIST_NO_DUPLICATES
-CFLAGS  += -DLEARNER_TRY_REMOVE
-CFLAGS  += -DLEARNER_TRY_REVERSE
+CXXFLAGS  += -DLIST_NO_DUPLICATES
+CXXFLAGS  += -DLEARNER_TRY_REMOVE
+CXXFLAGS  += -DLEARNER_TRY_REVERSE
 
 LDFLAGS += -lm
 
 include ../Makefile.common
 
 .PHONY: test_data
-test_data: CFLAGS += -DTEST_DATA -O0
-test_data: LIB_SRCS := ../lib/{bitmap,list,queue,random,mt19937ar,vector}.c
+test_data: CXXFLAGS += -DTEST_DATA -O0
+test_data: LIB_SRCS := ../lib/{bitmap,list,queue,random,mt19937ar,vector}.cc
 test_data:
-	$(CC) $(CFLAGS) data.c sort.c net.c $(LIB_SRCS) -o $@
+	$(CC) $(CXXFLAGS) data.cc sort.cc net.cc $(LIB_SRCS) -o $@
 
 .PHONY: test_net
-test_net: CFLAGS += -DTEST_NET -O0
-test_net: LIB_SRCS := ../lib/{list,queue,bitmap,random,mt19937ar,vector}.c
+test_net: CXXFLAGS += -DTEST_NET -O0
+test_net: LIB_SRCS := ../lib/{list,queue,bitmap,random,mt19937ar,vector}.cc
 test_net:
-	$(CC) $(CFLAGS) net.c $(LIB_SRCS) -o $@
+	$(CC) $(CXXFLAGS) net.cc $(LIB_SRCS) -o $@
 
 .PHONY: test_adtree
-test_adtree: CFLAGS += -DTEST_ADTREE -O0
-test_adtree: LIB_SRCS := ../lib/{bitmap,queue,list,random,mt19937ar,vector}.c
+test_adtree: CXXFLAGS += -DTEST_ADTREE -O0
+test_adtree: LIB_SRCS := ../lib/{bitmap,queue,list,random,mt19937ar,vector}.cc
 test_adtree:
-	$(CC) $(CFLAGS) adtree.c data.c net.c sort.c $(LIB_SRCS) -o $@
+	$(CC) $(CXXFLAGS) adtree.cc data.cc net.cc sort.cc $(LIB_SRCS) -o $@
 
 .PHONY: test_learner
-test_learner: CFLAGS += -DTEST_LEARNER -O0
-test_learner: LIB_SRCS := ../lib/{bitmap,list,queue,random,mt19937ar,thread,vector}.c -lm
+test_learner: CXXFLAGS += -DTEST_LEARNER -O0
+test_learner: LIB_SRCS := ../lib/{bitmap,list,queue,random,mt19937ar,thread,vector}.cc -lm
 test_learner:
-	$(CC) $(CFLAGS) learner.c sort.c adtree.c data.c net.c $(LIB_SRCS) -o $@
+	$(CC) $(CXXFLAGS) learner.cc sort.cc adtree.cc data.cc net.cc $(LIB_SRCS) -o $@
 

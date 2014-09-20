@@ -75,9 +75,7 @@
 #include "bitmap.h"
 #include "data.h"
 #include "net.h"
-#include "random.h"
 #include "sort.h"
-#include "types.h"
 #include "vector.h"
 
 enum data_config {
@@ -91,7 +89,7 @@ enum data_config {
  * =============================================================================
  */
 data_t*
-data_alloc (long numVar, long numRecord, random_t* randomPtr)
+data_alloc (long numVar, long numRecord, std::mt19937* randomPtr)
 {
     data_t* dataPtr;
 
@@ -135,9 +133,9 @@ data_free (data_t* dataPtr)
 net_t*
 data_generate (data_t* dataPtr, long seed, long maxNumParent, long percentParent)
 {
-    random_t* randomPtr = dataPtr->randomPtr;
+    std::mt19937* randomPtr = dataPtr->randomPtr;
     if (seed >= 0) {
-        random_seed(randomPtr, seed);
+        randomPtr->seed(seed);
     }
 
     /*
@@ -164,7 +162,7 @@ data_generate (data_t* dataPtr, long seed, long maxNumParent, long percentParent
         assert(thresholds);
         long t;
         for (t = 0; t < numThreshold; t++) {
-            long threshold = random_generate(randomPtr) % (DATA_PRECISION + 1);
+            long threshold = randomPtr->operator()() % (DATA_PRECISION + 1);
             thresholds[t] = threshold;
         }
         thresholdsTable[v] = thresholds;
@@ -197,7 +195,7 @@ data_generate (data_t* dataPtr, long seed, long maxNumParent, long percentParent
         long numChild = list_getSize(childIdListPtr);
         if (numChild == 0) {
 
-            bool_t status;
+            bool status;
 
             /*
              * Use breadth-first search to find net connected to this leaf
@@ -261,7 +259,7 @@ data_generate (data_t* dataPtr, long seed, long maxNumParent, long percentParent
                 assert(value != DATA_INIT);
                 index = (index << 1) + value;
             }
-            long rnd = random_generate(randomPtr) % DATA_PRECISION;
+            long rnd = randomPtr->operator()() % DATA_PRECISION;
             long threshold = thresholdsTable[v][index];
             record[v] = ((rnd < threshold) ? 1 : 0);
         }
@@ -305,10 +303,10 @@ data_getRecord (data_t* dataPtr, long index)
 
 /* =============================================================================
  * data_copy
- * -- Returns FALSE on failure
+ * -- Returns false on failure
  * =============================================================================
  */
-bool_t
+bool
 data_copy (data_t* dstPtr, data_t* srcPtr)
 {
     long numDstDatum = dstPtr->numVar * dstPtr->numRecord;
@@ -317,7 +315,7 @@ data_copy (data_t* dstPtr, data_t* srcPtr)
         free(dstPtr->records);
         dstPtr->records = (char*)calloc(numSrcDatum, sizeof(char));
         if (dstPtr->records == NULL) {
-            return FALSE;
+            return false;
         }
     }
 
@@ -325,7 +323,7 @@ data_copy (data_t* dstPtr, data_t* srcPtr)
     dstPtr->numRecord = srcPtr->numRecord;
     memcpy(dstPtr->records, srcPtr->records, (numSrcDatum * sizeof(char)));
 
-    return TRUE;
+    return true;
 }
 
 
