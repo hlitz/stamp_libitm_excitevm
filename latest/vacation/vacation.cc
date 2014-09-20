@@ -84,7 +84,6 @@
 #include "reservation.h"
 #include "thread.h"
 #include "timer.h"
-#include "tm.h"
 #include "utility.h"
 
 enum param_types {
@@ -216,7 +215,7 @@ initializeManager ()
     manager_t* managerPtr;
     long i;
     long numRelation;
-    std::mt19937* randomPtr;
+    std::mt19937 randomPtr;
     long* ids;
     bool (*manager_add[])(manager_t*, long, long, long) = {
         &manager_addCar,
@@ -230,10 +229,7 @@ initializeManager ()
     printf("Initializing manager... ");
     fflush(stdout);
 
-    randomPtr = new std::mt19937();
-    assert(randomPtr != NULL);
-
-    managerPtr = manager_alloc();
+    managerPtr = new manager_t();
     assert(managerPtr != NULL);
 
     numRelation = (long)global_params[PARAM_RELATIONS];
@@ -246,8 +242,8 @@ initializeManager ()
 
         /* Shuffle ids */
         for (i = 0; i < numRelation; i++) {
-            long x = randomPtr->operator()() % numRelation;
-            long y = randomPtr->operator()() % numRelation;
+            long x = randomPtr() % numRelation;
+            long y = randomPtr() % numRelation;
             long tmp = ids[x];
             ids[x] = ids[y];
             ids[y] = tmp;
@@ -257,8 +253,8 @@ initializeManager ()
         for (i = 0; i < numRelation; i++) {
             bool status;
             long id = ids[i];
-            long num = ((randomPtr->operator()() % 5) + 1) * 100;
-            long price = ((randomPtr->operator()() % 5) * 10) + 50;
+            long num = ((randomPtr() % 5) + 1) * 100;
+            long price = ((randomPtr() % 5) * 10) + 50;
             status = manager_add[t](managerPtr, id, num, price);
             assert(status);
         }
@@ -268,7 +264,6 @@ initializeManager ()
     puts("done.");
     fflush(stdout);
 
-    delete randomPtr;
     free(ids);
 
     return managerPtr;
@@ -450,7 +445,7 @@ int main (int argc, char** argv)
     /*
      * TODO: The contents of the manager's table need to be deallocated.
      */
-    manager_free(managerPtr);
+    delete managerPtr;
     puts("done.");
     fflush(stdout);
 
@@ -458,11 +453,3 @@ int main (int argc, char** argv)
 
     return 0;
 }
-
-
-/* =============================================================================
- *
- * End of vacation.c
- *
- * =============================================================================
- */

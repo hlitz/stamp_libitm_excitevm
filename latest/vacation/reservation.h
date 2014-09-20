@@ -71,8 +71,6 @@
 
 #pragma once
 
-#include "tm.h"
-
 enum reservation_type_t {
     RESERVATION_CAR,
     RESERVATION_FLIGHT,
@@ -84,6 +82,11 @@ struct reservation_info_t {
     reservation_type_t type;
     long id;
     long price; /* holds price at time reservation was made */
+
+    __attribute__((transaction_safe))
+    reservation_info_t(reservation_type_t type, long id, long price);
+
+    // NB: no need to provide destructor... default will do
 };
 
 struct reservation_t {
@@ -92,26 +95,11 @@ struct reservation_t {
     long numFree;
     long numTotal;
     long price;
+
+    __attribute__((transaction_safe))
+    reservation_t(long id, long price, long numTotal, bool* success);
 };
 
-
-/* =============================================================================
- * reservation_info_alloc
- * -- Returns NULL on failure
- * =============================================================================
- */
-TM_SAFE
-reservation_info_t*
-reservation_info_alloc (reservation_type_t type, long id, long price);
-
-
-/* =============================================================================
- * reservation_info_free
- * =============================================================================
- */
-TM_SAFE
-void
-reservation_info_free (  reservation_info_t* reservationInfoPtr);
 
 
 /* =============================================================================
@@ -120,20 +108,9 @@ reservation_info_free (  reservation_info_t* reservationInfoPtr);
  * =============================================================================
  */
 //[wer] safe comparator
-TM_SAFE
+__attribute__((transaction_safe))
 long
 reservation_info_compare (reservation_info_t* aPtr, reservation_info_t* bPtr);
-
-
-/* =============================================================================
- * reservation_alloc
- * -- Returns NULL on failure
- * =============================================================================
- */
-TM_SAFE
-reservation_t*
-reservation_alloc (  long id, long price, long numTotal, bool* success);
-
 
 /* =============================================================================
  * reservation_addToTotal
@@ -141,7 +118,7 @@ reservation_alloc (  long id, long price, long numTotal, bool* success);
  * -- Returns TRUE on success, else FALSE
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 reservation_addToTotal (  reservation_t* reservationPtr, long num, bool* success);
 
@@ -151,7 +128,7 @@ reservation_addToTotal (  reservation_t* reservationPtr, long num, bool* success
  * -- Returns TRUE on success, else FALSE
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 reservation_make (  reservation_t* reservationPtr);
 
@@ -161,7 +138,7 @@ reservation_make (  reservation_t* reservationPtr);
  * -- Returns TRUE on success, else FALSE
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 reservation_cancel (  reservation_t* reservationPtr);
 
@@ -172,16 +149,6 @@ reservation_cancel (  reservation_t* reservationPtr);
  * -- Returns TRUE on success, else FALSE
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 reservation_updatePrice (  reservation_t* reservationPtr, long newPrice);
-
-
-
-/* =============================================================================
- * reservation_free
- * =============================================================================
- */
-TM_SAFE
-void
-reservation_free (reservation_t* reservationPtr);

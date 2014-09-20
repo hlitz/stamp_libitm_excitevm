@@ -68,10 +68,7 @@
  * =============================================================================
  */
 
-
-#ifndef ELEMENT_H
-#define ELEMENT_H 1
-
+#pragma once
 
 #include "coordinate.h"
 #include "list.h"
@@ -80,7 +77,7 @@
 
 
 typedef pair_t         edge_t;
-struct element {
+struct element_t {
     coordinate_t coordinates[3];
     long numCoordinate;
     coordinate_t circumCenter;
@@ -96,7 +93,6 @@ struct element {
     bool isGarbage;
     bool isReferenced;
 };
-typedef struct element element_t;
 
 
 /* =============================================================================
@@ -383,14 +379,3 @@ element_printAngles (element_t* elementPtr);
 #define TMELEMENT_SETISGARBAGE(e, s)    TMelement_setIsGarbage(  e, s)
 #define TMELEMENT_ADDNEIGHBOR(e, n)     TMelement_addNeighbor(  e, n)
 #define TMELEMENT_GETNEIGHBORLIST(e)    TMelement_getNeighborListPtr(  e)
-
-
-#endif /* ELEMENT_H */
-
-
-/* =============================================================================
- *
- * End of element.h
- *
- * =============================================================================
- */

@@ -68,10 +68,7 @@
  * =============================================================================
  */
 
-
-#ifndef REGION_H
-#define REGION_H 1
-
+#pragma once
 
 #include "element.h"
 #include "heap.h"
@@ -79,7 +76,7 @@
 #include "tm.h"
 
 
-typedef struct region  region_t;
+struct region_t;
 
 /* =============================================================================
  * Pregion_alloc
@@ -138,14 +135,3 @@ TMregion_transferBad (region_t* regionPtr, heap_t* workHeapPtr);
 #define PREGION_CLEARBAD(r)             Pregion_clearBad(r)
 #define TMREGION_REFINE(r, e, m, s)        TMregion_refine(r, e, m, s)
 #define TMREGION_TRANSFERBAD(r, q)      TMregion_transferBad(r, q)
-
-
-#endif /* REGION_H */
-
-
-/* =============================================================================
- *
- * End of region.h
- *
- * =============================================================================
- */

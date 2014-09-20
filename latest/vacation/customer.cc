@@ -76,15 +76,13 @@
 #include "list.h"
 #include "memory.h"
 #include "reservation.h"
-#include "tm.h"
-
 
 /* =============================================================================
  * compareReservationInfo
  * =============================================================================
  */
 //static
-TM_SAFE long
+__attribute__((transaction_safe)) long
 compareReservationInfo (const void* aPtr, const void* bPtr)
 {
     return reservation_info_compare((reservation_info_t*)aPtr,
@@ -96,21 +94,14 @@ compareReservationInfo (const void* aPtr, const void* bPtr)
  * customer_alloc
  * =============================================================================
  */
-TM_SAFE customer_t*
-customer_alloc (  long id)
+__attribute__((transaction_safe))
+customer_t::customer_t(long _id)
 {
-    customer_t* customerPtr;
+    id = _id;
 
-    customerPtr = (customer_t*)malloc(sizeof(customer_t));
-    assert(customerPtr != NULL);
-
-    customerPtr->id = id;
-
-    //[wer210] compareReservationInfo has to be safe
-    customerPtr->reservationInfoListPtr = TMLIST_ALLOC(&compareReservationInfo);
-    assert(customerPtr->reservationInfoListPtr != NULL);
-
-    return customerPtr;
+    // NB: must initialize with TM_SAFE compare function
+    reservationInfoListPtr = TMLIST_ALLOC(&compareReservationInfo);
+    assert(reservationInfoListPtr != NULL);
 }
 
 
@@ -118,13 +109,11 @@ customer_alloc (  long id)
  * customer_free
  * =============================================================================
  */
-TM_SAFE void
-customer_free (  customer_t* customerPtr)
+__attribute__((transaction_safe))
+customer_t::~customer_t()
 {
-    list_t* reservationInfoListPtr =
-        (list_t*)TM_SHARED_READ_P(customerPtr->reservationInfoListPtr);
+    // [mfs] Is this sufficient?  Does it free the whole list?
     TMLIST_FREE(reservationInfoListPtr);
-    free(customerPtr);
 }
 
 
@@ -133,16 +122,15 @@ customer_free (  customer_t* customerPtr)
  * -- Returns TRUE if success, else FALSE
  * =============================================================================
  */
-TM_SAFE bool
+__attribute__((transaction_safe)) bool
 customer_addReservationInfo (customer_t* customerPtr,
                              reservation_type_t type, long id, long price)
 {
-    reservation_info_t* reservationInfoPtr;
-    reservationInfoPtr = reservation_info_alloc(type, id, price);
-    assert(reservationInfoPtr != NULL);
+    reservation_info_t* reservationInfoPtr =
+        new reservation_info_t(type, id, price);
 
     list_t* reservationInfoListPtr =
-        (list_t*)TM_SHARED_READ_P(customerPtr->reservationInfoListPtr);
+        customerPtr->reservationInfoListPtr;
 
     return TMLIST_INSERT(reservationInfoListPtr, (void*)reservationInfoPtr);
 }
@@ -155,18 +143,14 @@ customer_addReservationInfo (customer_t* customerPtr,
  */
 //[wer210] called only in manager.c, cancel() which is used to cancel a
 //         flight/car/room, which never happens...
-TM_SAFE bool
+__attribute__((transaction_safe)) bool
 customer_removeReservationInfo (customer_t* customerPtr,
                                 reservation_type_t type, long id)
 {
-    reservation_info_t findReservationInfo;
+    // NB: price not used to compare reservation infos
+    reservation_info_t findReservationInfo(type, id, 0);
 
-    findReservationInfo.type = type;
-    findReservationInfo.id = id;
-    /* price not used to compare reservation infos */
-
-    list_t* reservationInfoListPtr =
-        (list_t*)TM_SHARED_READ_P(customerPtr->reservationInfoListPtr);
+    list_t* reservationInfoListPtr = customerPtr->reservationInfoListPtr;
 
     reservation_info_t* reservationInfoPtr =
         (reservation_info_t*)TMLIST_FIND(reservationInfoListPtr,
@@ -184,7 +168,7 @@ customer_removeReservationInfo (customer_t* customerPtr,
       return false;
     }
 
-    reservation_info_free(reservationInfoPtr);
+    delete reservationInfoPtr;
 
     return true;
 }
@@ -195,13 +179,12 @@ customer_removeReservationInfo (customer_t* customerPtr,
  * -- Returns total cost of reservations
  * =============================================================================
  */
-TM_SAFE long
+__attribute__((transaction_safe)) long
 customer_getBill (  customer_t* customerPtr)
 {
     long bill = 0;
     list_iter_t it;
-    list_t* reservationInfoListPtr =
-        (list_t*)TM_SHARED_READ_P(customerPtr->reservationInfoListPtr);
+    list_t* reservationInfoListPtr = customerPtr->reservationInfoListPtr;
 
     TMLIST_ITER_RESET(&it, reservationInfoListPtr);
     while (TMLIST_ITER_HASNEXT(&it)) {
@@ -278,11 +261,3 @@ main ()
 
 
 #endif /* TEST_CUSTOMER */
-
-
-/* =============================================================================
- *
- * End of customer.c
- *
- * =============================================================================
- */

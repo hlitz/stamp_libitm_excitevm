@@ -80,7 +80,7 @@
 #include "mesh.h"
 #include "tm.h"
 
-struct region {
+struct region_t {
     coordinate_t centerCoordinate;
     queue_t*     expandQueuePtr;
     list_t*   beforeListPtr; /* before retriangulation; list to avoid duplicates */

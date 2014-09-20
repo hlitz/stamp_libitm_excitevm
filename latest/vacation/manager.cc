@@ -77,92 +77,59 @@
 #include "pair.h"
 #include "manager.h"
 #include "reservation.h"
-#include "tm.h"
 
 /* =============================================================================
  * DECLARATION OF TM_SAFE FUNCTIONS
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 long
 queryNumFree (  MAP_T* tablePtr, long id);
 
-TM_SAFE
+__attribute__((transaction_safe))
 long
 queryPrice (  MAP_T* tablePtr, long id);
 
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 reserve ( MAP_T* tablePtr, MAP_T* customerTablePtr, long customerId, long id, reservation_type_t type);
 
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 cancel ( MAP_T* tablePtr, MAP_T* customerTablePtr, long customerId, long id, reservation_type_t type);
 
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 addReservation (  MAP_T* tablePtr, long id, long num, long price);
 
-/* =============================================================================
- * tableAlloc
- * =============================================================================
+/**
+ * Constructor for manager objects
  */
-static MAP_T*
-tableAlloc ()
+manager_t::manager_t()
 {
-    return MAP_ALLOC(NULL, NULL);
+    carTablePtr = MAP_ALLOC(NULL, NULL);
+    roomTablePtr = MAP_ALLOC(NULL, NULL);
+    flightTablePtr = MAP_ALLOC(NULL, NULL);
+    customerTablePtr = MAP_ALLOC(NULL, NULL);
+    // [mfs] Once map is a c++ object, these asserts are unnecessary
+    assert(carTablePtr != NULL);
+    assert(roomTablePtr != NULL);
+    assert(flightTablePtr != NULL);
+    assert(customerTablePtr != NULL);
 }
 
-
-/* =============================================================================
- * manager_alloc
- * =============================================================================
+/**
+ * Destructor
+ *
+ * [mfs] notes in the earlier code suggest that contents are not deleted
+ *       here.  That's bad, but we can't fix it yet.
  */
-manager_t*
-manager_alloc ()
+manager_t::~manager_t()
 {
-    manager_t* managerPtr;
-
-    managerPtr = (manager_t*)malloc(sizeof(manager_t));
-    assert(managerPtr != NULL);
-
-    managerPtr->carTablePtr = tableAlloc();
-    managerPtr->roomTablePtr = tableAlloc();
-    managerPtr->flightTablePtr = tableAlloc();
-    managerPtr->customerTablePtr = tableAlloc();
-    assert(managerPtr->carTablePtr != NULL);
-    assert(managerPtr->roomTablePtr != NULL);
-    assert(managerPtr->flightTablePtr != NULL);
-    assert(managerPtr->customerTablePtr != NULL);
-
-    return managerPtr;
-}
-
-
-/* =============================================================================
- * tableFree
- * -- Note: contents are not deallocated
- * =============================================================================
- */
-static void
-tableFree (MAP_T* mapPtr)
-{
-    MAP_FREE(mapPtr);
-}
-
-
-
-/* =============================================================================
- * manager_free
- * =============================================================================
- */
-void
-manager_free (manager_t* managerPtr)
-{
-    tableFree(managerPtr->carTablePtr);
-    tableFree(managerPtr->roomTablePtr);
-    tableFree(managerPtr->flightTablePtr);
-    tableFree(managerPtr->customerTablePtr);
+    MAP_FREE(carTablePtr);
+    MAP_FREE(roomTablePtr);
+    MAP_FREE(flightTablePtr);
+    MAP_FREE(customerTablePtr);
 }
 
 
@@ -181,7 +148,7 @@ manager_free (manager_t* managerPtr)
  * =============================================================================
  */
 //[wer210] return value not used before, now indicationg aborts.
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 addReservation (MAP_T* tablePtr, long id, long num, long price)
 {
@@ -197,7 +164,7 @@ addReservation (MAP_T* tablePtr, long id, long num, long price)
         }
 
         //[wer210] there was aborts inside RESERVATION_ALLOC, passing an extra parameter.
-        reservationPtr = reservation_alloc(id, num, price, &success);
+        reservationPtr = new reservation_t(id, num, price, &success);
         if (!success) return false;
 
         assert(reservationPtr != NULL);
@@ -212,14 +179,14 @@ addReservation (MAP_T* tablePtr, long id, long num, long price)
         else return false;
       }
 
-      if ((long)TM_SHARED_READ(reservationPtr->numTotal) == 0) {
+      if (reservationPtr->numTotal == 0) {
         bool status = TMMAP_REMOVE(tablePtr, id);
         if (status == false) {
           //_ITM_abortTransaction(2);
           return false;
         }
 
-        reservation_free(reservationPtr);
+        delete reservationPtr;
       } else {
         //[wer210] there was aborts inside RESERVATIOn_UPDATE_PRICE, and return was not used
         if (!reservation_updatePrice(reservationPtr, price))
@@ -239,7 +206,7 @@ addReservation (MAP_T* tablePtr, long id, long num, long price)
  * =============================================================================
  */
 //[wer210] Return value not used before.
-TM_SAFE bool
+__attribute__((transaction_safe)) bool
 manager_addCar (manager_t* managerPtr, long carId, long numCars, long price)
 {
     return addReservation(  managerPtr->carTablePtr, carId, numCars, price);
@@ -255,7 +222,7 @@ manager_addCar (manager_t* managerPtr, long carId, long numCars, long price)
  * -- Returns TRUE on success, else FALSE
  * =============================================================================
  */
-TM_SAFE bool
+__attribute__((transaction_safe)) bool
 manager_deleteCar (  manager_t* managerPtr, long carId, long numCar)
 {
     /* -1 keeps old price */
@@ -270,7 +237,7 @@ manager_deleteCar (  manager_t* managerPtr, long carId, long numCar)
  * -- Returns TRUE on success, else FALSE
  * =============================================================================
  */
-TM_SAFE bool
+__attribute__((transaction_safe)) bool
 manager_addRoom (manager_t* managerPtr, long roomId, long numRoom, long price)
 {
     return addReservation(  managerPtr->roomTablePtr, roomId, numRoom, price);
@@ -287,7 +254,7 @@ manager_addRoom (manager_t* managerPtr, long roomId, long numRoom, long price)
  * -- Returns TRUE on success, else FALSE
  * =============================================================================
  */
-TM_SAFE bool
+__attribute__((transaction_safe)) bool
 manager_deleteRoom (manager_t* managerPtr, long roomId, long numRoom)
 {
     /* -1 keeps old price */
@@ -302,7 +269,7 @@ manager_deleteRoom (manager_t* managerPtr, long roomId, long numRoom)
  * -- Returns TRUE on success, FALSE on failure
  * =============================================================================
  */
-TM_SAFE bool
+__attribute__((transaction_safe)) bool
 manager_addFlight (manager_t* managerPtr, long flightId, long numSeat, long price)
 {
     return addReservation(managerPtr->flightTablePtr, flightId, numSeat, price);
@@ -318,7 +285,7 @@ manager_addFlight (manager_t* managerPtr, long flightId, long numSeat, long pric
  * =============================================================================
  */
 //[wer210] return not used before, make it to indicate aborts
-TM_SAFE bool
+__attribute__((transaction_safe)) bool
 manager_deleteFlight (  manager_t* managerPtr, long flightId)
 {
     reservation_t* reservationPtr;
@@ -329,14 +296,14 @@ manager_deleteFlight (  manager_t* managerPtr, long flightId)
       return true;
     }
 
-    if ((long)TM_SHARED_READ(reservationPtr->numUsed) > 0) {
+    if (reservationPtr->numUsed > 0) {
       //return FALSE; /* somebody has a reservation */
       return true;
     }
 
     return addReservation(managerPtr->flightTablePtr,
                           flightId,
-                          -1*(long)TM_SHARED_READ(reservationPtr->numTotal),
+                          -1*reservationPtr->numTotal,
                           -1 /* -1 keeps old price */);
 }
 
@@ -350,7 +317,7 @@ manager_deleteFlight (  manager_t* managerPtr, long flightId)
 //[wer210] Function is called inside a transaction in client.c
 //         But return value of this function was never used,
 //         so I make it to return true all the time except when need to abort.
-TM_SAFE bool
+__attribute__((transaction_safe)) bool
 manager_addCustomer (  manager_t* managerPtr, long customerId)
 {
     customer_t* customerPtr;
@@ -361,7 +328,7 @@ manager_addCustomer (  manager_t* managerPtr, long customerId)
       return true;
     }
 
-    customerPtr = customer_alloc(customerId);
+    customerPtr = new customer_t(customerId);
     assert(customerPtr != NULL);
 
     status = TMMAP_INSERT(managerPtr->customerTablePtr, customerId, customerPtr);
@@ -384,7 +351,7 @@ manager_addCustomer (  manager_t* managerPtr, long customerId)
  */
 //[wer210] Again, the return values were not used (except for test cases below)
 //         So I make it alway returning true, unless need to abort a transaction.
-TM_SAFE bool
+__attribute__((transaction_safe)) bool
 manager_deleteCustomer (  manager_t* managerPtr, long customerId)
 {
     customer_t* customerPtr;
@@ -422,7 +389,7 @@ manager_deleteCustomer (  manager_t* managerPtr, long customerId)
         //_ITM_abortTransaction(2);
         return false;
       }
-      reservation_info_free(reservationInfoPtr);
+      delete reservationInfoPtr;
     }
 
     status = TMMAP_REMOVE(managerPtr->customerTablePtr, customerId);
@@ -430,7 +397,7 @@ manager_deleteCustomer (  manager_t* managerPtr, long customerId)
       //_ITM_abortTransaction(2);
       return false;
     }
-    customer_free(customerPtr);
+    delete customerPtr;
 
     return true;
 }
@@ -447,7 +414,7 @@ manager_deleteCustomer (  manager_t* managerPtr, long customerId)
  * -- Return numFree of a reservation, -1 if failure
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 long
 queryNumFree (  MAP_T* tablePtr, long id)
 {
@@ -456,7 +423,7 @@ queryNumFree (  MAP_T* tablePtr, long id)
 
     reservationPtr = (reservation_t*)TMMAP_FIND(tablePtr, id);
     if (reservationPtr != NULL) {
-        numFree = (long)TM_SHARED_READ(reservationPtr->numFree);
+        numFree = reservationPtr->numFree;
     }
 
     return numFree;
@@ -468,16 +435,14 @@ queryNumFree (  MAP_T* tablePtr, long id)
  * -- Return price of a reservation, -1 if failure
  * =============================================================================
  */
- TM_SAFE
+ __attribute__((transaction_safe))
 long
 queryPrice (  MAP_T* tablePtr, long id)
 {
     long price = -1;
-    reservation_t* reservationPtr;
-
-    reservationPtr = (reservation_t*)TMMAP_FIND(tablePtr, id);
+    reservation_t* reservationPtr = (reservation_t*)TMMAP_FIND(tablePtr, id);
     if (reservationPtr != NULL) {
-        price = (long)TM_SHARED_READ(reservationPtr->price);
+        price = reservationPtr->price;
     }
 
     return price;
@@ -490,7 +455,7 @@ queryPrice (  MAP_T* tablePtr, long id)
  * -- Returns -1 if the car does not exist
  * =============================================================================
  */
-TM_SAFE long
+__attribute__((transaction_safe)) long
 manager_queryCar (manager_t* managerPtr, long carId)
 {
     return queryNumFree(managerPtr->carTablePtr, carId);
@@ -503,7 +468,7 @@ manager_queryCar (manager_t* managerPtr, long carId)
  * -- Returns -1 if the car does not exist
  * =============================================================================
  */
-TM_SAFE long
+__attribute__((transaction_safe)) long
 manager_queryCarPrice (manager_t* managerPtr, long carId)
 {
     return queryPrice(managerPtr->carTablePtr, carId);
@@ -516,7 +481,7 @@ manager_queryCarPrice (manager_t* managerPtr, long carId)
  * -- Returns -1 if the room does not exist
  * =============================================================================
  */
-TM_SAFE long
+__attribute__((transaction_safe)) long
 manager_queryRoom (  manager_t* managerPtr, long roomId)
 {
     return queryNumFree(  managerPtr->roomTablePtr, roomId);
@@ -529,7 +494,7 @@ manager_queryRoom (  manager_t* managerPtr, long roomId)
  * -- Returns -1 if the room does not exist
  * =============================================================================
  */
-TM_SAFE long
+__attribute__((transaction_safe)) long
 manager_queryRoomPrice (  manager_t* managerPtr, long roomId)
 {
     return queryPrice(  managerPtr->roomTablePtr, roomId);
@@ -542,7 +507,7 @@ manager_queryRoomPrice (  manager_t* managerPtr, long roomId)
  * -- Returns -1 if the flight does not exist
  * =============================================================================
  */
-TM_SAFE long
+__attribute__((transaction_safe)) long
 manager_queryFlight (  manager_t* managerPtr, long flightId)
 {
     return queryNumFree(  managerPtr->flightTablePtr, flightId);
@@ -555,7 +520,7 @@ manager_queryFlight (  manager_t* managerPtr, long flightId)
  * -- Returns -1 if the flight does not exist
  * =============================================================================
  */
-TM_SAFE long
+__attribute__((transaction_safe)) long
 manager_queryFlightPrice (  manager_t* managerPtr, long flightId)
 {
     return queryPrice(  managerPtr->flightTablePtr, flightId);
@@ -568,7 +533,7 @@ manager_queryFlightPrice (  manager_t* managerPtr, long flightId)
  * -- Returns -1 if the customer does not exist
  * =============================================================================
  */
-TM_SAFE long
+__attribute__((transaction_safe)) long
 manager_queryCustomerBill (  manager_t* managerPtr, long customerId)
 {
     long bill = -1;
@@ -598,7 +563,7 @@ manager_queryCustomerBill (  manager_t* managerPtr, long customerId)
  */
 //[wer210] Again, the original return values are not used. So I modified return values
 // to indicate if should restart a transaction.
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 reserve (MAP_T* tablePtr, MAP_T* customerTablePtr,
          long customerId, long id, reservation_type_t type)
@@ -644,7 +609,7 @@ reserve (MAP_T* tablePtr, MAP_T* customerTablePtr,
  * -- Returns TRUE on success, else FALSE
  * =============================================================================
  */
-TM_SAFE bool
+__attribute__((transaction_safe)) bool
 manager_reserveCar (  manager_t* managerPtr, long customerId, long carId)
 {
     return reserve(managerPtr->carTablePtr,
@@ -661,7 +626,7 @@ manager_reserveCar (  manager_t* managerPtr, long customerId, long carId)
  * -- Returns TRUE on success, else FALSE
  * =============================================================================
  */
-TM_SAFE bool
+__attribute__((transaction_safe)) bool
 manager_reserveRoom (  manager_t* managerPtr, long customerId, long roomId)
 {
     return reserve(managerPtr->roomTablePtr,
@@ -678,7 +643,7 @@ manager_reserveRoom (  manager_t* managerPtr, long customerId, long roomId)
  * -- Returns TRUE on success, else FALSE
  * =============================================================================
  */
-TM_SAFE bool
+__attribute__((transaction_safe)) bool
 manager_reserveFlight (manager_t* managerPtr, long customerId, long flightId)
 {
     return reserve(managerPtr->flightTablePtr,
@@ -697,7 +662,7 @@ manager_reserveFlight (manager_t* managerPtr, long customerId, long flightId)
  */
 //[wer210] was a "static" function, invoked by three functions below
 //         however, never called.
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 cancel (MAP_T* tablePtr, MAP_T* customerTablePtr,
         long customerId, long id, reservation_type_t type)
@@ -738,7 +703,7 @@ cancel (MAP_T* tablePtr, MAP_T* customerTablePtr,
  * -- Returns TRUE on success, else FALSE
  * =============================================================================
  */
-TM_SAFE bool
+__attribute__((transaction_safe)) bool
 manager_cancelCar (  manager_t* managerPtr, long customerId, long carId)
 {
     return cancel(managerPtr->carTablePtr,
@@ -755,7 +720,7 @@ manager_cancelCar (  manager_t* managerPtr, long customerId, long carId)
  * -- Returns TRUE on success, else FALSE
  * =============================================================================
  */
-TM_SAFE bool
+__attribute__((transaction_safe)) bool
 manager_cancelRoom (  manager_t* managerPtr, long customerId, long roomId)
 {
     return cancel(managerPtr->roomTablePtr,
@@ -773,7 +738,7 @@ manager_cancelRoom (  manager_t* managerPtr, long customerId, long roomId)
  * -- Returns TRUE on success, else FALSE
  * =============================================================================
  */
-TM_SAFE bool
+__attribute__((transaction_safe)) bool
 manager_cancelFlight (manager_t* managerPtr, long customerId, long flightId)
 {
     return cancel(managerPtr->flightTablePtr,
