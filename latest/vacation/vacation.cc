@@ -306,7 +306,7 @@ initializeClients (manager_t* managerPtr)
     queryRange = (long)((double)percentQuery / 100.0 * (double)numRelation + 0.5);
 
     for (i = 0; i < numClient; i++) {
-        clients[i] = client_alloc(i,
+        clients[i] = new client_t(i,
                                   managerPtr,
                                   numTransactionPerClient,
                                   numQueryPerTransaction,
@@ -331,7 +331,6 @@ initializeClients (manager_t* managerPtr)
     return clients;
 }
 
-#if 0
 /* =============================================================================
  * checkTables
  * -- some simple checks (not comprehensive)
@@ -388,7 +387,6 @@ checkTables (manager_t* managerPtr)
     puts("done.");
     fflush(stdout);
 }
-#endif
 
 /* =============================================================================
  * freeClients
@@ -397,12 +395,11 @@ checkTables (manager_t* managerPtr)
 static void
 freeClients (client_t** clients)
 {
-    long i;
     long numClient = (long)global_params[PARAM_CLIENTS];
 
-    for (i = 0; i < numClient; i++) {
+    for (long i = 0; i < numClient; i++) {
         client_t* clientPtr = clients[i];
-        client_free(clientPtr);
+        delete clientPtr;
     }
 }
 
@@ -444,12 +441,7 @@ int main (int argc, char** argv)
     printf("Time = %0.6lf\n",
            TIMER_DIFF_SECONDS(start, stop));
     fflush(stdout);
-    //[wer210] From here, no transactions anymore, however the following function
-    //         call includes PLUS, which is incorrect unless manually clone
-    //         a set of functions that does not contains PLUS specifically for it.
-    //         However it does not affect total running time of transactions, so just
-    //         comment it for now.
-    //checkTables(managerPtr);
+    checkTables(managerPtr);
 
     /* Clean up */
     printf("Deallocating memory... ");

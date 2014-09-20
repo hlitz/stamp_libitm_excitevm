@@ -68,7 +68,6 @@
  * =============================================================================
  */
 
-
 #include <assert.h>
 #include "action.h"
 #include "client.h"
@@ -82,48 +81,21 @@
  * -- Returns NULL on failure
  * =============================================================================
  */
-client_t*
-client_alloc (long id,
-              manager_t* managerPtr,
-              long numOperation,
-              long numQueryPerTransaction,
-              long queryRange,
-              long percentUser)
+client_t::client_t(long _id,
+                   manager_t* _managerPtr,
+                   long _numOperation,
+                   long _numQueryPerTransaction,
+                   long _queryRange,
+                   long _percentUser)
 {
-    client_t* clientPtr;
-
-    clientPtr = (client_t*)malloc(sizeof(client_t));
-    if (clientPtr == NULL) {
-        return NULL;
-    }
-
-    clientPtr->randomPtr = new std::mt19937();
-    if (clientPtr->randomPtr == NULL) {
-        return NULL;
-    }
-
-    clientPtr->id = id;
-    clientPtr->managerPtr = managerPtr;
-    clientPtr->randomPtr->seed(id);
-    clientPtr->numOperation = numOperation;
-    clientPtr->numQueryPerTransaction = numQueryPerTransaction;
-    clientPtr->queryRange = queryRange;
-    clientPtr->percentUser = percentUser;
-
-    return clientPtr;
+    id = _id;
+    managerPtr = _managerPtr;
+    randomPtr.seed(id);
+    numOperation = _numOperation;
+    numQueryPerTransaction = _numQueryPerTransaction;
+    queryRange = _queryRange;
+    percentUser = _percentUser;
 }
-
-
-/* =============================================================================
- * client_free
- * =============================================================================
- */
-void
-client_free (client_t* clientPtr)
-{
-    free(clientPtr);
-}
-
 
 /* =============================================================================
  * selectAction
@@ -158,7 +130,7 @@ client_run (void* argPtr)
     client_t* clientPtr = ((client_t**)argPtr)[myId];
 
     manager_t* managerPtr = clientPtr->managerPtr;
-    std::mt19937*  randomPtr  = clientPtr->randomPtr;
+    std::mt19937&  randomPtr  = clientPtr->randomPtr;
 
     long numOperation           = clientPtr->numOperation;
     long numQueryPerTransaction = clientPtr->numQueryPerTransaction;
@@ -172,7 +144,7 @@ client_run (void* argPtr)
 
     for (long i = 0; i < numOperation; i++) {
 
-        long r = randomPtr->operator()() % 100;
+        long r = randomPtr() % 100;
         action_t action = selectAction(r, percentUser);
 
         switch (action) {
@@ -180,11 +152,11 @@ client_run (void* argPtr)
                 long maxPrices[NUM_RESERVATION_TYPE] = { -1, -1, -1 };
                 long maxIds[NUM_RESERVATION_TYPE] = { -1, -1, -1 };
                 long n;
-                long numQuery = randomPtr->operator()() % numQueryPerTransaction + 1;
-                long customerId = randomPtr->operator()() % queryRange + 1;
+                long numQuery = randomPtr() % numQueryPerTransaction + 1;
+                long customerId = randomPtr() % queryRange + 1;
                 for (n = 0; n < numQuery; n++) {
-                    types[n] = randomPtr->operator()() % NUM_RESERVATION_TYPE;
-                    ids[n] = (randomPtr->operator()() % queryRange) + 1;
+                    types[n] = randomPtr() % NUM_RESERVATION_TYPE;
+                    ids[n] = (randomPtr() % queryRange) + 1;
                 }
                 bool isFound = false;
                 bool done = true;
@@ -248,7 +220,7 @@ client_run (void* argPtr)
             }
 
             case ACTION_DELETE_CUSTOMER: {
-                long customerId = randomPtr->operator()() % queryRange + 1;
+                long customerId = randomPtr() % queryRange + 1;
                 bool done = true;
                 while (1) {
                   __transaction_atomic {
@@ -264,14 +236,14 @@ client_run (void* argPtr)
             }
 
             case ACTION_UPDATE_TABLES: {
-                long numUpdate = randomPtr->operator()() % numQueryPerTransaction + 1;
+                long numUpdate = randomPtr() % numQueryPerTransaction + 1;
                 long n;
                 for (n = 0; n < numUpdate; n++) {
-                    types[n] = randomPtr->operator()() % NUM_RESERVATION_TYPE;
-                    ids[n] = (randomPtr->operator()() % queryRange) + 1;
-                    ops[n] = randomPtr->operator()() % 2;
+                    types[n] = randomPtr() % NUM_RESERVATION_TYPE;
+                    ids[n] = (randomPtr() % queryRange) + 1;
+                    ops[n] = randomPtr() % 2;
                     if (ops[n]) {
-                        prices[n] = ((randomPtr->operator()() % 5) * 10) + 50;
+                        prices[n] = ((randomPtr() % 5) * 10) + 50;
                     }
                 }
                 bool done = true;
@@ -327,15 +299,3 @@ client_run (void* argPtr)
     } /* for i */
 
 }
-
-
-/* =============================================================================
- *
- * End of client.c
- *
- * =============================================================================
- */
-
-
-
-
