@@ -1,20 +1,17 @@
 PROG := kmeans
 
 SRCS += \
-	cluster.c \
-	common.c \
-	kmeans.c \
-	normal.c
+	cluster.cc \
+	common.cc \
+	kmeans.cc \
+	normal.cc
 
-LIBSRCS += \
-	mt19937ar.c \
-	random.c \
-	thread.c
+LIBSRCS += thread.cc
 
-OBJS := ${SRCS:.c=.o} ${LIBSRCS:%.c=lib_%.o}
+OBJS := ${SRCS:.cc=.o} ${LIBSRCS:%.cc=lib_%.o}
 
 # Display results of the benchmark
-# CFLAGS += -DOUTPUT_TO_STDOUT
+# CXXFLAGS += -DOUTPUT_TO_STDOUT
 
 LDFLAGS += -lm
 

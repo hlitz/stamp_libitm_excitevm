@@ -120,7 +120,7 @@
 static void
 usage (char* argv0)
 {
-    char* help =
+    const char* help =
         "Usage: %s [switches] -i filename\n"
         "       -i filename:     file containing data to be clustered\n"
         "       -b               input file is in binary format\n"
@@ -142,7 +142,7 @@ int main (int argc, char** argv)
 {
     int     max_nclusters = 15;
     int     min_nclusters = 15;
-    char*   filename = "../data/kmeans/inputs/random-n65536-d32-c16.txt";
+    const char*   filename = "../data/kmeans/inputs/random-n65536-d32-c16.txt";
     float*  buf;
     float** attributes;
     float** cluster_centres = NULL;

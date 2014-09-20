@@ -89,7 +89,6 @@
 #include <math.h>
 #include "common.h"
 #include "normal.h"
-#include "random.h"
 #include "thread.h"
 #include "timer.h"
 #include "tm.h"
@@ -204,7 +203,7 @@ normal_exec (int       nthreads,
              int       nclusters,
              float     threshold,
              int*      membership,
-             random_t* randomPtr) /* out: [npoints] */
+             std::mt19937* randomPtr) /* out: [npoints] */
 {
     int i;
     int j;
@@ -229,7 +228,7 @@ normal_exec (int       nthreads,
 
     /* Randomly pick cluster centers */
     for (i = 0; i < nclusters; i++) {
-        int n = (int)(random_generate(randomPtr) % npoints);
+        int n = (int)(randomPtr->operator()() % npoints);
         for (j = 0; j < nfeatures; j++) {
             clusters[i][j] = feature[n][j];
         }

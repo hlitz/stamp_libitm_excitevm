@@ -98,7 +98,6 @@
 #include "common.h"
 #include "cluster.h"
 #include "normal.h"
-#include "random.h"
 #include "util.h"
 #include "tm.h"
 
@@ -185,12 +184,12 @@ cluster_exec (
     int nclusters;
     int* membership = 0;
     float** tmp_cluster_centres;
-    random_t* randomPtr;
+    std::mt19937* randomPtr;
 
     membership = (int*)malloc(numObjects * sizeof(int));
     assert(membership);
 
-    randomPtr = random_alloc();
+    randomPtr = new std::mt19937();
     assert(randomPtr);
 
     if (use_zscore_transform) {
@@ -204,7 +203,7 @@ cluster_exec (
      */
     for (nclusters = min_nclusters; nclusters <= max_nclusters; nclusters++) {
 
-        random_seed(randomPtr, 7);
+        randomPtr->seed(7);
 
         tmp_cluster_centres = normal_exec(nthreads,
                                           attributes,
@@ -229,7 +228,7 @@ cluster_exec (
     } /* nclusters */
 
     free(membership);
-    random_free(randomPtr);
+    delete randomPtr;
 
     return 0;
 }
