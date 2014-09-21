@@ -75,7 +75,7 @@
 #include "bitmap.h"
 #include "tm.h"
 #include "utility.h"
-
+#include "tm_transition.h"
 
 #define NUM_BIT_PER_BYTE (8L)
 #define NUM_BIT_PER_WORD (sizeof(unsigned long) * NUM_BIT_PER_BYTE)

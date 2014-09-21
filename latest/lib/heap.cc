@@ -312,7 +312,7 @@ TMheapify (  heap_t* heapPtr, long startIndex)
 
             e1 = (void*)TM_SHARED_READ_P(elements[leftIndex]);
             e2 = (void*)TM_SHARED_READ_P(elements[index]);
-            TM_IFUNC_CALL2(ret, compare, e1, e2);
+            ret = compare(e1, e2);
 
             if (ret > 0)
                 maxIndex = leftIndex;
@@ -329,7 +329,7 @@ TMheapify (  heap_t* heapPtr, long startIndex)
 
             e1 = (void*)TM_SHARED_READ_P(elements[rightIndex]);
             e2 = (void*)TM_SHARED_READ_P(elements[maxIndex]);
-            TM_IFUNC_CALL2(ret, compare, e1, e2);
+            ret = compare(e1, e2);
 
             if (ret > 0)
                 maxIndex = rightIndex;

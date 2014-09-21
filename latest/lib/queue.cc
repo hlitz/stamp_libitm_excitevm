@@ -74,7 +74,7 @@
 #include <string.h>
 #include "tm.h"
 #include "queue.h"
-
+#include "tm_transition.h"
 
 struct queue_t {
     long pop; /* points before element to pop */

@@ -241,7 +241,7 @@ TMlookup (  rbtree_t* s, void* k)
     while (p != NULL) {
         long cmp;
         k2 = TX_LDF_P(p, k);
-        TM_IFUNC_CALL2(cmp, compare, k, k2);
+        cmp = compare(k, k2);
         if (cmp == 0) {
             return p;
         }
@@ -608,7 +608,7 @@ TMinsert (  rbtree_t* s, void* k, void* v, node_t* n)
     for (;;) {
         long cmp;
         k2 = TX_LDF_P(t, k);
-        TM_IFUNC_CALL2(cmp, compare, k, k2);
+        cmp = compare(k, k2);
         if (cmp == 0) {
             return t;
         } else if (cmp < 0) {

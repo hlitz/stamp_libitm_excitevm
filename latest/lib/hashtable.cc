@@ -87,6 +87,7 @@
 #include "list.h"
 #include "pair.h"
 #include "tm.h"
+#include "tm_transition.h"
 
 /* =============================================================================
  * TMhashtable_iter_reset
@@ -338,7 +339,7 @@ TMhashtable_containsKey (  hashtable_t* hashtablePtr, void* keyPtr)
     //unsigned long (*hash)(const void*) TM_IFUNC_DECL = hashtablePtr->hash;
     unsigned long (*hash)(const void*) TM_SAFE = hashtablePtr->hash;
 
-    TM_IFUNC_CALL1(i, hash, keyPtr);
+    i = hash(keyPtr);
     i = i % hashtablePtr->numBucket;
 
     findPair.firstPtr = keyPtr;
@@ -364,7 +365,7 @@ TMhashtable_find (  hashtable_t* hashtablePtr, void* keyPtr)
     //unsigned long (*hash)(const void*) TM_IFUNC_DECL = hashtablePtr->hash;
     unsigned long (*hash)(const void*) TM_SAFE = hashtablePtr->hash;
 
-    TM_IFUNC_CALL1(i, hash, keyPtr);
+    i = hash(keyPtr);
     i = i % hashtablePtr->numBucket;
 
     findPair.firstPtr = keyPtr;
@@ -396,7 +397,7 @@ TMhashtable_insert (
     long numBucket = hashtablePtr->numBucket;
     unsigned long i;
 
-    TM_IFUNC_CALL1(i, hash, keyPtr);
+    i = hash(keyPtr);
     i = i % numBucket;
 
     pair_t findPair;
@@ -445,7 +446,7 @@ TMhashtable_remove (  hashtable_t* hashtablePtr, void* keyPtr)
     pair_t* pairPtr;
     pair_t removePair;
 
-    TM_IFUNC_CALL1(i, hash, keyPtr);
+    i = hash(keyPtr);
     i = i % numBucket;
     chainPtr = hashtablePtr->buckets[i];
 

@@ -75,6 +75,7 @@
 #include <assert.h>
 #include "list.h"
 #include "tm.h"
+#include "tm_transition.h"
 
 /* =============================================================================
  * DECLARATION OF TM_SAFE FUNCTIONS
