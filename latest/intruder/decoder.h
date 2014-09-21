@@ -71,7 +71,6 @@
 #pragma once
 
 #include "error.h"
-#include "tm.h"
 
 struct decoder_t;
 
@@ -96,7 +95,7 @@ decoder_free (decoder_t* decoderPtr);
  * TMdecoder_process
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 int_error_t
 TMdecoder_process (  decoder_t* decoderPtr, char* bytes, long numByte);
 
@@ -106,7 +105,7 @@ TMdecoder_process (  decoder_t* decoderPtr, char* bytes, long numByte);
  * -- If none, returns NULL
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 char*
 TMdecoder_getComplete (  decoder_t* decoderPtr, long* decodedFlowIdPtr);
 

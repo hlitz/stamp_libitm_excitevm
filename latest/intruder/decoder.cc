@@ -77,7 +77,7 @@
 #include "map.h"
 #include "packet.h"
 #include "queue.h"
-#include "tm.h"
+#include "tm_transition.h"
 
 __attribute__ ((transaction_pure))
 void TM_print(char* s)
@@ -136,7 +136,7 @@ decoder_free (decoder_t* decoderPtr)
  * =============================================================================
  */
 //[wer] this function was problematic to write-back algorithms.
-TM_SAFE
+__attribute__((transaction_safe))
 int_error_t
 TMdecoder_process (  decoder_t* decoderPtr, char* bytes, long numByte)
 {
@@ -189,7 +189,7 @@ TMdecoder_process (  decoder_t* decoderPtr, char* bytes, long numByte)
 
       if (fragmentListPtr == NULL) {
 
-        // [wer210] the comparator should be TM_SAFE
+        // [wer210] the comparator should be __attribute__((transaction_safe))
         fragmentListPtr = TMLIST_ALLOC(&packet_compareFragmentId);
         assert(fragmentListPtr);
         status = TMLIST_INSERT(fragmentListPtr, (void*)packetPtr);
@@ -325,7 +325,7 @@ TMdecoder_process (  decoder_t* decoderPtr, char* bytes, long numByte)
  * -- If none, returns NULL
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 char*
 TMdecoder_getComplete (  decoder_t* decoderPtr, long* decodedFlowIdPtr)
 {

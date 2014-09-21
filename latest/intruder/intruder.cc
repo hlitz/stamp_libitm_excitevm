@@ -80,7 +80,6 @@
 #include "stream.h"
 #include "thread.h"
 #include "timer.h"
-#include "tm.h"
 
 __attribute__ ((transaction_pure))
 void TMprint(char* s)

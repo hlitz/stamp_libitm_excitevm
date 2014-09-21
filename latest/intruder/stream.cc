@@ -80,7 +80,6 @@
 #include "packet.h"
 #include "queue.h"
 #include "stream.h"
-#include "tm.h"
 #include "vector.h"
 
 
@@ -280,7 +279,7 @@ stream_generate (stream_t* streamPtr,
  * -- If none, returns NULL
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 char*
 stream_getPacket (stream_t* streamPtr)
 {

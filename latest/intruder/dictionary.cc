@@ -73,7 +73,6 @@
 #include <stdlib.h>
 #include <assert.h>
 #include "dictionary.h"
-#include "tm.h"
 #include "vector.h"
 
 

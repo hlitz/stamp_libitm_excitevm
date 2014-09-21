@@ -71,7 +71,6 @@
 #pragma once
 
 #include "dictionary.h"
-#include "tm.h"
 
 struct stream_t;
 
@@ -111,7 +110,7 @@ stream_generate (stream_t* streamPtr,
  * -- If none, returns NULL
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 char*
 stream_getPacket (stream_t* streamPtr);
 
