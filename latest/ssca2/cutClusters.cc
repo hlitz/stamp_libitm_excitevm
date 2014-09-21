@@ -73,7 +73,6 @@
 #include "defs.h"
 #include "globals.h"
 #include "thread.h"
-#include "tm.h"
 
 static ULONGINT_T* global_Index                = NULL;
 static ULONGINT_T* global_neighbourArray       = NULL;
@@ -528,9 +527,7 @@ cutClusters (void* argPtr)
         }
 
         __transaction_atomic {
-          long tmp_cliqueSize = (long)TM_SHARED_READ(global_cliqueSize);
-          TM_SHARED_WRITE(global_cliqueSize, (tmp_cliqueSize + cliqueSize));
-          //global_cliqueSize += cliqueSize;
+          global_cliqueSize += cliqueSize;
         }
 
         thread_barrier_wait();

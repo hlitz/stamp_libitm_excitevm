@@ -73,7 +73,7 @@
 #include "globals.h"
 #include "thread.h"
 #include "utility.h"
-#include "tm.h"
+#include "tm_transition.h"
 
 static ULONGINT_T*  global_p                 = NULL;
 static ULONGINT_T   global_maxNumVertices    = 0;
@@ -300,10 +300,7 @@ computeGraph (void* argPtr)
     thread_barrier_wait();
 
     __transaction_atomic {
-      TM_SHARED_WRITE( global_outVertexListSize,
-                       ((long)TM_SHARED_READ(global_outVertexListSize) + outVertexListSize));
-
-      global_outVertexListSize += outVertexListSize;
+        global_outVertexListSize += outVertexListSize;
     }
 
     thread_barrier_wait();
@@ -478,12 +475,11 @@ computeGraph (void* argPtr)
               __transaction_atomic {
                 /* Add i to the impliedEdgeList of v */
 
-                long inDegree = (long)TM_SHARED_READ(GPtr->inDegree[v]);
-                TM_SHARED_WRITE(GPtr->inDegree[v], (inDegree + 1));
+                long inDegree = GPtr->inDegree[v];
+                GPtr->inDegree[v] = (inDegree + 1);
 
                 if (inDegree < MAX_CLUSTER_SIZE) {
-                  TM_SHARED_WRITE(impliedEdgeList[v*MAX_CLUSTER_SIZE+inDegree],
-                                  (unsigned long)i);
+                    impliedEdgeList[v*MAX_CLUSTER_SIZE+inDegree] = (unsigned long)i;
                 } else {
                   /* Use auxiliary array to store the implied edge */
                   /* Create an array if it's not present already */
@@ -491,11 +487,11 @@ computeGraph (void* argPtr)
                   if ((inDegree % MAX_CLUSTER_SIZE) == 0) {
                     a = (ULONGINT_T*)malloc(MAX_CLUSTER_SIZE * sizeof(ULONGINT_T));
                     assert(a);
-                    TM_SHARED_WRITE_P(auxArr[v], a);
+                    auxArr[v] = a;
                   } else {
                     a = auxArr[v];
                   }
-                  TM_SHARED_WRITE(a[inDegree % MAX_CLUSTER_SIZE], (unsigned long)i);
+                  a[inDegree % MAX_CLUSTER_SIZE] = (unsigned long)i;
                 }
               } // TM_END
             }

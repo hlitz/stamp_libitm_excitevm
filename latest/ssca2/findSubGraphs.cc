@@ -73,8 +73,6 @@
 #include "findSubGraphs.h"
 #include "globals.h"
 #include "thread.h"
-#include "tm.h"
-
 
 /* =============================================================================
  * findSubGraphs0

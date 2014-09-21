@@ -76,7 +76,6 @@
 #include "genScalData.h"
 #include "globals.h"
 #include "thread.h"
-#include "tm.h"
 
 static ULONGINT_T* global_permV              = NULL;
 static long*       global_cliqueSizes        = NULL;

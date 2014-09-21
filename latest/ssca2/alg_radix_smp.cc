@@ -70,8 +70,6 @@
 #include "alg_radix_smp.h"
 #include "createPartition.h"
 #include "thread.h"
-#include "tm.h"
-
 
 #define BITS(x, k, j)  ((x>>k) & ~(~0<<j))
 
