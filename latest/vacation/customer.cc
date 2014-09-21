@@ -12,6 +12,7 @@
 #include "list.h"
 #include "memory.h"
 #include "reservation.h"
+#include "tm_transition.h"
 
 /* =============================================================================
  * compareReservationInfo

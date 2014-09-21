@@ -71,27 +71,18 @@
 
 #pragma once
 
-#include "tm.h"
-
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
 struct bitmap_t {
     long numBit;
     long numWord;
     unsigned long* bits;
 };
 
-
 /* =============================================================================
  * bitmap_alloc
  * -- Returns NULL on failure
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bitmap_t*
 bitmap_alloc (long numBit);
 
@@ -100,7 +91,7 @@ bitmap_alloc (long numBit);
  * bitmap_free
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 void
 bitmap_free (bitmap_t* bitmapPtr);
 
@@ -111,7 +102,7 @@ bitmap_free (bitmap_t* bitmapPtr);
  * -- Returns true on success, else false
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 bitmap_set (bitmap_t* bitmapPtr, long i);
 
@@ -122,7 +113,7 @@ bitmap_set (bitmap_t* bitmapPtr, long i);
  * -- Returns true on success, else false
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 bitmap_clear (bitmap_t* bitmapPtr, long i);
 
@@ -132,7 +123,7 @@ bitmap_clear (bitmap_t* bitmapPtr, long i);
  * -- Clears all bit to 0
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 void
 bitmap_clearAll (bitmap_t* bitmapPtr);
 
@@ -142,7 +133,7 @@ bitmap_clearAll (bitmap_t* bitmapPtr);
  * -- Returns true if ith bit is clear, else false
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 bitmap_isClear (bitmap_t* bitmapPtr, long i);
 
@@ -152,7 +143,7 @@ bitmap_isClear (bitmap_t* bitmapPtr, long i);
  * -- Returns true if ith bit is set, else false
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 bitmap_isSet (bitmap_t* bitmapPtr, long i);
 
@@ -164,7 +155,7 @@ bitmap_isSet (bitmap_t* bitmapPtr, long i);
  * -- If all bits are set, returns -1
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 long
 bitmap_findClear (bitmap_t* bitmapPtr, long startIndex);
 
@@ -175,7 +166,7 @@ bitmap_findClear (bitmap_t* bitmapPtr, long startIndex);
  * -- If all bits are clear, returns -1
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 long
 bitmap_findSet (bitmap_t* bitmapPtr, long startIndex);
 
@@ -184,7 +175,7 @@ bitmap_findSet (bitmap_t* bitmapPtr, long startIndex);
  * bitmap_getNumClear
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 long
 bitmap_getNumClear (bitmap_t* bitmapPtr);
 
@@ -193,7 +184,7 @@ bitmap_getNumClear (bitmap_t* bitmapPtr);
  * bitmap_getNumSet
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 long
 bitmap_getNumSet (bitmap_t* bitmapPtr);
 
@@ -202,7 +193,7 @@ bitmap_getNumSet (bitmap_t* bitmapPtr);
  * bitmap_copy
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 void
 bitmap_copy (bitmap_t* dstPtr, bitmap_t* srcPtr);
 
@@ -211,7 +202,7 @@ bitmap_copy (bitmap_t* dstPtr, bitmap_t* srcPtr);
  * bitmap_toggleAll
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 void
 bitmap_toggleAll (bitmap_t* bitmapPtr);
 
@@ -228,8 +219,3 @@ bitmap_toggleAll (bitmap_t* bitmapPtr);
 #define TMBITMAP_GETNUMSET(b)            bitmap_getNumSet(b)
 #define TMBITMAP_COPY(b)                 bitmap_copy(b)
 #define TMBITMAP_TOGGLEALL(b)            bitmap_toggleAll(b)
-
-
-#ifdef __cplusplus
-}
-#endif

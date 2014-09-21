@@ -68,21 +68,12 @@
  * =============================================================================
  */
 
+#pragma once
 
-#ifndef PAIR_H
-#define PAIR_H 1
-
-#include "tm.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
-typedef struct pair {
+struct pair_t {
     void* firstPtr;
     void* secondPtr;
-} pair_t;
+};
 
 
 /* =============================================================================
@@ -90,7 +81,7 @@ typedef struct pair {
  * -- Returns NULL if failure
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 pair_t*
 pair_alloc (void* firstPtr, void* secondPtr);
 
@@ -99,7 +90,7 @@ pair_alloc (void* firstPtr, void* secondPtr);
  * pair_free
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 void
 pair_free (pair_t* pairPtr);
 
@@ -109,26 +100,10 @@ pair_free (pair_t* pairPtr);
  * -- Exchange 'firstPtr' and 'secondPtr'
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 void
 pair_swap (pair_t* pairPtr);
 
 
 #define TMPAIR_ALLOC(f,s)   pair_alloc(f, s)
 #define TMPAIR_FREE(p)      pair_free(p)
-
-
-#ifdef __cplusplus
-}
-#endif
-
-
-#endif /* PAIR_H */
-
-
-/* =============================================================================
- *
- * End of pair.h
- *
- * =============================================================================
- */

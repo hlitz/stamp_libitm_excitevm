@@ -85,37 +85,31 @@
 
 #include "list.h"
 #include "pair.h"
-#include "tm.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 
 enum hashtable_config {
     HASHTABLE_DEFAULT_RESIZE_RATIO  = 3,
     HASHTABLE_DEFAULT_GROWTH_FACTOR = 3
 };
 
-typedef struct hashtable {
+struct hashtable_t {
     list_t** buckets;
     long numBucket;
 #ifdef HASHTABLE_SIZE_FIELD
     long size;
 #endif
     //[wer210] the hash function and comparator should be TM_SAFE
-    TM_SAFE unsigned long (*hash)(const void*);
-    TM_SAFE long (*comparePairs)(const pair_t*, const pair_t*);
+    __attribute__((transaction_safe)) unsigned long (*hash)(const void*);
+    __attribute__((transaction_safe)) long (*comparePairs)(const pair_t*, const pair_t*);
     long resizeRatio;
     long growthFactor;
     /* comparePairs should return <0 if before, 0 if equal, >0 if after */
-} hashtable_t;
+};
 
 
-typedef struct hashtable_iter {
+struct hashtable_iter_t {
     long bucket;
     list_iter_t it;
-} hashtable_iter_t;
+};
 
 
 
@@ -123,7 +117,7 @@ typedef struct hashtable_iter {
  * TMhashtable_iter_reset
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 void
 TMhashtable_iter_reset (
                         hashtable_iter_t* itPtr, hashtable_t* hashtablePtr);
@@ -134,7 +128,7 @@ TMhashtable_iter_reset (
  * TMhashtable_iter_hasNext
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 TMhashtable_iter_hasNext (
                           hashtable_iter_t* itPtr, hashtable_t* hashtablePtr);
@@ -144,7 +138,7 @@ TMhashtable_iter_hasNext (
  * TMhashtable_iter_next
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 void*
 TMhashtable_iter_next (hashtable_iter_t* itPtr, hashtable_t* hashtablePtr);
 
@@ -156,7 +150,7 @@ TMhashtable_iter_next (hashtable_iter_t* itPtr, hashtable_t* hashtablePtr);
  * -- Negative values for resizeRatio or growthFactor select default values
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 hashtable_t*
 TMhashtable_alloc (
                    long initNumBucket,
@@ -171,7 +165,7 @@ TMhashtable_alloc (
  * TMhashtable_free
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 void
 TMhashtable_free (  hashtable_t* hashtablePtr);
 
@@ -181,7 +175,7 @@ TMhashtable_free (  hashtable_t* hashtablePtr);
  * TMhashtable_isEmpty
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 TMhashtable_isEmpty (  hashtable_t* hashtablePtr);
 
@@ -192,7 +186,7 @@ TMhashtable_isEmpty (  hashtable_t* hashtablePtr);
  * -- Returns number of elements in hash table
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 long
 TMhashtable_getSize (  hashtable_t* hashtablePtr);
 
@@ -201,7 +195,7 @@ TMhashtable_getSize (  hashtable_t* hashtablePtr);
  * TMhashtable_containsKey
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 TMhashtable_containsKey (  hashtable_t* hashtablePtr, void* keyPtr);
 
@@ -211,7 +205,7 @@ TMhashtable_containsKey (  hashtable_t* hashtablePtr, void* keyPtr);
  * -- Returns NULL on failure, else pointer to data associated with key
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 void*
 TMhashtable_find (  hashtable_t* hashtablePtr, void* keyPtr);
 
@@ -221,7 +215,7 @@ TMhashtable_find (  hashtable_t* hashtablePtr, void* keyPtr);
  * TMhashtable_insert
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 TMhashtable_insert (hashtable_t* hashtablePtr, void* keyPtr, void* dataPtr);
 
@@ -232,7 +226,7 @@ TMhashtable_insert (hashtable_t* hashtablePtr, void* keyPtr, void* dataPtr);
  * -- Returns true if successful, else false
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 TMhashtable_remove (hashtable_t* hashtablePtr, void* keyPtr);
 
@@ -247,8 +241,3 @@ TMhashtable_remove (hashtable_t* hashtablePtr, void* keyPtr);
 #define TMHASHTABLE_FIND(ht, k)           TMhashtable_find(  ht, k)
 #define TMHASHTABLE_INSERT(ht, k, d)      TMhashtable_insert(  ht, k, d)
 #define TMHASHTABLE_REMOVE(ht)            TMhashtable_remove(  ht)
-
-
-#ifdef __cplusplus
-}
-#endif

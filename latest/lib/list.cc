@@ -76,28 +76,24 @@
 #include "list.h"
 #include "tm.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* =============================================================================
  * DECLARATION OF TM_SAFE FUNCTIONS
  * =============================================================================
  */
 
-TM_SAFE
+__attribute__((transaction_safe))
 list_node_t*
 findPrevious (list_t* listPtr, void* dataPtr);
 
-TM_SAFE
+__attribute__((transaction_safe))
 void
 freeList (list_node_t* nodePtr);
 
-TM_SAFE
+__attribute__((transaction_safe))
 list_node_t*
 allocNode (void* dataPtr);
 
-TM_SAFE
+__attribute__((transaction_safe))
 void
 freeNode (list_node_t* nodePtr);
 
@@ -106,7 +102,7 @@ freeNode (list_node_t* nodePtr);
  * -- Default compare function
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 long
 compareDataPtrAddresses (const void* a, const void* b)
 {
@@ -118,7 +114,7 @@ compareDataPtrAddresses (const void* a, const void* b)
  * list_iter_reset
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 void
 list_iter_reset (list_iter_t* itPtr, list_t* listPtr)
 {
@@ -131,7 +127,7 @@ list_iter_reset (list_iter_t* itPtr, list_t* listPtr)
  * =============================================================================
  */
 // [wer210] removed the second junk parameter
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 //list_iter_hasNext (list_iter_t* itPtr, list_t* listPtr)
 list_iter_hasNext (list_iter_t* itPtr)
@@ -143,7 +139,7 @@ list_iter_hasNext (list_iter_t* itPtr)
  * list_iter_next
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 void*
 list_iter_next (list_iter_t* itPtr)
 {
@@ -157,7 +153,7 @@ list_iter_next (list_iter_t* itPtr)
  * -- Returns NULL on failure
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 list_node_t*
 allocNode (void* dataPtr)
 {
@@ -179,9 +175,9 @@ allocNode (void* dataPtr)
  * -- Returns NULL on failure
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 list_t*
-list_alloc (TM_SAFE long (*compare)(const void*, const void*))
+list_alloc (__attribute__((transaction_safe)) long (*compare)(const void*, const void*))
 {
     list_t* listPtr = (list_t*)malloc(sizeof(list_t));
     if (listPtr == NULL) {
@@ -206,7 +202,7 @@ list_alloc (TM_SAFE long (*compare)(const void*, const void*))
  * TMfreeNode
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 void
 freeNode (list_node_t* nodePtr)
 {
@@ -218,7 +214,7 @@ freeNode (list_node_t* nodePtr)
  * TMfreeList
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 void
 freeList (list_node_t* nodePtr)
 {
@@ -233,7 +229,7 @@ freeList (list_node_t* nodePtr)
  * list_free
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 void
 list_free (  list_t* listPtr)
 {
@@ -248,7 +244,7 @@ list_free (  list_t* listPtr)
  * -- Return true if list is empty, else false
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 list_isEmpty (list_t* listPtr)
 {
@@ -261,7 +257,7 @@ list_isEmpty (list_t* listPtr)
  * -- Returns the size of the list
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 long
 list_getSize (  list_t* listPtr)
 {
@@ -273,7 +269,7 @@ list_getSize (  list_t* listPtr)
  * findPrevious
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 list_node_t*
 findPrevious (list_t* listPtr, void* dataPtr)
 {
@@ -296,7 +292,7 @@ findPrevious (list_t* listPtr, void* dataPtr)
  * -- Returns NULL if not found, else returns pointer to data
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 void*
 list_find (list_t* listPtr, void* dataPtr)
 {
@@ -319,7 +315,7 @@ list_find (list_t* listPtr, void* dataPtr)
  * -- Return true on success, else false
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 list_insert (list_t* listPtr, void* dataPtr)
 {
@@ -357,7 +353,7 @@ list_insert (list_t* listPtr, void* dataPtr)
  * -- Returns true if successful, else false
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 list_remove (list_t* listPtr, void* dataPtr)
 {
@@ -387,7 +383,7 @@ list_remove (list_t* listPtr, void* dataPtr)
  * -- Removes all elements
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 void
 list_clear (list_t* listPtr)
 {
@@ -499,15 +495,3 @@ main ()
 
 
 #endif /* TEST_LIST */
-
-#ifdef __cplusplus
-}
-#endif
-
-/* =============================================================================
- *
- * End of list.c
- *
- * =============================================================================
- */
-

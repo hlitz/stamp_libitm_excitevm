@@ -77,7 +77,7 @@
 #include "vector.h"
 
 
-char* global_defaultSignatures[] = {
+const char* global_defaultSignatures[] = {
     "about",
     "after",
     "all",
@@ -167,7 +167,7 @@ dictionary_alloc ()
     if (dictionaryPtr) {
         long s;
         for (s = 0; s < global_numDefaultSignature; s++) {
-            char* sig = global_defaultSignatures[s];
+            const char* sig = global_defaultSignatures[s];
             bool status = vector_pushBack(dictionaryPtr,
                                             (void*)sig);
             assert(status);
@@ -190,7 +190,7 @@ Pdictionary_alloc ()
     if (dictionaryPtr) {
         long s;
         for (s = 0; s < global_numDefaultSignature; s++) {
-            char* sig = global_defaultSignatures[s];
+            const char* sig = global_defaultSignatures[s];
             bool status = PVECTOR_PUSHBACK(dictionaryPtr,
                                              (void*)sig);
             assert(status);

@@ -76,7 +76,7 @@
 #include "queue.h"
 
 
-struct queue {
+struct queue_t {
     long pop; /* points before element to pop */
     long push;
     long capacity;

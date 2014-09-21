@@ -74,7 +74,7 @@
 #include <stdlib.h>
 #include "list.h"
 #include "table.h"
-
+#include "tm.h"
 
 /* =============================================================================
  * table_alloc

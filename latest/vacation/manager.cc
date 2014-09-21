@@ -13,6 +13,7 @@
 #include "pair.h"
 #include "manager.h"
 #include "reservation.h"
+#include "tm_transition.h"
 
 /* =============================================================================
  * DECLARATION OF TM_SAFE FUNCTIONS

@@ -79,19 +79,9 @@
  * =============================================================================
  */
 
+#pragma once
 
-#ifndef RBTREE_H
-#define RBTREE_H 1
-
-
-#include "tm.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
-typedef struct rbtree rbtree_t;
+struct rbtree_t;
 
 
 /* =============================================================================
@@ -106,7 +96,7 @@ rbtree_verify (rbtree_t* s, long verbose);
  * rbtree_alloc
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 rbtree_t*
 rbtree_alloc (long (*compare)(const void*, const void*));
 
@@ -115,7 +105,7 @@ rbtree_alloc (long (*compare)(const void*, const void*));
  * rbtree_free
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 void
 rbtree_free (rbtree_t* r);
 
@@ -125,7 +115,7 @@ rbtree_free (rbtree_t* r);
  * -- Returns true on success
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 rbtree_insert (rbtree_t* r, void* key, void* val);
 
@@ -134,7 +124,7 @@ rbtree_insert (rbtree_t* r, void* key, void* val);
  * rbtree_delete
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 rbtree_delete (rbtree_t* r, void* key);
 
@@ -144,7 +134,7 @@ rbtree_delete (rbtree_t* r, void* key);
  * -- Return false if had to insert node first
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 rbtree_update (rbtree_t* r, void* key, void* val);
 
@@ -153,7 +143,7 @@ rbtree_update (rbtree_t* r, void* key, void* val);
  * rbtree_get
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 void*
 rbtree_get (rbtree_t* r, void* key);
 
@@ -162,7 +152,7 @@ rbtree_get (rbtree_t* r, void* key);
  * rbtree_contains
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 rbtree_contains (  rbtree_t* r, void* key);
 
@@ -174,21 +164,3 @@ rbtree_contains (  rbtree_t* r, void* key);
 #define TMRBTREE_UPDATE(r, k, v)  rbtree_update(r, (void*)(k), (void*)(v))
 #define TMRBTREE_GET(r, k)        rbtree_get(r, (void*)(k))
 #define TMRBTREE_CONTAINS(r, k)   rbtree_contains(r, (void*)(k))
-
-
-#ifdef __cplusplus
-}
-#endif
-
-
-
-#endif /* RBTREE_H */
-
-
-
-/* =============================================================================
- *
- * End of rbtree.h
- *
- * =============================================================================
- */

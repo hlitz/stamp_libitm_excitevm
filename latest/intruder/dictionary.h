@@ -76,7 +76,7 @@
 typedef vector_t dictionary_t;
 
 
-extern char* global_defaultSignatures[];
+extern const char* global_defaultSignatures[];
 extern const long global_numDefaultSignature;
 
 

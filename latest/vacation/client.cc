@@ -8,6 +8,7 @@
 #include "manager.h"
 #include "reservation.h"
 #include "thread.h"
+#include "tm_transition.h"
 
 /* =============================================================================
  * client_alloc

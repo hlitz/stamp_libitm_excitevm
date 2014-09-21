@@ -68,27 +68,18 @@
  * =============================================================================
  */
 
-
-#ifndef QUEUE_H
-#define QUEUE_H 1
+#pragma once
 
 #include <random>
-#include "tm.h"
 
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
-typedef struct queue queue_t;
+struct queue_t;
 
 
 /* =============================================================================
  * TMqueue_alloc
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 queue_t*
 queue_alloc (  long initCapacity);
 
@@ -97,7 +88,7 @@ queue_alloc (  long initCapacity);
  * TMqueue_free
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 void
 queue_free (  queue_t* queuePtr);
 
@@ -106,7 +97,7 @@ queue_free (  queue_t* queuePtr);
  * TMqueue_isEmpty
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 queue_isEmpty (  queue_t* queuePtr);
 
@@ -115,7 +106,7 @@ queue_isEmpty (  queue_t* queuePtr);
  * queue_clear
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 void
 queue_clear (queue_t* queuePtr);
 
@@ -126,7 +117,7 @@ queue_clear (queue_t* queuePtr);
  */
 //[wer210] has to be TM_PURE, use random_generate(), only called once
 //         outside tx in yada, yada.c: initializeWork().
-TM_PURE
+__attribute__((transaction_pure)) // TODO: fixme
 void
 queue_shuffle (queue_t* queuePtr, std::mt19937* randomPtr);
 
@@ -135,7 +126,7 @@ queue_shuffle (queue_t* queuePtr, std::mt19937* randomPtr);
  * queue_push
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 queue_push (  queue_t* queuePtr, void* dataPtr);
 
@@ -143,7 +134,7 @@ queue_push (  queue_t* queuePtr, void* dataPtr);
  * queue_pop
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 void*
 queue_pop (  queue_t* queuePtr);
 
@@ -155,20 +146,3 @@ queue_pop (  queue_t* queuePtr);
 #define TMQUEUE_CLEAR(q)    queue_clear(q)
 #define TMQUEUE_PUSH(q, d)  queue_push(q, (void*)(d))
 #define TMQUEUE_POP(q)      queue_pop(q)
-
-
-#ifdef __cplusplus
-}
-#endif
-
-
-#endif /* QUEUE_H */
-
-
-/* =============================================================================
- *
- * End of queue.h
- *
- * =============================================================================
- */
-

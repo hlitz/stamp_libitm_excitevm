@@ -73,8 +73,6 @@
 #include "element.h"
 #include "heap.h"
 #include "mesh.h"
-#include "tm.h"
-
 
 struct region_t;
 
@@ -105,7 +103,7 @@ Pregion_free (region_t* regionPtr);
  * Returns net number of elements added to mesh.
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 long
 TMregion_refine (region_t* regionPtr, element_t* elementPtr, mesh_t* meshPtr,
                  bool* success);
@@ -115,7 +113,7 @@ TMregion_refine (region_t* regionPtr, element_t* elementPtr, mesh_t* meshPtr,
  * Pregion_clearBad
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 //TM_PURE
 void
 Pregion_clearBad (region_t* regionPtr);
@@ -125,7 +123,7 @@ Pregion_clearBad (region_t* regionPtr);
  * TMregion_transferBad
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 void
 TMregion_transferBad (region_t* regionPtr, heap_t* workHeapPtr);
 

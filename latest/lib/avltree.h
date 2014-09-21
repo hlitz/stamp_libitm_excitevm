@@ -88,12 +88,7 @@
  * =============================================================================
  */
 
-
-
-#ifndef JSW_AVLTREE_H
-#define JSW_AVLTREE_H
-
-#include "tm.h"
+#pragma once
 
 #ifdef __cplusplus
 #include <cstddef>
@@ -118,21 +113,21 @@ extern "C" {
 
     /* AVL tree functions */
 #ifdef USE_DUP_AND_REL
-    TM_SAFE
+    __attribute__((transaction_safe))
     jsw_avltree_t *jsw_avlnew ( cmp_f cmp, dup_f dup, rel_f rel );
 #else /* ! USE_DUP_AND_REL */
-    TM_SAFE
+    __attribute__((transaction_safe))
     jsw_avltree_t *jsw_avlnew ( cmp_f cmp );
 #endif /* ! USE_DUP_AND_REL */
-    TM_SAFE
+    __attribute__((transaction_safe))
     void           jsw_avldelete ( jsw_avltree_t *tree );
-    TM_SAFE
+    __attribute__((transaction_safe))
     void          *jsw_avlfind ( jsw_avltree_t *tree, void *data );
-    TM_SAFE
+    __attribute__((transaction_safe))
     long           jsw_avlinsert ( jsw_avltree_t *tree, void *data );
-    TM_SAFE
+    __attribute__((transaction_safe))
     long           jsw_avlerase ( jsw_avltree_t *tree, void *data );
-    TM_SAFE
+    __attribute__((transaction_safe))
     size_t         jsw_avlsize ( jsw_avltree_t *tree );
 
     /* Traversal functions */
@@ -146,14 +141,3 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
-
-#endif
-
-
-
-/* =============================================================================
- *
- * End of avltree.h
- *
- * =============================================================================
- */

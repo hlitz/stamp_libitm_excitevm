@@ -79,11 +79,10 @@
 #include "mesh.h"
 #include "queue.h"
 #include "set.h"
-#include "tm.h"
 #include "utility.h"
+#include "tm_transition.h"
 
-
-struct mesh {
+struct mesh_t {
     element_t* rootElementPtr;
     queue_t* initBadQueuePtr;
     long size;
@@ -131,7 +130,7 @@ mesh_free (mesh_t* meshPtr)
  * TMmesh_insert
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 void
 TMmesh_insert (mesh_t* meshPtr, element_t* elementPtr, MAP_T* edgeMapPtr)
 {
@@ -140,8 +139,8 @@ TMmesh_insert (mesh_t* meshPtr, element_t* elementPtr, MAP_T* edgeMapPtr)
      * The root element is not needed for the actual refining, but rather
      * for checking the validity of the final mesh.
      */
-    if (!TM_SHARED_READ_P(meshPtr->rootElementPtr)) {
-        TM_SHARED_WRITE_P(meshPtr->rootElementPtr, elementPtr);
+    if (!meshPtr->rootElementPtr) {
+        meshPtr->rootElementPtr = elementPtr;
     }
 
     /*
@@ -192,7 +191,7 @@ TMmesh_insert (mesh_t* meshPtr, element_t* elementPtr, MAP_T* edgeMapPtr)
  * TMmesh_remove
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 void
 TMmesh_remove (mesh_t* meshPtr, element_t* elementPtr)
 {
@@ -202,8 +201,8 @@ TMmesh_remove (mesh_t* meshPtr, element_t* elementPtr)
      * If removing root, a new root is selected on the next mesh_insert, which
      * always follows a call a mesh_remove.
      */
-    if ((element_t*)TM_SHARED_READ_P(meshPtr->rootElementPtr) == elementPtr) {
-        TM_SHARED_WRITE_P(meshPtr->rootElementPtr, (element_t *)NULL);
+    if (meshPtr->rootElementPtr == elementPtr) {
+        meshPtr->rootElementPtr = NULL;
     }
 
     /*
@@ -242,7 +241,7 @@ TMmesh_remove (mesh_t* meshPtr, element_t* elementPtr)
  * TMmesh_insertBoundary
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 TMmesh_insertBoundary (mesh_t* meshPtr, edge_t* boundaryPtr)
 {
@@ -254,7 +253,7 @@ TMmesh_insertBoundary (mesh_t* meshPtr, edge_t* boundaryPtr)
  * TMmesh_removeBoundary
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 TMmesh_removeBoundary (mesh_t* meshPtr, edge_t* boundaryPtr)
 {

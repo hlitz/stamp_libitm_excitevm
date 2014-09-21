@@ -32,7 +32,7 @@ struct manager_t {
  * -- Returns TRUE on success, else FALSE
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 manager_addCar (manager_t* managerPtr, long carId, long numCar, long price);
 
@@ -46,7 +46,7 @@ manager_addCar (manager_t* managerPtr, long carId, long numCar, long price);
  * -- Returns TRUE on success, else FALSE
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 manager_deleteCar (  manager_t* managerPtr, long carId, long numCar);
 
@@ -58,7 +58,7 @@ manager_deleteCar (  manager_t* managerPtr, long carId, long numCar);
  * -- Returns TRUE on success, else FALSE
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 manager_addRoom (manager_t* managerPtr, long roomId, long numRoom, long price);
 
@@ -72,7 +72,7 @@ manager_addRoom (manager_t* managerPtr, long roomId, long numRoom, long price);
  * -- Returns TRUE on success, else FALSE
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 manager_deleteRoom (  manager_t* managerPtr, long roomId, long numRoom);
 
@@ -84,7 +84,7 @@ manager_deleteRoom (  manager_t* managerPtr, long roomId, long numRoom);
  * -- Returns TRUE on success, FALSE on failure
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 manager_addFlight (
                    manager_t* managerPtr, long flightId, long numSeat, long price);
@@ -100,7 +100,7 @@ manager_addFlight_seq (manager_t* managerPtr, long flightId, long numSeat, long 
  * -- Returns TRUE on success, else FALSE
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 manager_deleteFlight (  manager_t* managerPtr, long flightId);
 
@@ -111,7 +111,7 @@ manager_deleteFlight (  manager_t* managerPtr, long flightId);
  * -- Returns TRUE on success, else FALSE
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 manager_addCustomer (  manager_t* managerPtr, long customerId);
 
@@ -123,7 +123,7 @@ manager_addCustomer (  manager_t* managerPtr, long customerId);
  * -- Returns TRUE on success, else FALSE
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 manager_deleteCustomer (  manager_t* managerPtr, long customerId);
 
@@ -140,7 +140,7 @@ manager_deleteCustomer (  manager_t* managerPtr, long customerId);
  * -- Returns -1 if the car does not exist
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 long
 manager_queryCar (  manager_t* managerPtr, long carId);
 
@@ -151,7 +151,7 @@ manager_queryCar (  manager_t* managerPtr, long carId);
  * -- Returns -1 if the car does not exist
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 long
 manager_queryCarPrice (  manager_t* managerPtr, long carId);
 
@@ -162,7 +162,7 @@ manager_queryCarPrice (  manager_t* managerPtr, long carId);
  * -- Returns -1 if the room does not exist
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 long
 manager_queryRoom (  manager_t* managerPtr, long roomId);
 
@@ -173,7 +173,7 @@ manager_queryRoom (  manager_t* managerPtr, long roomId);
  * -- Returns -1 if the room does not exist
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 long
 manager_queryRoomPrice (  manager_t* managerPtr, long roomId);
 
@@ -184,7 +184,7 @@ manager_queryRoomPrice (  manager_t* managerPtr, long roomId);
  * -- Returns -1 if the flight does not exist
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 long
 manager_queryFlight (  manager_t* managerPtr, long flightId);
 
@@ -195,7 +195,7 @@ manager_queryFlight (  manager_t* managerPtr, long flightId);
  * -- Returns -1 if the flight does not exist
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 long
 manager_queryFlightPrice (  manager_t* managerPtr, long flightId);
 
@@ -206,7 +206,7 @@ manager_queryFlightPrice (  manager_t* managerPtr, long flightId);
  * -- Returns -1 if the customer does not exist
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 long
 manager_queryCustomerBill (  manager_t* managerPtr, long customerId);
 
@@ -223,7 +223,7 @@ manager_queryCustomerBill (  manager_t* managerPtr, long customerId);
  * -- Returns TRUE on success, else FALSE
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 manager_reserveCar (
                     manager_t* managerPtr, long customerId, long carId);
@@ -235,7 +235,7 @@ manager_reserveCar (
  * -- Returns TRUE on success, else FALSE
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 manager_reserveRoom (
                      manager_t* managerPtr, long customerId, long roomId);
@@ -247,7 +247,7 @@ manager_reserveRoom (
  * -- Returns TRUE on success, else FALSE
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 manager_reserveFlight (manager_t* managerPtr, long customerId, long flightId);
 
@@ -258,7 +258,7 @@ manager_reserveFlight (manager_t* managerPtr, long customerId, long flightId);
  * -- Returns TRUE on success, else FALSE
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 manager_cancelCar (manager_t* managerPtr, long customerId, long carId);
 
@@ -269,7 +269,7 @@ manager_cancelCar (manager_t* managerPtr, long customerId, long carId);
  * -- Returns TRUE on success, else FALSE
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 manager_cancelRoom (manager_t* managerPtr, long customerId, long roomId);
 
@@ -280,6 +280,6 @@ manager_cancelRoom (manager_t* managerPtr, long customerId, long roomId);
  * -- Returns TRUE on success, else FALSE
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 manager_cancelFlight (manager_t* managerPtr, long customerId, long flightId);

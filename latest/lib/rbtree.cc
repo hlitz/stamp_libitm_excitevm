@@ -88,21 +88,17 @@
 #include "rbtree.h"
 #include "tm.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-typedef struct node {
+struct node_t {
     void* k;
     void* v;
-    struct node* p;
-    struct node* l;
-    struct node* r;
+    node_t* p;
+    node_t* l;
+    node_t* r;
     long c;
-} node_t;
+};
 
 
-struct rbtree {
+struct rbtree_t {
     node_t* root;
     TM_SAFE long (*compare)(const void*, const void*);   /* returns {-1,0,1}, 0 -> equal */
 };
@@ -1268,14 +1264,3 @@ main ()
 
 
 #endif /* TEST_RBTREE */
-
-#ifdef __cplusplus
-}
-#endif
-
-/* =============================================================================
- *
- * End of rbtree.c
- *
- * =============================================================================
- */

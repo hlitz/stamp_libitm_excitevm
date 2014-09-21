@@ -69,23 +69,13 @@
  */
 
 
-#ifndef VECTOR_H
-#define VECTOR_H 1
+#pragma once
 
-
-#include "tm.h"
-
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
-typedef struct vector {
+struct vector_t {
     long size;
     long capacity;
     void** elements;
-} vector_t;
+};
 
 
 /* =============================================================================
@@ -93,7 +83,7 @@ typedef struct vector {
  * -- Returns NULL if failed
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 vector_t*
 vector_alloc (long initCapacity);
 
@@ -102,7 +92,7 @@ vector_alloc (long initCapacity);
  * vector_free
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 void
 vector_free (vector_t* vectorPtr);
 
@@ -112,7 +102,7 @@ vector_free (vector_t* vectorPtr);
  * -- Returns NULL if failed
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 void*
 vector_at (vector_t* vectorPtr, long i);
 
@@ -122,7 +112,7 @@ vector_at (vector_t* vectorPtr, long i);
  * -- Returns false if fail, else true
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 vector_pushBack (vector_t* vectorPtr, void* dataPtr);
 
@@ -132,7 +122,7 @@ vector_pushBack (vector_t* vectorPtr, void* dataPtr);
  * -- Returns false if fail, else true
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 vector_pushBack (vector_t* vectorPtr, void* dataPtr);
 
@@ -142,7 +132,7 @@ vector_pushBack (vector_t* vectorPtr, void* dataPtr);
  * -- Returns NULL if fail, else returns last element
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 void*
 vector_popBack (vector_t* vectorPtr);
 
@@ -151,7 +141,7 @@ vector_popBack (vector_t* vectorPtr);
  * vector_getSize
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 long
 vector_getSize (vector_t* vectorPtr);
 
@@ -160,7 +150,7 @@ vector_getSize (vector_t* vectorPtr);
  * vector_clear
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 void
 vector_clear (vector_t* vectorPtr);
 
@@ -170,16 +160,16 @@ vector_clear (vector_t* vectorPtr);
  * =============================================================================
  */
 //[wer] this function was pure because of qsort(), fixed
-TM_SAFE
+__attribute__((transaction_safe))
 void
-vector_sort (vector_t* vectorPtr, int TM_SAFE (*compare) (const void*, const void*));
+vector_sort (vector_t* vectorPtr, int __attribute__((transaction_safe)) (*compare) (const void*, const void*));
 
 
 /* =============================================================================
  * vector_copy
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 vector_copy (vector_t* dstVectorPtr, vector_t* srcVectorPtr);
 
@@ -193,19 +183,3 @@ vector_copy (vector_t* dstVectorPtr, vector_t* srcVectorPtr);
 #define PVECTOR_CLEAR(v)            vector_clear(v)
 #define PVECTOR_SORT(v, cmp)        vector_sort(v, cmp)
 #define PVECTOR_COPY(dst, src)      vector_copy(dst, src)
-
-
-#ifdef __cplusplus
-}
-#endif
-
-
-#endif /* VECTOR_H */
-
-
-/* =============================================================================
- *
- * End of vector.h
- *
- * =============================================================================
- */

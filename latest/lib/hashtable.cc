@@ -86,10 +86,7 @@
 #include "hashtable.h"
 #include "list.h"
 #include "pair.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "tm.h"
 
 /* =============================================================================
  * TMhashtable_iter_reset
@@ -573,10 +570,6 @@ main ()
 
 
 #endif /* TEST_HASHTABLE */
-
-#ifdef __cplusplus
-}
-#endif
 
 /* =============================================================================
  *

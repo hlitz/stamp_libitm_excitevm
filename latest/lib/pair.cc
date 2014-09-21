@@ -79,7 +79,7 @@
  * -- Returns NULL if failure
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 pair_t*
 pair_alloc (void* firstPtr, void* secondPtr)
 {
@@ -99,7 +99,7 @@ pair_alloc (void* firstPtr, void* secondPtr)
  * pair_free
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 void
 pair_free (pair_t* pairPtr)
 {
@@ -112,7 +112,7 @@ pair_free (pair_t* pairPtr)
  * -- Exchange 'firstPtr' and 'secondPtr'
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 void
 pair_swap (pair_t* pairPtr)
 {

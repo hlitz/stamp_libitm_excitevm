@@ -84,7 +84,7 @@
 #include "query.h"
 #include "utility.h"
 #include "vector.h"
-
+#include "tm.h"
 
 TM_PURE //TMprint()
 void TMprinti(int i)

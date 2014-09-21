@@ -73,8 +73,6 @@
 #include "coordinate.h"
 #include "list.h"
 #include "pair.h"
-#include "tm.h"
-
 
 typedef pair_t         edge_t;
 struct element_t {
@@ -99,7 +97,7 @@ struct element_t {
  * element_compare
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 long
 element_compare (element_t* aElementPtr, element_t* bElementPtr);
 
@@ -110,7 +108,7 @@ element_compare (element_t* aElementPtr, element_t* bElementPtr);
  * For use in list_t
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 long
 element_listCompare (const void* aPtr, const void* bPtr);
 
@@ -121,7 +119,7 @@ element_listCompare (const void* aPtr, const void* bPtr);
  * For use in MAP_T
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 long
 element_mapCompare (const pair_t* aPtr, const pair_t* bPtr);
 
@@ -132,7 +130,7 @@ element_mapCompare (const pair_t* aPtr, const pair_t* bPtr);
  * Contains a copy of input arg 'coordinates'
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 element_t*
 TMelement_alloc (  coordinate_t* coordinates, long numCoordinate);
 
@@ -141,7 +139,7 @@ TMelement_alloc (  coordinate_t* coordinates, long numCoordinate);
  * TMelement_free
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 void
 TMelement_free (  element_t* elementPtr);
 
@@ -151,7 +149,7 @@ TMelement_free (  element_t* elementPtr);
  * =============================================================================
  */
 //TM_PURE
-TM_SAFE
+__attribute__((transaction_safe))
 long
 element_getNumEdge (element_t* elementPtr);
 
@@ -162,7 +160,7 @@ element_getNumEdge (element_t* elementPtr);
  * Returned edgePtr is sorted; i.e., coordinate_compare(first, second) < 0
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 //TM_PURE
 edge_t*
 element_getEdge (element_t* elementPtr, long i);
@@ -174,7 +172,7 @@ element_getEdge (element_t* elementPtr, long i);
  * For use in list_t
  * ============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 long
 element_listCompareEdge (const void* aPtr, const void* bPtr);
 
@@ -185,7 +183,7 @@ element_listCompareEdge (const void* aPtr, const void* bPtr);
  * For use in MAP_T
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 long
 element_mapCompareEdge (const pair_t* aPtr, const pair_t* bPtr);
 
@@ -196,7 +194,7 @@ element_mapCompareEdge (const pair_t* aPtr, const pair_t* bPtr);
  * For use in heap_t
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 long
 element_heapCompare (const void* aPtr, const void* bPtr);
 
@@ -206,7 +204,7 @@ element_heapCompare (const void* aPtr, const void* bPtr);
  * =============================================================================
  */
 //TM_PURE
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 element_isInCircumCircle (element_t* elementPtr, coordinate_t* coordinatePtr);
 
@@ -216,7 +214,7 @@ element_isInCircumCircle (element_t* elementPtr, coordinate_t* coordinatePtr);
  * =============================================================================
  */
 //TM_PURE
-TM_SAFE
+__attribute__((transaction_safe))
 void
 element_clearEncroached (element_t* elementPtr);
 
@@ -226,7 +224,7 @@ element_clearEncroached (element_t* elementPtr);
  * =============================================================================
  */
 //TM_PURE
-TM_SAFE
+__attribute__((transaction_safe))
 edge_t*
 element_getEncroachedPtr (element_t* elementPtr);
 
@@ -245,7 +243,7 @@ element_isSkinny (element_t* elementPtr);
  * =============================================================================
  */
 //TM_PURE
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 element_isBad (element_t* elementPtr);
 
@@ -255,7 +253,7 @@ element_isBad (element_t* elementPtr);
  * TMelement_isReferenced
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 TMelement_isReferenced (  element_t* elementPtr);
 
@@ -265,7 +263,7 @@ TMelement_isReferenced (  element_t* elementPtr);
  * TMelement_setIsReferenced
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 void
 TMelement_setIsReferenced (  element_t* elementPtr, bool status);
 
@@ -277,7 +275,7 @@ TMelement_setIsReferenced (  element_t* elementPtr, bool status);
  * -- Can we deallocate?
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 TMelement_isGarbage (  element_t* elementPtr);
 
@@ -287,7 +285,7 @@ TMelement_isGarbage (  element_t* elementPtr);
  * TMelement_setIsGarbage
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 void
 TMelement_setIsGarbage (  element_t* elementPtr, bool status);
 
@@ -296,7 +294,7 @@ TMelement_setIsGarbage (  element_t* elementPtr, bool status);
  * TMelement_addNeighbor
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 void
 TMelement_addNeighbor (  element_t* elementPtr, element_t* neighborPtr);
 
@@ -306,7 +304,7 @@ TMelement_addNeighbor (  element_t* elementPtr, element_t* neighborPtr);
  * =============================================================================
  */
 //TM_PURE
-TM_SAFE
+__attribute__((transaction_safe))
 list_t*
 element_getNeighborListPtr (element_t* elementPtr);
 
@@ -317,7 +315,7 @@ element_getNeighborListPtr (element_t* elementPtr);
  * =============================================================================
  */
 //TM_PURE
-TM_SAFE
+__attribute__((transaction_safe))
 edge_t*
 element_getCommonEdge (element_t* aElementPtr, element_t* bElementPtr);
 
@@ -331,7 +329,7 @@ element_getCommonEdge (element_t* aElementPtr, element_t* bElementPtr);
 //TM_PURE
 //coordinate_t
 //element_getNewPoint (element_t* elementPtr);
-TM_SAFE
+__attribute__((transaction_safe))
 void
 element_getNewPoint (element_t* elementPtr, coordinate_t* ret);
 

@@ -74,7 +74,7 @@
 #include "heap.h"
 #include "tm.h"
 
-struct heap {
+struct heap_t {
     void** elements;
     long size;
     long capacity;

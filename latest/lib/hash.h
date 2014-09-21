@@ -71,18 +71,12 @@
 
 #pragma once
 
-#include "tm.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-    // [wer210] used in genome
+// [wer210] used in genome
 /* =============================================================================
  * hash_dbj2
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 unsigned long
 hash_dbj2 (char* str);
 
@@ -91,11 +85,6 @@ hash_dbj2 (char* str);
  * hash_sdbm
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 unsigned long
 hash_sdbm (char* str);
-
-
-#ifdef __cplusplus
-}
-#endif

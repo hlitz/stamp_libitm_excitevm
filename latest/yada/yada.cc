@@ -79,8 +79,6 @@
 #include "heap.h"
 #include "thread.h"
 #include "timer.h"
-#include "tm.h"
-
 
 #define PARAM_DEFAULT_INPUTPREFIX ("inputs/ttimeu1000000.2")
 #define PARAM_DEFAULT_NUMTHREAD   (1L)
@@ -257,10 +255,8 @@ process (void*)
     }
 
     __transaction_atomic {
-      TM_SHARED_WRITE(global_totalNumAdded,
-                      TM_SHARED_READ(global_totalNumAdded) + totalNumAdded);
-      TM_SHARED_WRITE(global_numProcess,
-                      TM_SHARED_READ(global_numProcess) + numProcess);
+        global_totalNumAdded += totalNumAdded;
+        global_numProcess += numProcess;
     }
 
     PREGION_FREE(regionPtr);

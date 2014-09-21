@@ -1,5 +1,4 @@
-#ifndef TM_H
-#define TM_H 1
+#pragma once
 
 #include <stdlib.h>                   /* Defines size_t. */
 
@@ -39,12 +38,3 @@
 extern
 TM_PURE
 int strncmp (__const char *__s1, __const char *__s2, size_t __n);
-
-extern
-TM_PURE
-void __assert_fail (__const char *__assertion, __const char *__file,
-                           unsigned int __line, __const char *__function)
-     __attribute__ ((__noreturn__));
-
-#endif /* TM_H */
-

@@ -68,14 +68,9 @@
  * =============================================================================
  */
 
+#pragma once
 
-#ifndef HEAP_H
-#define HEAP_H 1
-
-
-#include "tm.h"
-
-typedef struct heap heap_t;
+struct heap_t;
 
 
 /* =============================================================================
@@ -102,7 +97,7 @@ heap_free (heap_t* heapPtr);
  * -- Returns false on failure
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 heap_insert (heap_t* heapPtr, void* dataPtr);
 
@@ -111,7 +106,7 @@ heap_insert (heap_t* heapPtr, void* dataPtr);
  * -- Returns NULL if empty
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 void*
 heap_remove (heap_t* heapPtr);
 
@@ -127,14 +122,3 @@ heap_isValid (heap_t* heapPtr);
 
 #define TMHEAP_INSERT(h, d)             heap_insert((h), (d))
 #define TMHEAP_REMOVE(h)                heap_remove((h))
-
-
-#endif /* HEAP_H */
-
-
-/* =============================================================================
- *
- * End of heap.c
- *
- * =============================================================================
- */

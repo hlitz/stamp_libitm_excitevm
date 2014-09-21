@@ -78,7 +78,7 @@
 #include "map.h"
 #include "queue.h"
 #include "mesh.h"
-#include "tm.h"
+#include "tm_transition.h"
 
 struct region_t {
     coordinate_t centerCoordinate;
@@ -93,18 +93,18 @@ struct region_t {
  * =============================================================================
  */
 
-TM_SAFE
+__attribute__((transaction_safe))
 void
 TMaddToBadVector (  vector_t* badVectorPtr, element_t* badElementPtr);
 
-TM_SAFE
+__attribute__((transaction_safe))
 long
 TMretriangulate (element_t* elementPtr,
                  region_t* regionPtr,
                  mesh_t* meshPtr,
                  MAP_T* edgeMapPtr);
 
-TM_SAFE
+__attribute__((transaction_safe))
 element_t*
 TMgrowRegion (element_t* centerElementPtr,
               region_t* regionPtr,
@@ -159,7 +159,7 @@ Pregion_free (region_t* regionPtr)
  * TMaddToBadVector
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 void
 TMaddToBadVector (  vector_t* badVectorPtr, element_t* badElementPtr)
 {
@@ -175,7 +175,7 @@ TMaddToBadVector (  vector_t* badVectorPtr, element_t* badElementPtr)
  * =============================================================================
  */
 
-TM_SAFE
+__attribute__((transaction_safe))
 long
 TMretriangulate (element_t* elementPtr,
                  region_t* regionPtr,
@@ -281,7 +281,7 @@ TMretriangulate (element_t* elementPtr,
  * -- Return NULL if success, else pointer to encroached boundary
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 element_t*
 TMgrowRegion (element_t* centerElementPtr,
               region_t* regionPtr,
@@ -318,7 +318,7 @@ TMgrowRegion (element_t* centerElementPtr,
         element_t* currentElementPtr = (element_t*)TMQUEUE_POP(expandQueuePtr);
 
         TMLIST_INSERT(beforeListPtr, (void*)currentElementPtr); /* no duplicates */
-        // TM_SAFE
+        // __attribute__((transaction_safe))
         list_t* neighborListPtr = element_getNeighborListPtr(currentElementPtr);
 
         list_iter_t it;
@@ -371,7 +371,7 @@ TMgrowRegion (element_t* centerElementPtr,
  * -- Returns net number of elements added to mesh
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 long
 TMregion_refine (region_t* regionPtr, element_t* elementPtr, mesh_t* meshPtr, bool* success)
 {
@@ -430,7 +430,7 @@ TMregion_refine (region_t* regionPtr, element_t* elementPtr, mesh_t* meshPtr, bo
  * =============================================================================
  */
 //TM_PURE
-TM_SAFE
+__attribute__((transaction_safe))
 void
 Pregion_clearBad (region_t* regionPtr)
 {
@@ -442,7 +442,7 @@ Pregion_clearBad (region_t* regionPtr)
  * TMregion_transferBad
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 void
 TMregion_transferBad (region_t* regionPtr, heap_t* workHeapPtr)
 {

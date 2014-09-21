@@ -75,11 +75,10 @@
 #include <random>
 #include "element.h"
 #include "map.h"
-#include "tm.h"
 #include "vector.h"
 
 
-typedef struct mesh  mesh_t;
+struct mesh_t;
 
 
 /* =============================================================================
@@ -103,7 +102,7 @@ mesh_free (mesh_t* meshPtr);
  * TMmesh_insert
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 void
 TMmesh_insert (mesh_t* meshPtr, element_t* elementPtr, MAP_T* edgeMapPtr);
 
@@ -112,7 +111,7 @@ TMmesh_insert (mesh_t* meshPtr, element_t* elementPtr, MAP_T* edgeMapPtr);
  * TMmesh_remove
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 void
 TMmesh_remove ( mesh_t* meshPtr, element_t* elementPtr);
 
@@ -121,7 +120,7 @@ TMmesh_remove ( mesh_t* meshPtr, element_t* elementPtr);
  * TMmesh_insertBoundary
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 TMmesh_insertBoundary ( mesh_t* meshPtr, edge_t* boundaryPtr);
 
@@ -130,7 +129,7 @@ TMmesh_insertBoundary ( mesh_t* meshPtr, edge_t* boundaryPtr);
  * TMmesh_removeBoundary
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 TMmesh_removeBoundary ( mesh_t* meshPtr, edge_t* boundaryPtr);
 
