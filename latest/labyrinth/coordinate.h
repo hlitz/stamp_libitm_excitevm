@@ -73,13 +73,11 @@
 #define COORDINATE_H 1
 
 
-#include "tm.h"
-
-typedef struct coordinate {
+struct coordinate_t {
     long x;
     long y;
     long z;
-} coordinate_t;
+};
 
 
 /* =============================================================================

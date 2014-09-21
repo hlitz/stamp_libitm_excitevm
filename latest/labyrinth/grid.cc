@@ -76,7 +76,6 @@
 #include "coordinate.h"
 #include "grid.h"
 #include "vector.h"
-#include "tm.h"
 
 /* ??? Cacheline size is fixed (set to 64 bytes for x86_64). */
 const unsigned long CACHE_LINE_SIZE = 64UL;
@@ -126,7 +125,7 @@ grid_free (grid_t* gridPtr)
  * grid_copy
  * =============================================================================
  */
-TM_PURE
+__attribute__((transaction_pure)) // TODO: FIXME
 //TM_SAFE
 void
 grid_copy (grid_t* dstGridPtr, grid_t* srcGridPtr)
@@ -153,7 +152,7 @@ grid_copy (grid_t* dstGridPtr, grid_t* srcGridPtr)
  * grid_isPointValid
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 grid_isPointValid (grid_t* gridPtr, long x, long y, long z)
 {
@@ -172,7 +171,7 @@ grid_isPointValid (grid_t* gridPtr, long x, long y, long z)
  * grid_getPointRef
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 long*
 grid_getPointRef (grid_t* gridPtr, long x, long y, long z)
 {
@@ -184,7 +183,7 @@ grid_getPointRef (grid_t* gridPtr, long x, long y, long z)
  * grid_getPointIndices
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 void
 grid_getPointIndices (grid_t* gridPtr,
                       long* gridPointPtr, long* xPtr, long* yPtr, long* zPtr)
@@ -204,7 +203,7 @@ grid_getPointIndices (grid_t* gridPtr,
  * grid_getPoint
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 long
 grid_getPoint (grid_t* gridPtr, long x, long y, long z)
 {
@@ -216,7 +215,7 @@ grid_getPoint (grid_t* gridPtr, long x, long y, long z)
  * grid_isPointEmpty
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 grid_isPointEmpty (grid_t* gridPtr, long x, long y, long z)
 {
@@ -229,7 +228,7 @@ grid_isPointEmpty (grid_t* gridPtr, long x, long y, long z)
  * grid_isPointFull
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 grid_isPointFull (grid_t* gridPtr, long x, long y, long z)
 {
@@ -242,7 +241,7 @@ grid_isPointFull (grid_t* gridPtr, long x, long y, long z)
  * grid_setPoint
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 void
 grid_setPoint (grid_t* gridPtr, long x, long y, long z, long value)
 {
@@ -274,7 +273,7 @@ grid_addPath (grid_t* gridPtr, vector_t* pointVectorPtr)
  * TMgrid_addPath
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 //void
 bool
 TMgrid_addPath (vector_t* pointVectorPtr)
@@ -294,7 +293,7 @@ TMgrid_addPath (vector_t* pointVectorPtr)
     //[wer210] a check loop and a write loop
     for (i = 1; i < (n-1); i++) {
       long* gridPointPtr = (long*)vector_at(pointVectorPtr, i);
-      long value = (long)TM_SHARED_READ(*gridPointPtr);
+      long value = *gridPointPtr;
       if (value != GRID_POINT_EMPTY) {
         return false;
       }
@@ -303,7 +302,7 @@ TMgrid_addPath (vector_t* pointVectorPtr)
 
     for (i = 1; i < (n-1); i++) {
       long* gridPointPtr = (long*)vector_at(pointVectorPtr, i);
-      TM_SHARED_WRITE(*gridPointPtr, (long)GRID_POINT_FULL);
+      *gridPointPtr = (long)GRID_POINT_FULL;
     }
     return true;
 }

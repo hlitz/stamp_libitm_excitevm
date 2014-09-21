@@ -75,11 +75,10 @@
 #include "grid.h"
 #include "queue.h"
 #include "router.h"
-#include "tm.h"
 #include "vector.h"
+#include "tm_transition.h"
 
-
-typedef enum momentum {
+enum momentum_t {
     MOMENTUM_ZERO = 0,
     MOMENTUM_POSX = 1,
     MOMENTUM_POSY = 2,
@@ -87,15 +86,15 @@ typedef enum momentum {
     MOMENTUM_NEGX = 4,
     MOMENTUM_NEGY = 5,
     MOMENTUM_NEGZ = 6
-} momentum_t;
+};
 
-typedef struct point {
+struct point_t {
     long x;
     long y;
     long z;
     long value;
     momentum_t momentum;
-} point_t;
+};
 
 point_t MOVE_POSX = { 1,  0,  0,  0, MOMENTUM_POSX};
 point_t MOVE_POSY = { 0,  1,  0,  0, MOMENTUM_POSY};
@@ -142,7 +141,7 @@ router_free (router_t* routerPtr)
  * =============================================================================
  */
 //[wer210] was static
-TM_SAFE
+__attribute__((transaction_safe))
 void
 PexpandToNeighbor (grid_t* myGridPtr,
                    long x, long y, long z, long value, queue_t* queuePtr)
@@ -169,7 +168,7 @@ PexpandToNeighbor (grid_t* myGridPtr,
  * =============================================================================
  */
 //static TM_PURE
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 PdoExpansion (router_t* routerPtr, grid_t* myGridPtr, queue_t* queuePtr,
               coordinate_t* srcPtr, coordinate_t* dstPtr)
@@ -184,11 +183,11 @@ PdoExpansion (router_t* routerPtr, grid_t* myGridPtr, queue_t* queuePtr,
      */
 
     TMQUEUE_CLEAR(queuePtr);
-    // TM_SAFE
+    // __attribute__((transaction_safe))
     long* srcGridPointPtr = grid_getPointRef(myGridPtr, srcPtr->x,
                                              srcPtr->y, srcPtr->z);
     TMQUEUE_PUSH(queuePtr, (void*)srcGridPointPtr);
-    // TM_SAFE
+    // __attribute__((transaction_safe))
     grid_setPoint(myGridPtr, srcPtr->x, srcPtr->y, srcPtr->z, 0);
     grid_setPoint(myGridPtr, dstPtr->x, dstPtr->y, dstPtr->z, GRID_POINT_EMPTY);
     long* dstGridPointPtr =
@@ -206,7 +205,7 @@ PdoExpansion (router_t* routerPtr, grid_t* myGridPtr, queue_t* queuePtr,
         long x;
         long y;
         long z;
-        // TM_SAFE
+        // __attribute__((transaction_safe))
         grid_getPointIndices(myGridPtr, gridPointPtr, &x, &y, &z);
         long value = (*gridPointPtr);
 
@@ -239,7 +238,7 @@ PdoExpansion (router_t* routerPtr, grid_t* myGridPtr, queue_t* queuePtr,
  * traceToNeighbor
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 //static
 void
 traceToNeighbor (grid_t* myGridPtr,
@@ -278,7 +277,7 @@ traceToNeighbor (grid_t* myGridPtr,
  * =============================================================================
  */
 //static TM_PURE
-TM_SAFE
+__attribute__((transaction_safe))
 vector_t*
 PdoTraceback (grid_t* gridPtr, grid_t* myGridPtr,
               coordinate_t* dstPtr, long bendCost)
@@ -416,7 +415,7 @@ router_solve (void* argPtr)
              * pointVectorPtr will be a memory leak if we abort this transaction
              */
             if (pointVectorPtr) {
-              // [wer210]TM_SAFE, abort inside
+              // [wer210]__attribute__((transaction_safe)), abort inside
               TMGRID_ADDPATH(gridPtr, pointVectorPtr);
               TM_LOCAL_WRITE(success, true);
             }
