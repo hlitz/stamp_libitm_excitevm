@@ -1,0 +1,40 @@
+# obj folder
+TMBUILD ?= obj
+
+# ======== Defines ========
+CXX	:= g++
+CXXFLAGS += -I../lib -I../
+CXXFLAGS += 
+CXXFLAGS   += -Wall -Wextra -g
+CXXFLAGS   += -fgnu-tm
+CXXFLAGS   += -O2 -std=c++11
+
+LD	:= g++
+LDFLAGS  += -lpthread
+LDFLAGS  += -litm
+
+# ======== Rules ========
+OBJDIR = ../$(TMBUILD)/$(PROG)/
+
+_OBJS = $(patsubst %,$(OBJDIR)/%,$(OBJS))
+_PROG = $(OBJDIR)/$(PROG)
+
+.PHONY: default
+default: $(PROG)
+
+.PHONY: $(PROG)
+$(PROG): $(_PROG)
+
+.PHONY: clean
+clean:
+	$(RM) $(_OBJS) $(_PROG)
+
+$(_PROG): $(_OBJS)
+	$(LD) $^ $(LDFLAGS) -o $(_PROG)
+
+$(OBJDIR)/%.o: %.cc *.h ../lib/*.h
+	@mkdir -p $(@D)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(OBJDIR)/lib_%.o: ../lib/%.cc ../lib/*.h
+	$(CXX) $(CXXFLAGS) -c $< -o $@
