@@ -75,8 +75,6 @@
 #include <random>
 #include "gene.h"
 #include "nucleotide.h"
-#include "tm.h"
-
 
 /* =============================================================================
  * gene_alloc

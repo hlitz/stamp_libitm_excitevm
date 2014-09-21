@@ -80,9 +80,7 @@
 #include "sequencer.h"
 #include "thread.h"
 #include "timer.h"
-#include "tm.h"
 #include "vector.h"
-
 
 enum param_types {
     PARAM_GENE    = (unsigned char)'g',

@@ -74,7 +74,6 @@
 #include <stdlib.h>
 #include "list.h"
 #include "table.h"
-#include "tm.h"
 
 /* =============================================================================
  * table_alloc
@@ -115,7 +114,7 @@ table_alloc (long numBucket, long (*compare)(const void*, const void*))
  * -- Returns true if successful, else false
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 table_insert (table_t* tablePtr, unsigned long hash, void* dataPtr)
 {
