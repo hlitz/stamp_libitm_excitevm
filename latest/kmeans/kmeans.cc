@@ -107,7 +107,6 @@
 #include "normal.h"
 #include "common.h"
 #include "thread.h"
-#include "tm.h"
 #include "util.h"
 
 #define MAX_LINE_LENGTH 1000000 /* max input is 400000 one digit input + spaces */
