@@ -137,7 +137,7 @@ adtree_make (adtree_t* adtreePtr, data_t* dataPtr);
  * -- queryVector must consist of queries sorted by id
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 long
 adtree_getCount (adtree_t* adtreePtr, vector_t* queryVectorPtr);
 

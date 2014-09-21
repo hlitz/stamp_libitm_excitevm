@@ -84,9 +84,9 @@
 #include "query.h"
 #include "utility.h"
 #include "vector.h"
-#include "tm.h"
+#include "tm_transition.h"
 
-TM_PURE //TMprint()
+__attribute__((transaction_pure)) //TMprint()
 void TMprinti(int i)
 {
     printf("%d", i);
@@ -326,7 +326,7 @@ adtree_make (adtree_t* adtreePtr, data_t* dataPtr)
  * getCount
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 long
 getCount (adtree_node_t* nodePtr,
           long i,
@@ -455,7 +455,7 @@ getCount (adtree_node_t* nodePtr,
  * =============================================================================
  */
 //[wer] called in learner.c inside a TM_SAFE function
-TM_SAFE
+__attribute__((transaction_safe))
 long
 adtree_getCount (adtree_t* adtreePtr, vector_t* queryVectorPtr)
 {

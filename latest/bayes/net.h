@@ -77,9 +77,8 @@
 #include "list.h"
 #include "operation.h"
 #include "queue.h"
-#include "tm.h"
 
-typedef struct net net_t;
+struct net_t;
 
 
 /* =============================================================================
@@ -102,7 +101,7 @@ net_free (net_t* netPtr);
  * TMnet_applyOperation
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 void
 TMnet_applyOperation (
                       net_t* netPtr, operation_t op, long fromId, long toId);
@@ -112,7 +111,7 @@ TMnet_applyOperation (
  * TMnet_hasEdge
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 TMnet_hasEdge (  net_t* netPtr, long fromId, long toId);
 
@@ -122,7 +121,7 @@ TMnet_hasEdge (  net_t* netPtr, long fromId, long toId);
  * TMnet_isPath
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 TMnet_isPath (
               net_t* netPtr,
@@ -144,7 +143,7 @@ net_isCycle (net_t* netPtr);
  * net_getParentIdListPtr
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 list_t*
 net_getParentIdListPtr (net_t* netPtr, long id);
 
@@ -163,7 +162,7 @@ net_getChildIdListPtr (net_t* netPtr, long id);
  * -- Returns false if id is not root node (i.e., has cycle back id)
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 TMnet_findAncestors (net_t* netPtr,
                      long id,
@@ -177,7 +176,7 @@ TMnet_findAncestors (net_t* netPtr,
  * -- Returns false if id is not root node (i.e., has cycle back id)
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 TMnet_findDescendants (net_t* netPtr,
                        long id,

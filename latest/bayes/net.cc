@@ -76,22 +76,22 @@
 #include "operation.h"
 #include "queue.h"
 #include "vector.h"
-#include "tm.h"
+#include "tm_transition.h"
 
-typedef enum net_node_mark {
+enum net_node_mark_t {
     NET_NODE_MARK_INIT = 0,
     NET_NODE_MARK_DONE = 1,
     NET_NODE_MARK_TEST = 2
-} net_node_mark_t;
+};
 
-typedef struct net_node {
+struct net_node_t {
     long id;
     list_t* parentIdListPtr;
     list_t* childIdListPtr;
     net_node_mark_t mark;
-} net_node_t;
+};
 
-struct net {
+struct net_t {
     vector_t* nodeVectorPtr;
 };
 
@@ -100,15 +100,15 @@ struct net {
  * =============================================================================
  */
 
-TM_SAFE
+__attribute__((transaction_safe))
 void
 TMinsertEdge (  net_t* netPtr, long fromId, long toId);
 
-TM_SAFE
+__attribute__((transaction_safe))
 void
 TMremoveEdge (  net_t* netPtr, long fromId, long toId);
 
-TM_SAFE
+__attribute__((transaction_safe))
 void
 TMreverseEdge (  net_t* netPtr, long fromId, long toId);
 
@@ -116,7 +116,7 @@ TMreverseEdge (  net_t* netPtr, long fromId, long toId);
  * compareId
  * =============================================================================
  */
-TM_SAFE long
+__attribute__((transaction_safe)) long
 compareId (const void* aPtr, const void* bPtr)
 {
     long a = (long)aPtr;
@@ -229,7 +229,7 @@ net_free (net_t* netPtr)
  * TMinsertEdge
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 void
 TMinsertEdge (  net_t* netPtr, long fromId, long toId)
 {
@@ -252,7 +252,7 @@ TMinsertEdge (  net_t* netPtr, long fromId, long toId)
  * TMremoveEdge
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 void
 TMremoveEdge (  net_t* netPtr, long fromId, long toId)
 {
@@ -274,7 +274,7 @@ TMremoveEdge (  net_t* netPtr, long fromId, long toId)
  * TMreverseEdge
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 void
 TMreverseEdge (  net_t* netPtr, long fromId, long toId)
 {
@@ -287,7 +287,7 @@ TMreverseEdge (  net_t* netPtr, long fromId, long toId)
  * TMnet_applyOperation
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 void
 TMnet_applyOperation (net_t* netPtr, operation_t op, long fromId, long toId)
 {
@@ -304,7 +304,7 @@ TMnet_applyOperation (net_t* netPtr, operation_t op, long fromId, long toId)
  * TMnet_hasEdge
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 TMnet_hasEdge (  net_t* netPtr, long fromId, long toId)
 {
@@ -333,7 +333,7 @@ TMnet_hasEdge (  net_t* netPtr, long fromId, long toId)
  * TMnet_isPath
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 TMnet_isPath (net_t* netPtr,
               long fromId,
@@ -356,7 +356,7 @@ TMnet_isPath (net_t* netPtr,
     while (!TMQUEUE_ISEMPTY(workQueuePtr)) {
         long id = (long)TMQUEUE_POP(workQueuePtr);
         if (id == toId) {
-          TMQUEUE_CLEAR(workQueuePtr); //TM_SAFE
+          TMQUEUE_CLEAR(workQueuePtr); //__attribute__((transaction_safe))
             return true;
         }
 
@@ -467,7 +467,7 @@ net_isCycle (net_t* netPtr)
  * =============================================================================
  */
 //TM_PURE
-TM_SAFE
+__attribute__((transaction_safe))
 list_t*
 net_getParentIdListPtr (net_t* netPtr, long id)
 {
@@ -499,7 +499,7 @@ net_getChildIdListPtr (net_t* netPtr, long id)
  * -- Returns false if id is not root node (i.e., has cycle back id)
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 TMnet_findAncestors (
                      net_t* netPtr,
@@ -572,7 +572,7 @@ TMnet_findAncestors (
  * -- Returns false if id is not root node (i.e., has cycle back id)
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 TMnet_findDescendants (net_t* netPtr,
                        long id,
