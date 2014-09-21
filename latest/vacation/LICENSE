@@ -1,7 +1,4 @@
-/* =============================================================================
- *
- * thread.h
- *
+/*
  * =============================================================================
  *
  * Copyright (C) Stanford University, 2006.  All Rights Reserved.
@@ -19,11 +16,6 @@
  * ------------------------------------------------------------------------
  *
  * For the license of ssca2, please see ssca2/COPYRIGHT
- *
- * ------------------------------------------------------------------------
- *
- * For the license of lib/mt19937ar.c and lib/mt19937ar.h, please see the
- * header of the files.
  *
  * ------------------------------------------------------------------------
  *
@@ -67,60 +59,3 @@
  *
  * =============================================================================
  */
-
-#pragma once
-
-/* =============================================================================
- * thread_startup
- * -- Create pool of secondary threads
- * -- numThread is total number of threads (primary + secondary)
- * =============================================================================
- */
-void
-thread_startup (long numThread);
-
-
-/* =============================================================================
- * thread_start
- * -- Make primary and secondary threads execute work
- * -- Should only be called by primary thread
- * -- funcPtr takes one arguments: argPtr
- * =============================================================================
- */
-void
-thread_start (void (*funcPtr)(void*), void* argPtr);
-
-
-/* =============================================================================
- * thread_shutdown
- * -- Primary thread kills pool of secondary threads
- * =============================================================================
- */
-void
-thread_shutdown ();
-
-
-/* =============================================================================
- * thread_getId
- * -- Call after thread_start() to get thread ID inside parallel region
- * =============================================================================
- */
-long thread_getId();
-
-
-/* =============================================================================
- * thread_getNumThread
- * -- Call after thread_start() to get number of threads inside parallel region
- * =============================================================================
- */
-long
-thread_getNumThread();
-
-
-/* =============================================================================
- * thread_barrier_wait
- * -- Call after thread_start() to synchronize threads inside parallel region
- * =============================================================================
- */
-void
-thread_barrier_wait();

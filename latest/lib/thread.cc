@@ -71,108 +71,84 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <pthread.h>
 #include "tm.h"
 #include "thread.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+static __thread long      global_threadId;
+static long               global_numThread         = 1;
+static pthread_barrier_t* global_barrierPtr        = NULL;
+static long*              global_threadIds         = NULL;
+static pthread_t*         global_threads           = NULL;
+static void               (*global_funcPtr)(void*) = NULL;
+static void*              global_argPtr            = NULL;
+static volatile bool      global_doShutdown        = false;
 
-static THREAD_LOCAL_T    global_threadId;
-static long              global_numThread       = 1;
-static THREAD_BARRIER_T* global_barrierPtr      = NULL;
-static long*             global_threadIds       = NULL;
-static THREAD_ATTR_T     global_threadAttr;
-static THREAD_T*         global_threads         = NULL;
-static void            (*global_funcPtr)(void*) = NULL;
-static void*             global_argPtr          = NULL;
-static volatile bool     global_doShutdown      = false;
-
-
-/* =============================================================================
- * threadWait
- * -- Synchronizes all threads to start/stop parallel section
- * =============================================================================
+/**
+ * threadWait: Synchronizes all threads to start/stop parallel section
  */
-static void
-threadWait (void* argPtr)
+static void* threadWait(void* argPtr)
 {
     long threadId = *(long*)argPtr;
 
-    THREAD_LOCAL_SET(global_threadId, (long)threadId);
+    global_threadId = (long)threadId;
 
     while (1) {
-        THREAD_BARRIER(global_barrierPtr, threadId); /* wait for start parallel */
+        pthread_barrier_wait(global_barrierPtr); /* wait for start parallel */
         if (global_doShutdown) {
             break;
         }
         global_funcPtr(global_argPtr);
-        THREAD_BARRIER(global_barrierPtr, threadId); /* wait for end parallel */
+        pthread_barrier_wait(global_barrierPtr); /* wait for end parallel */
         if (threadId == 0) {
             break;
         }
     }
+    return NULL;
 }
 
-
-/* =============================================================================
- * thread_startup
- * -- Create pool of secondary threads
- * -- numThread is total number of threads (primary + secondaries)
- * =============================================================================
+/**
+ * thread_startup: Create pool of secondary threads.  numThread is total
+ *                 number of threads (primary + secondaries)
  */
-void
-thread_startup (long numThread)
+void thread_startup(long numThread)
 {
-    long i;
-
     global_numThread = numThread;
     global_doShutdown = false;
 
-    /* Set up barrier */
+    // Set up barrier
     assert(global_barrierPtr == NULL);
-    global_barrierPtr = THREAD_BARRIER_ALLOC(numThread);
+    global_barrierPtr = (pthread_barrier_t*)malloc(sizeof(pthread_barrier_t));
     assert(global_barrierPtr);
-    THREAD_BARRIER_INIT(global_barrierPtr, numThread);
+    pthread_barrier_init(global_barrierPtr, 0, numThread);
 
-    /* Set up ids */
-    THREAD_LOCAL_INIT(global_threadId);
+    // Set up ids
     assert(global_threadIds == NULL);
     global_threadIds = (long*)malloc(numThread * sizeof(long));
     assert(global_threadIds);
-    for (i = 0; i < numThread; i++) {
+    for (long i = 0; i < numThread; i++) {
         global_threadIds[i] = i;
     }
 
-    /* Set up thread list */
+    // Set up thread list
     assert(global_threads == NULL);
-    global_threads = (THREAD_T*)malloc(numThread * sizeof(THREAD_T));
+    global_threads = (pthread_t*)malloc(numThread * sizeof(pthread_t));
     assert(global_threads);
 
-    /* Set up pool */
-    THREAD_ATTR_INIT(global_threadAttr);
-    for (i = 1; i < numThread; i++) {
-        THREAD_CREATE(global_threads[i],
-                      global_threadAttr,
-                      &threadWait,
-                      &global_threadIds[i]);
+    // Set up pool
+    for (long i = 1; i < numThread; i++) {
+        pthread_create(&global_threads[i], NULL, &threadWait, (void*)&global_threadIds[i]);
     }
 
-    /*
-     * Wait for primary thread to call thread_start
-     */
+    // Wait for primary thread to call thread_start
 }
 
-
-/* =============================================================================
- * thread_start
- * -- Make primary and secondary threads execute work
- * -- Should only be called by primary thread
- * -- funcPtr takes one arguments: argPtr
- * =============================================================================
+/**
+ * thread_start: Make primary and secondary threads execute work.  Should
+ *               only be called by primary thread.  funcPtr takes one
+ *               arguments: argPtr.
  */
-void
-thread_start (void (*funcPtr)(void*), void* argPtr)
+void thread_start(void (*funcPtr)(void*), void* argPtr)
 {
     global_funcPtr = funcPtr;
     global_argPtr = argPtr;
@@ -181,27 +157,22 @@ thread_start (void (*funcPtr)(void*), void* argPtr)
     threadWait((void*)&threadId);
 }
 
-
-/* =============================================================================
- * thread_shutdown
- * -- Primary thread kills pool of secondary threads
- * =============================================================================
+/**
+ * thread_shutdown: Primary thread kills pool of secondary threads
  */
-void
-thread_shutdown ()
+void thread_shutdown()
 {
-    /* Make secondary threads exit wait() */
+    // Make secondary threads exit wait()
     global_doShutdown = true;
-    THREAD_BARRIER(global_barrierPtr, 0);
+    pthread_barrier_wait(global_barrierPtr);
 
     long numThread = global_numThread;
 
-    long i;
-    for (i = 1; i < numThread; i++) {
-        THREAD_JOIN(global_threads[i]);
+    for (long i = 1; i < numThread; i++) {
+        pthread_join(global_threads[i], NULL);
     }
 
-    THREAD_BARRIER_FREE(global_barrierPtr);
+    free(global_barrierPtr);
     global_barrierPtr = NULL;
 
     free(global_threadIds);
@@ -213,148 +184,32 @@ thread_shutdown ()
     global_numThread = 1;
 }
 
-
-/* =============================================================================
- * thread_barrier_alloc
- * =============================================================================
+/**
+ * thread_getId: Call after thread_start() to get thread ID inside parallel
+ *               region
  */
-thread_barrier_t*
-thread_barrier_alloc (long numThread)
+long thread_getId()
 {
-    thread_barrier_t* barrierPtr;
-
-    assert(numThread > 0);
-    assert((numThread & (numThread - 1)) == 0); /* must be power of 2 */
-    barrierPtr = (thread_barrier_t*)malloc(numThread * sizeof(thread_barrier_t));
-    if (barrierPtr != NULL) {
-        barrierPtr->numThread = numThread;
-    }
-
-    return barrierPtr;
+    return global_threadId;
 }
 
-
-/* =============================================================================
- * thread_barrier_free
- * =============================================================================
+/**
+ * thread_getNumThread: Call after thread_start() to get number of threads
+ *                      inside parallel region
  */
-void
-thread_barrier_free (thread_barrier_t* barrierPtr)
-{
-    free(barrierPtr);
-}
-
-
-/* =============================================================================
- * thread_barrier_init
- * =============================================================================
- */
-void
-thread_barrier_init (thread_barrier_t* barrierPtr)
-{
-    long i;
-    long numThread = barrierPtr->numThread;
-
-    for (i = 0; i < numThread; i++) {
-        barrierPtr[i].count = 0;
-        THREAD_MUTEX_INIT(barrierPtr[i].countLock);
-        THREAD_COND_INIT(barrierPtr[i].proceedCond);
-        THREAD_COND_INIT(barrierPtr[i].proceedAllCond);
-    }
-}
-
-
-/* =============================================================================
- * thread_barrier
- * -- Simple logarithmic barrier
- * =============================================================================
- */
-void
-thread_barrier (thread_barrier_t* barrierPtr, long threadId)
-{
-    long i = 2;
-    long base = 0;
-    long index;
-    long numThread = barrierPtr->numThread;
-
-    if (numThread < 2) {
-        return;
-    }
-
-    do {
-        index = base + threadId / i;
-        if ((threadId % i) == 0) {
-            THREAD_MUTEX_LOCK(barrierPtr[index].countLock);
-            barrierPtr[index].count++;
-            while (barrierPtr[index].count < 2) {
-                THREAD_COND_WAIT(barrierPtr[index].proceedCond,
-                                 barrierPtr[index].countLock);
-            }
-            THREAD_MUTEX_UNLOCK(barrierPtr[index].countLock);
-        } else {
-            THREAD_MUTEX_LOCK(barrierPtr[index].countLock);
-            barrierPtr[index].count++;
-            if (barrierPtr[index].count == 2) {
-                THREAD_COND_SIGNAL(barrierPtr[index].proceedCond);
-            }
-            while (THREAD_COND_WAIT(barrierPtr[index].proceedAllCond,
-                                    barrierPtr[index].countLock) != 0)
-            {
-                /* wait */
-            }
-            THREAD_MUTEX_UNLOCK(barrierPtr[index].countLock);
-            break;
-        }
-        base = base + numThread / i;
-        i *= 2;
-    } while (i <= numThread);
-
-    for (i /= 2; i > 1; i /= 2) {
-        base = base - numThread / i;
-        index = base + threadId / i;
-        THREAD_MUTEX_LOCK(barrierPtr[index].countLock);
-        barrierPtr[index].count = 0;
-        THREAD_COND_SIGNAL(barrierPtr[index].proceedAllCond);
-        THREAD_MUTEX_UNLOCK(barrierPtr[index].countLock);
-    }
-}
-
-
-/* =============================================================================
- * thread_getId
- * -- Call after thread_start() to get thread ID inside parallel region
- * =============================================================================
- */
-long
-thread_getId()
-{
-    return (long)THREAD_LOCAL_GET(global_threadId);
-}
-
-
-/* =============================================================================
- * thread_getNumThread
- * -- Call after thread_start() to get number of threads inside parallel region
- * =============================================================================
- */
-long
-thread_getNumThread()
+long thread_getNumThread()
 {
     return global_numThread;
 }
 
-
-/* =============================================================================
- * thread_barrier_wait
- * -- Call after thread_start() to synchronize threads inside parallel region
- * =============================================================================
+/**
+ * thread_barrier_wait: Call after thread_start() to synchronize threads
+ *                      inside parallel region
  */
-void
-thread_barrier_wait()
+void thread_barrier_wait()
 {
-    THREAD_BARRIER(global_barrierPtr, threadId);
+    pthread_barrier_wait(global_barrierPtr);
 }
-
 
 /* =============================================================================
  * TEST_THREAD
@@ -362,18 +217,13 @@ thread_barrier_wait()
  */
 #ifdef TEST_THREAD
 
-
 #include <stdio.h>
 #include <unistd.h>
-
 
 #define NUM_THREADS    (4)
 #define NUM_ITERATIONS (3)
 
-
-
-void
-printId (void* argPtr)
+void printId (void* argPtr)
 {
     long threadId = thread_getId();
     long numThread = thread_getNumThread();
@@ -394,9 +244,7 @@ printId (void* argPtr)
     }
 }
 
-
-int
-main ()
+int main ()
 {
     puts("Starting...");
 
@@ -414,16 +262,4 @@ main ()
     return 0;
 }
 
-
 #endif /* TEST_THREAD */
-
-#ifdef __cplusplus
-}
-#endif
-
-/* =============================================================================
- *
- * End of thread.c
- *
- * =============================================================================
- */
