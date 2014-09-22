@@ -37,16 +37,14 @@ reservation_info_t::reservation_info_t(reservation_type_t _type,
  * =============================================================================
  */
 __attribute__((transaction_safe))
-long
-reservation_info_compare (reservation_info_t* aPtr, reservation_info_t* bPtr)
+bool
+reservation_info_compare(reservation_info_t* left, reservation_info_t* right)
 {
-    long typeDiff;
-
-    typeDiff = aPtr->type - bPtr->type;
-
-    return ((typeDiff != 0) ? (typeDiff) : (aPtr->id - bPtr->id));
+    if (left->type == right->type)
+        return left->id < right->id;
+    else
+        return left->type < right->type;
 }
-
 
 //static void
 __attribute__((transaction_safe))

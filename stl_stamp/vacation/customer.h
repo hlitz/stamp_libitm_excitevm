@@ -8,12 +8,12 @@
 
 #pragma once
 
-#include "list.h"
+#include <set>
 #include "reservation.h"
 
 struct customer_t {
     long id;
-    list_t* reservationInfoListPtr;
+    std::set<reservation_info_t*, bool(*)(reservation_info_t*, reservation_info_t*)>* reservationInfoList;
 
     __attribute__((transaction_safe))
     customer_t(long id);

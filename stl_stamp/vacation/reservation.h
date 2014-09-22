@@ -80,5 +80,5 @@ struct reservation_t {
  * -- Returns -1 if A < B, 0 if A = B, 1 if A > B
  */
 __attribute__((transaction_safe))
-long reservation_info_compare(reservation_info_t* aPtr, reservation_info_t* bPtr);
+bool reservation_info_compare(reservation_info_t* aPtr, reservation_info_t* bPtr);
 

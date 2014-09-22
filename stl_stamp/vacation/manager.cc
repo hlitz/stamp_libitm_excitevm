@@ -292,8 +292,6 @@ manager_t::deleteCustomer (long customerId)
 {
     customer_t* customerPtr;
     MAP_T* reservationTables[NUM_RESERVATION_TYPE];
-    list_t* reservationInfoListPtr;
-    list_iter_t it;
     bool status;
 
     customerPtr = (customer_t*)TMMAP_FIND(customerTablePtr, customerId);
@@ -307,14 +305,10 @@ manager_t::deleteCustomer (long customerId)
     reservationTables[RESERVATION_FLIGHT] = flightTablePtr;
 
     /* Cancel this customer's reservations */
-    reservationInfoListPtr = customerPtr->reservationInfoListPtr;
-    TMLIST_ITER_RESET(&it, reservationInfoListPtr);
-    while (TMLIST_ITER_HASNEXT(&it)) {
-      reservation_info_t* reservationInfoPtr =
-        (reservation_info_t*)TMLIST_ITER_NEXT(&it);
-      reservation_t* reservationPtr =
-        (reservation_t*)TMMAP_FIND(reservationTables[reservationInfoPtr->type],
-                                   reservationInfoPtr->id);
+    for (auto i : *customerPtr->reservationInfoList) {
+        reservation_info_t* reservationInfoPtr = i;
+        reservation_t* reservationPtr =
+            (reservation_t*)TMMAP_FIND(reservationTables[i->type], i->id);
       if (reservationPtr == NULL) {
         //_ITM_abortTransaction(2);
         return false;

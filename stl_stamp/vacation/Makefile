@@ -22,7 +22,7 @@ PROG := vacation
 
 SRCS += client.cc customer.cc manager.cc reservation.cc vacation.cc
 
-LIBSRCS += list.cc rbtree.cc thread.cc
+LIBSRCS += rbtree.cc thread.cc
 
 OBJS := ${SRCS:.cc=.o} ${LIBSRCS:%.cc=lib_%.o}
 

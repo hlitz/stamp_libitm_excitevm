@@ -9,23 +9,9 @@
 #include <assert.h>
 #include <stdlib.h>
 #include "customer.h"
-#include "list.h"
 #include "memory.h"
 #include "reservation.h"
 #include "tm_transition.h"
-
-/* =============================================================================
- * compareReservationInfo
- * =============================================================================
- */
-//static
-__attribute__((transaction_safe)) long
-compareReservationInfo (const void* aPtr, const void* bPtr)
-{
-    return reservation_info_compare((reservation_info_t*)aPtr,
-                                    (reservation_info_t*)bPtr);
-}
-
 
 /* =============================================================================
  * customer_alloc
@@ -37,8 +23,10 @@ customer_t::customer_t(long _id)
     id = _id;
 
     // NB: must initialize with TM_SAFE compare function
-    reservationInfoListPtr = TMLIST_ALLOC(&compareReservationInfo);
-    assert(reservationInfoListPtr != NULL);
+    reservationInfoList = new std::set<reservation_info_t*,
+                                       bool(*)(reservation_info_t*, reservation_info_t*)
+                                       >(reservation_info_compare);
+    assert(reservationInfoList != NULL);
 }
 
 
@@ -50,7 +38,7 @@ __attribute__((transaction_safe))
 customer_t::~customer_t()
 {
     // [mfs] Is this sufficient?  Does it free the whole list?
-    TMLIST_FREE(reservationInfoListPtr);
+    delete(reservationInfoList);
 }
 
 
@@ -64,7 +52,7 @@ bool customer_t::addReservationInfo (reservation_type_t type, long id, long pric
 {
     reservation_info_t* reservationInfoPtr =
         new reservation_info_t(type, id, price);
-    return TMLIST_INSERT(reservationInfoListPtr, (void*)reservationInfoPtr);
+    return reservationInfoList->insert(reservationInfoPtr).second;
 }
 
 
@@ -82,14 +70,17 @@ bool customer_t::removeReservationInfo(reservation_type_t type, long id)
     reservation_info_t findReservationInfo(type, id, 0);
 
     reservation_info_t* reservationInfoPtr =
-        (reservation_info_t*)TMLIST_FIND(reservationInfoListPtr,
-                                         &findReservationInfo);
+        *reservationInfoList->find(&findReservationInfo);
 
     if (reservationInfoPtr == NULL) {
         return false;
     }
-    bool status = TMLIST_REMOVE(reservationInfoListPtr,
-                                (void*)&findReservationInfo);
+
+    // [mfs] There must be a better way than using the count...
+    int oldcount = reservationInfoList->size();
+    reservationInfoList->erase(&findReservationInfo);
+    int newcount = reservationInfoList->size();
+    bool status = newcount == oldcount - 1;
 
     //[wer210] get rid of restart()
     if (status == false) {
@@ -112,15 +103,8 @@ __attribute__((transaction_safe))
 long customer_t::getBill()
 {
     long bill = 0;
-    list_iter_t it;
-
-    TMLIST_ITER_RESET(&it, reservationInfoListPtr);
-    while (TMLIST_ITER_HASNEXT(&it)) {
-        reservation_info_t* reservationInfoPtr =
-            (reservation_info_t*)TMLIST_ITER_NEXT(&it);
-        bill += reservationInfoPtr->price;
-    }
-
+    for (auto i : *reservationInfoList)
+        bill += i->price;
     return bill;
 }
 
