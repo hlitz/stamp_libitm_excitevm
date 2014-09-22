@@ -2,20 +2,14 @@
  * PLEASE SEE LICENSE FILE FOR LICENSING AND COPYRIGHT INFORMATION
  */
 
-#include <assert.h>
-#include <stdlib.h>
-#include <stdio.h>
+#include <cassert>
+#include <cstdlib>
+#include <cstdio>
 #include <getopt.h>
 #include <random>
 #include "client.h"
-#include "customer.h"
 #include "manager.h"
-#include "map.h"
-#include "memory.h"
-#include "operation.h"
-#include "reservation.h"
 #include "timer.h"
-#include "utility.h"
 #include "thread.h"
 
 enum param_types {
@@ -277,13 +271,15 @@ checkTables (manager_t* managerPtr)
 {
     long i;
     long numRelation = (long)global_params[PARAM_RELATIONS];
-    MAP_T* customerTablePtr = managerPtr->customerTablePtr;
-    MAP_T* tables[] = {
-        managerPtr->carTablePtr,
-        managerPtr->flightTablePtr,
-        managerPtr->roomTablePtr,
+
+    std::map<long, customer_t*>* custs = managerPtr->customerTable;
+    std::map<long, reservation_t*>* tbls[] = {
+        managerPtr->carTable,
+        managerPtr->flightTable,
+        managerPtr->roomTable,
     };
-    long numTable = sizeof(tables) / sizeof(tables[0]);
+
+    long numTable = sizeof(tbls) / sizeof(tbls[0]);
     bool (*manager_add[])(manager_t*, long, long, long) = {
         &manager_addCar,
         &manager_addFlight,
@@ -299,22 +295,39 @@ checkTables (manager_t* managerPtr)
     long queryRange = (long)((double)percentQuery / 100.0 * (double)numRelation + 0.5);
     long maxCustomerId = queryRange + 1;
     for (i = 1; i <= maxCustomerId; i++) {
-        if (MAP_FIND(customerTablePtr, i)) {
-            if (MAP_REMOVE(customerTablePtr, i)) {
-                assert(!MAP_FIND(customerTablePtr, i));
+        auto f = custs->find(i);
+        if (f->first == i) {
+            auto r = custs->erase(i);
+            if (r != 0) {
+                auto c = custs->find(i);
+                assert(c == custs->end());
             }
+            else {
+                assert(r == 0);
+            }
+        }
+        else {
+            assert(f == custs->end());
         }
     }
 
     /* Check reservation tables for consistency and unique ids */
     for (t = 0; t < numTable; t++) {
-        MAP_T* tablePtr = tables[t];
         for (i = 1; i <= numRelation; i++) {
-            if (MAP_FIND(tablePtr, i)) {
+            auto f = tbls[t]->find(i);
+            if (f->first == i) {
                 assert(manager_add[t](managerPtr, i, 0, 0)); /* validate entry */
-                if (MAP_REMOVE(tablePtr, i)) {
-                    assert(!MAP_REMOVE(tablePtr, i));
+                auto e = tbls[t]->erase(i);
+                if (e == 1) {
+                    auto k = tbls[t]->erase(i);
+                    assert(k == 0);
                 }
+                else {
+                    assert(e == 0);
+                }
+            }
+            else {
+                assert(f == tbls[t]->end());
             }
         }
     }

@@ -2,11 +2,9 @@
  * PLEASE SEE LICENSE FILE FOR LICENSING AND COPYRIGHT INFORMATION
  */
 
-#include <assert.h>
+#include <cassert>
 #include "action.h"
 #include "client.h"
-#include "manager.h"
-#include "reservation.h"
 #include "thread.h"
 #include "tm_transition.h"
 

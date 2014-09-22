@@ -8,13 +8,15 @@
 
 #pragma once
 
-#include "map.h"
+#include <map>
+#include "reservation.h"
+#include "customer.h"
 
 struct manager_t {
-  MAP_T* carTablePtr;
-  MAP_T* roomTablePtr;
-  MAP_T* flightTablePtr;
-  MAP_T* customerTablePtr;
+  std::map<long, reservation_t*>* carTable;
+  std::map<long, reservation_t*>* roomTable;
+  std::map<long, reservation_t*>* flightTable;
+  std::map<long, customer_t*>* customerTable;
 
   manager_t();
   ~manager_t();

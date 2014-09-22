@@ -6,9 +6,6 @@
  * reservation.c: Representation of car, flight, and hotel relations
  */
 
-#include <assert.h>
-#include <stdlib.h>
-#include "memory.h"
 #include "reservation.h"
 
 /* =============================================================================
@@ -185,8 +182,8 @@ reservation_t::updatePrice(long newPrice)
 #ifdef TEST_RESERVATION
 
 
-#include <assert.h>
-#include <stdio.h>
+#include <cassert>
+#include <cstdio>
 
 /* =============================================================================
  * reservation_compare

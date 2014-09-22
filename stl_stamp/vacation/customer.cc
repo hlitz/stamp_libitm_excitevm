@@ -6,11 +6,9 @@
  * customer.c: Representation of customer
  */
 
-#include <assert.h>
-#include <stdlib.h>
+#include <cassert>
+#include <cstdlib>
 #include "customer.h"
-#include "memory.h"
-#include "reservation.h"
 #include "tm_transition.h"
 
 /* =============================================================================
@@ -76,11 +74,8 @@ bool customer_t::removeReservationInfo(reservation_type_t type, long id)
         return false;
     }
 
-    // [mfs] There must be a better way than using the count...
-    int oldcount = reservationInfoList->size();
-    reservationInfoList->erase(&findReservationInfo);
-    int newcount = reservationInfoList->size();
-    bool status = newcount == oldcount - 1;
+    int num = reservationInfoList->erase(&findReservationInfo);
+    bool status = num == 1;
 
     //[wer210] get rid of restart()
     if (status == false) {
@@ -116,8 +111,8 @@ long customer_t::getBill()
 #ifdef TEST_CUSTOMER
 
 
-#include <assert.h>
-#include <stdio.h>
+#include <cassert>
+#include <cstdio>
 
 
 int
