@@ -15,10 +15,6 @@
  * DECLARATION OF TM_SAFE FUNCTIONS
  * =============================================================================
  */
-//static void
-__attribute__((transaction_safe))
-bool
-checkReservation(reservation_t* reservationPtr);
 
 /* =============================================================================
  * reservation_info_alloc
@@ -55,21 +51,18 @@ reservation_info_compare (reservation_info_t* aPtr, reservation_info_t* bPtr)
 //static void
 __attribute__((transaction_safe))
 bool
-checkReservation (  reservation_t* reservationPtr)
+reservation_t::checkReservation()
 {
-    long numUsed = reservationPtr->numUsed;
     if (numUsed < 0) {
       //_ITM_abortTransaction(2);
       return false;
     }
 
-    long numFree = reservationPtr->numFree;
     if (numFree < 0) {
       //_ITM_abortTransaction(2);
       return false;
     }
 
-    long numTotal = reservationPtr->numTotal;
     if (numTotal < 0) {
       //_ITM_abortTransaction(2);
       return false;
@@ -80,7 +73,6 @@ checkReservation (  reservation_t* reservationPtr)
       return false;
     }
 
-    long price = reservationPtr->price;
     if (price < 0) {
       //_ITM_abortTransaction(2);
       return false;
@@ -105,91 +97,87 @@ reservation_t::reservation_t(long _id,
     numFree = _numTotal;
     numTotal = _numTotal;
     price = _price;
-    *success = checkReservation(this);
+    *success = checkReservation();
 }
 
 
 /* =============================================================================
- * reservation_addToTotal
+ * reservation_t::addToTotal
  * -- Adds if 'num' > 0, removes if 'num' < 0;
  * -- Returns TRUE on success, else FALSE
  * =============================================================================
  */
 __attribute__((transaction_safe)) bool
-reservation_addToTotal (  reservation_t* reservationPtr, long num, bool* success)
+reservation_t::addToTotal(long num, bool* success)
 {
-    long numFree = reservationPtr->numFree;
     if (numFree + num < 0)
         return false;
 
-    reservationPtr->numFree += num;
-    reservationPtr->numTotal += num;
+    numFree += num;
+    numTotal += num;
 
-    *success = checkReservation(reservationPtr);
+    *success = checkReservation();
     return true;
 }
 
 
 /* =============================================================================
- * reservation_make
+ * reservation_t::make
  * -- Returns TRUE on success, else FALSE
  * =============================================================================
  */
-__attribute__((transaction_safe)) bool
-reservation_make (  reservation_t* reservationPtr)
+__attribute__((transaction_safe))
+bool reservation_t::make()
 {
-    long numFree = reservationPtr->numFree;
-
     if (numFree < 1)
         return false;
 
-    reservationPtr->numUsed += 1;
-    reservationPtr->numFree -= 1;
+    numUsed += 1;
+    numFree -= 1;
 
-    checkReservation(reservationPtr);
+    checkReservation();
     return true;
 }
 
 
 /* =============================================================================
- * reservation_cancel
+ * reservation_t::cancel
  * -- Returns TRUE on success, else FALSE
  * =============================================================================
  */
 __attribute__((transaction_safe)) bool
-reservation_cancel (reservation_t* reservationPtr)
+reservation_t::cancel()
 {
-    long numUsed = reservationPtr->numUsed;
     if (numUsed < 1)
         return false;
 
-    reservationPtr->numUsed -= 1;
-    reservationPtr->numFree += 1;
+    numUsed -= 1;
+    numFree += 1;
 
     //[wer210] Note here, return false, instead of abort in checkReservation
-    return checkReservation(reservationPtr);
+    return checkReservation();
 }
 
 
 
 /* =============================================================================
- * reservation_updatePrice
+ * reservation_t::updatePrice
  * -- Failure if 'price' < 0
  * -- Returns TRUE on success, else FALSE
  * =============================================================================
  */
 //[wer210] returns were not used before, so use it to indicate aborts
 __attribute__((transaction_safe)) bool
-reservation_updatePrice(reservation_t* reservationPtr, long newPrice)
+reservation_t::updatePrice(long newPrice)
 {
     if (newPrice < 0) {
       //return FALSE;
       return true;
     }
 
-    reservationPtr->price = newPrice;
+    price = newPrice;
 
-    return checkReservation(reservationPtr);
+    return checkReservation();
 }
 
 /* =============================================================================

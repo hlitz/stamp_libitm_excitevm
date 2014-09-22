@@ -37,6 +37,42 @@ struct reservation_t {
     reservation_t(long id, long price, long numTotal, bool* success);
 
     // NB: no need to provide destructor... default will do
+
+    /*
+     * addToTotal
+     * -- Adds if 'num' > 0, removes if 'num' < 0;
+     * -- Returns TRUE on success, else FALSE
+     */
+    __attribute__((transaction_safe))
+    bool addToTotal(long num, bool* success);
+
+    /*
+     * make
+     * -- Returns TRUE on success, else FALSE
+     */
+    __attribute__((transaction_safe))
+    bool make();
+
+    /*
+     * cancel
+     * -- Returns TRUE on success, else FALSE
+     */
+    __attribute__((transaction_safe))
+    bool cancel();
+
+
+    /*
+     * updatePrice
+     * -- Failure if 'price' < 0
+     * -- Returns TRUE on success, else FALSE
+     */
+    __attribute__((transaction_safe))
+    bool updatePrice(long newPrice);
+
+  private:
+    __attribute__((transaction_safe))
+    bool checkReservation();
+
 };
 
 /*
@@ -46,33 +82,3 @@ struct reservation_t {
 __attribute__((transaction_safe))
 long reservation_info_compare(reservation_info_t* aPtr, reservation_info_t* bPtr);
 
-/*
- * reservation_addToTotal
- * -- Adds if 'num' > 0, removes if 'num' < 0;
- * -- Returns TRUE on success, else FALSE
- */
-__attribute__((transaction_safe))
-bool reservation_addToTotal(reservation_t* reservationPtr, long num, bool* success);
-
-/*
- * reservation_make
- * -- Returns TRUE on success, else FALSE
- */
-__attribute__((transaction_safe))
-bool reservation_make(reservation_t* reservationPtr);
-
-/*
- * reservation_cancel
- * -- Returns TRUE on success, else FALSE
- */
-__attribute__((transaction_safe))
-bool reservation_cancel(reservation_t* reservationPtr);
-
-
-/*
- * reservation_updatePrice
- * -- Failure if 'price' < 0
- * -- Returns TRUE on success, else FALSE
- */
-__attribute__((transaction_safe))
-bool reservation_updatePrice(reservation_t* reservationPtr, long newPrice);

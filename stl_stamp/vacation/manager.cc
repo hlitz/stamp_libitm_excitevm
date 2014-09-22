@@ -20,23 +20,23 @@
  */
 __attribute__((transaction_safe))
 long
-queryNumFree (  MAP_T* tablePtr, long id);
+queryNumFree (MAP_T* tablePtr, long id);
 
 __attribute__((transaction_safe))
 long
-queryPrice (  MAP_T* tablePtr, long id);
+queryPrice (MAP_T* tablePtr, long id);
 
 __attribute__((transaction_safe))
 bool
-reserve ( MAP_T* tablePtr, MAP_T* customerTablePtr, long customerId, long id, reservation_type_t type);
+reserve (MAP_T* tablePtr, MAP_T* customerTablePtr, long customerId, long id, reservation_type_t type);
 
 __attribute__((transaction_safe))
 bool
-cancel ( MAP_T* tablePtr, MAP_T* customerTablePtr, long customerId, long id, reservation_type_t type);
+cancel (MAP_T* tablePtr, MAP_T* customerTablePtr, long customerId, long id, reservation_type_t type);
 
 __attribute__((transaction_safe))
 bool
-addReservation (  MAP_T* tablePtr, long id, long num, long price);
+addReservation(MAP_T* tablePtr, long id, long num, long price);
 
 /**
  * Constructor for manager objects
@@ -108,7 +108,7 @@ addReservation (MAP_T* tablePtr, long id, long num, long price)
     } else {
       /* Update existing reservation */
       //[wer210] there was aborts inside RESERVATION_ADD_TO_TOTAL, passing an extra parameter.
-      if (!reservation_addToTotal(reservationPtr, num, &success)) {
+      if (!reservationPtr->addToTotal(num, &success)) {
         //return FALSE;
         if (success)
           return true;
@@ -125,7 +125,7 @@ addReservation (MAP_T* tablePtr, long id, long num, long price)
         delete reservationPtr;
       } else {
         //[wer210] there was aborts inside RESERVATIOn_UPDATE_PRICE, and return was not used
-        if (!reservation_updatePrice(reservationPtr, price))
+        if (!reservationPtr->updatePrice(price))
           return false;
       }
     }
@@ -135,7 +135,7 @@ addReservation (MAP_T* tablePtr, long id, long num, long price)
 
 
 /* =============================================================================
- * manager_addCar
+ * manager_t::addCar
  * -- Add cars to a city
  * -- Adding to an existing car overwrite the price if 'price' >= 0
  * -- Returns TRUE on success, else FALSE
@@ -143,14 +143,14 @@ addReservation (MAP_T* tablePtr, long id, long num, long price)
  */
 //[wer210] Return value not used before.
 __attribute__((transaction_safe)) bool
-manager_addCar (manager_t* managerPtr, long carId, long numCars, long price)
+manager_t::addCar (long carId, long numCars, long price)
 {
-    return addReservation(  managerPtr->carTablePtr, carId, numCars, price);
+    return addReservation(carTablePtr, carId, numCars, price);
 }
 
 
 /* =============================================================================
- * manager_deleteCar
+ * manager_t::deleteCar
  * -- Delete cars from a city
  * -- Decreases available car count (those not allocated to a customer)
  * -- Fails if would make available car count negative
@@ -159,30 +159,30 @@ manager_addCar (manager_t* managerPtr, long carId, long numCars, long price)
  * =============================================================================
  */
 __attribute__((transaction_safe)) bool
-manager_deleteCar (  manager_t* managerPtr, long carId, long numCar)
+manager_t::deleteCar (long carId, long numCar)
 {
     /* -1 keeps old price */
-    return addReservation(  managerPtr->carTablePtr, carId, -numCar, -1);
+    return addReservation(carTablePtr, carId, -numCar, -1);
 }
 
 
 /* =============================================================================
- * manager_addRoom
+ * manager_t::addRoom
  * -- Add rooms to a city
  * -- Adding to an existing room overwrite the price if 'price' >= 0
  * -- Returns TRUE on success, else FALSE
  * =============================================================================
  */
 __attribute__((transaction_safe)) bool
-manager_addRoom (manager_t* managerPtr, long roomId, long numRoom, long price)
+manager_t::addRoom (long roomId, long numRoom, long price)
 {
-    return addReservation(  managerPtr->roomTablePtr, roomId, numRoom, price);
+    return addReservation(roomTablePtr, roomId, numRoom, price);
 }
 
 
 
 /* =============================================================================
- * manager_deleteRoom
+ * manager_t::deleteRoom
  * -- Delete rooms from a city
  * -- Decreases available room count (those not allocated to a customer)
  * -- Fails if would make available room count negative
@@ -191,30 +191,30 @@ manager_addRoom (manager_t* managerPtr, long roomId, long numRoom, long price)
  * =============================================================================
  */
 __attribute__((transaction_safe)) bool
-manager_deleteRoom (manager_t* managerPtr, long roomId, long numRoom)
+manager_t::deleteRoom (long roomId, long numRoom)
 {
     /* -1 keeps old price */
-    return addReservation(  managerPtr->roomTablePtr, roomId, -numRoom, -1);
+    return addReservation(roomTablePtr, roomId, -numRoom, -1);
 }
 
 
 /* =============================================================================
- * manager_addFlight
+ * manager_t::addFlight
  * -- Add seats to a flight
  * -- Adding to an existing flight overwrite the price if 'price' >= 0
  * -- Returns TRUE on success, FALSE on failure
  * =============================================================================
  */
 __attribute__((transaction_safe)) bool
-manager_addFlight (manager_t* managerPtr, long flightId, long numSeat, long price)
+manager_t::addFlight (long flightId, long numSeat, long price)
 {
-    return addReservation(managerPtr->flightTablePtr, flightId, numSeat, price);
+    return addReservation(flightTablePtr, flightId, numSeat, price);
 }
 
 
 
 /* =============================================================================
- * manager_deleteFlight
+ * manager_t::deleteFlight
  * -- Delete an entire flight
  * -- Fails if customer has reservation on this flight
  * -- Returns TRUE on success, else FALSE
@@ -222,11 +222,11 @@ manager_addFlight (manager_t* managerPtr, long flightId, long numSeat, long pric
  */
 //[wer210] return not used before, make it to indicate aborts
 __attribute__((transaction_safe)) bool
-manager_deleteFlight (  manager_t* managerPtr, long flightId)
+manager_t::deleteFlight (long flightId)
 {
     reservation_t* reservationPtr;
 
-    reservationPtr = (reservation_t*)TMMAP_FIND(managerPtr->flightTablePtr, flightId);
+    reservationPtr = (reservation_t*)TMMAP_FIND(flightTablePtr, flightId);
     if (reservationPtr == NULL) {
       //return FALSE;
       return true;
@@ -237,7 +237,7 @@ manager_deleteFlight (  manager_t* managerPtr, long flightId)
       return true;
     }
 
-    return addReservation(managerPtr->flightTablePtr,
+    return addReservation(flightTablePtr,
                           flightId,
                           -1*reservationPtr->numTotal,
                           -1 /* -1 keeps old price */);
@@ -245,7 +245,7 @@ manager_deleteFlight (  manager_t* managerPtr, long flightId)
 
 
 /* =============================================================================
- * manager_addCustomer
+ * manager_t::addCustomer
  * -- If customer already exists, returns failure
  * -- Returns TRUE on success, else FALSE
  * =============================================================================
@@ -254,12 +254,12 @@ manager_deleteFlight (  manager_t* managerPtr, long flightId)
 //         But return value of this function was never used,
 //         so I make it to return true all the time except when need to abort.
 __attribute__((transaction_safe)) bool
-manager_addCustomer (  manager_t* managerPtr, long customerId)
+manager_t::addCustomer (long customerId)
 {
     customer_t* customerPtr;
     bool status;
 
-    if (TMMAP_CONTAINS(managerPtr->customerTablePtr, customerId)) {
+    if (TMMAP_CONTAINS(customerTablePtr, customerId)) {
       //return FALSE;
       return true;
     }
@@ -267,7 +267,7 @@ manager_addCustomer (  manager_t* managerPtr, long customerId)
     customerPtr = new customer_t(customerId);
     assert(customerPtr != NULL);
 
-    status = TMMAP_INSERT(managerPtr->customerTablePtr, customerId, customerPtr);
+    status = TMMAP_INSERT(customerTablePtr, customerId, customerPtr);
     if (status == false) {
       //_ITM_abortTransaction(2);
       return false;
@@ -279,7 +279,7 @@ manager_addCustomer (  manager_t* managerPtr, long customerId)
 
 
 /* =============================================================================
- * manager_deleteCustomer
+ * manager_t::deleteCustomer
  * -- Delete this customer and associated reservations
  * -- If customer does not exist, returns success
  * -- Returns TRUE on success, else FALSE
@@ -288,7 +288,7 @@ manager_addCustomer (  manager_t* managerPtr, long customerId)
 //[wer210] Again, the return values were not used (except for test cases below)
 //         So I make it alway returning true, unless need to abort a transaction.
 __attribute__((transaction_safe)) bool
-manager_deleteCustomer (  manager_t* managerPtr, long customerId)
+manager_t::deleteCustomer (long customerId)
 {
     customer_t* customerPtr;
     MAP_T* reservationTables[NUM_RESERVATION_TYPE];
@@ -296,15 +296,15 @@ manager_deleteCustomer (  manager_t* managerPtr, long customerId)
     list_iter_t it;
     bool status;
 
-    customerPtr = (customer_t*)TMMAP_FIND(managerPtr->customerTablePtr, customerId);
+    customerPtr = (customer_t*)TMMAP_FIND(customerTablePtr, customerId);
     if (customerPtr == NULL) {
       //return FALSE;
       return true;
     }
 
-    reservationTables[RESERVATION_CAR] = managerPtr->carTablePtr;
-    reservationTables[RESERVATION_ROOM] = managerPtr->roomTablePtr;
-    reservationTables[RESERVATION_FLIGHT] = managerPtr->flightTablePtr;
+    reservationTables[RESERVATION_CAR] = carTablePtr;
+    reservationTables[RESERVATION_ROOM] = roomTablePtr;
+    reservationTables[RESERVATION_FLIGHT] = flightTablePtr;
 
     /* Cancel this customer's reservations */
     reservationInfoListPtr = customerPtr->reservationInfoListPtr;
@@ -320,7 +320,7 @@ manager_deleteCustomer (  manager_t* managerPtr, long customerId)
         return false;
       }
 
-      status = reservation_cancel(reservationPtr);
+      status = reservationPtr->cancel();
       if (status == false) {
         //_ITM_abortTransaction(2);
         return false;
@@ -328,7 +328,7 @@ manager_deleteCustomer (  manager_t* managerPtr, long customerId)
       delete reservationInfoPtr;
     }
 
-    status = TMMAP_REMOVE(managerPtr->customerTablePtr, customerId);
+    status = TMMAP_REMOVE(customerTablePtr, customerId);
     if (status == false) {
       //_ITM_abortTransaction(2);
       return false;
@@ -352,7 +352,7 @@ manager_deleteCustomer (  manager_t* managerPtr, long customerId)
  */
 __attribute__((transaction_safe))
 long
-queryNumFree (  MAP_T* tablePtr, long id)
+queryNumFree (MAP_T* tablePtr, long id)
 {
     long numFree = -1;
     reservation_t* reservationPtr;
@@ -373,7 +373,7 @@ queryNumFree (  MAP_T* tablePtr, long id)
  */
  __attribute__((transaction_safe))
 long
-queryPrice (  MAP_T* tablePtr, long id)
+queryPrice (MAP_T* tablePtr, long id)
 {
     long price = -1;
     reservation_t* reservationPtr = (reservation_t*)TMMAP_FIND(tablePtr, id);
@@ -386,99 +386,99 @@ queryPrice (  MAP_T* tablePtr, long id)
 
 
 /* =============================================================================
- * manager_queryCar
+ * manager_t::queryCar
  * -- Return the number of empty seats on a car
  * -- Returns -1 if the car does not exist
  * =============================================================================
  */
 __attribute__((transaction_safe)) long
-manager_queryCar (manager_t* managerPtr, long carId)
+manager_t::queryCar (long carId)
 {
-    return queryNumFree(managerPtr->carTablePtr, carId);
+    return queryNumFree(carTablePtr, carId);
 }
 
 
 /* =============================================================================
- * manager_queryCarPrice
+ * manager_t::queryCarPrice
  * -- Return the price of the car
  * -- Returns -1 if the car does not exist
  * =============================================================================
  */
 __attribute__((transaction_safe)) long
-manager_queryCarPrice (manager_t* managerPtr, long carId)
+manager_t::queryCarPrice (long carId)
 {
-    return queryPrice(managerPtr->carTablePtr, carId);
+    return queryPrice(carTablePtr, carId);
 }
 
 
 /* =============================================================================
- * manager_queryRoom
+ * manager_t::queryRoom
  * -- Return the number of empty seats on a room
  * -- Returns -1 if the room does not exist
  * =============================================================================
  */
 __attribute__((transaction_safe)) long
-manager_queryRoom (  manager_t* managerPtr, long roomId)
+manager_t::queryRoom (long roomId)
 {
-    return queryNumFree(  managerPtr->roomTablePtr, roomId);
+    return queryNumFree(roomTablePtr, roomId);
 }
 
 
 /* =============================================================================
- * manager_queryRoomPrice
+ * manager_t::queryRoomPrice
  * -- Return the price of the room
  * -- Returns -1 if the room does not exist
  * =============================================================================
  */
 __attribute__((transaction_safe)) long
-manager_queryRoomPrice (  manager_t* managerPtr, long roomId)
+manager_t::queryRoomPrice (long roomId)
 {
-    return queryPrice(  managerPtr->roomTablePtr, roomId);
+    return queryPrice(roomTablePtr, roomId);
 }
 
 
 /* =============================================================================
- * manager_queryFlight
+ * manager_t::queryFlight
  * -- Return the number of empty seats on a flight
  * -- Returns -1 if the flight does not exist
  * =============================================================================
  */
 __attribute__((transaction_safe)) long
-manager_queryFlight (  manager_t* managerPtr, long flightId)
+manager_t::queryFlight (long flightId)
 {
-    return queryNumFree(  managerPtr->flightTablePtr, flightId);
+    return queryNumFree(flightTablePtr, flightId);
 }
 
 
 /* =============================================================================
- * manager_queryFlightPrice
+ * manager_t::queryFlightPrice
  * -- Return the price of the flight
  * -- Returns -1 if the flight does not exist
  * =============================================================================
  */
 __attribute__((transaction_safe)) long
-manager_queryFlightPrice (  manager_t* managerPtr, long flightId)
+manager_t::queryFlightPrice (long flightId)
 {
-    return queryPrice(  managerPtr->flightTablePtr, flightId);
+    return queryPrice(flightTablePtr, flightId);
 }
 
 
 /* =============================================================================
- * manager_queryCustomerBill
+ * manager_t::queryCustomerBill
  * -- Return the total price of all reservations held for a customer
  * -- Returns -1 if the customer does not exist
  * =============================================================================
  */
-__attribute__((transaction_safe)) long
-manager_queryCustomerBill (  manager_t* managerPtr, long customerId)
+__attribute__((transaction_safe))
+long manager_t::queryCustomerBill(long customerId)
 {
     long bill = -1;
     customer_t* customerPtr;
 
-    customerPtr = (customer_t*)TMMAP_FIND(managerPtr->customerTablePtr, customerId);
+    customerPtr = (customer_t*)TMMAP_FIND(customerTablePtr, customerId);
 
     if (customerPtr != NULL) {
-        bill = customer_getBill(customerPtr);
+        bill = customerPtr->getBill();
     }
 
     return bill;
@@ -519,16 +519,16 @@ reserve (MAP_T* tablePtr, MAP_T* customerTablePtr,
       return true;
     }
 
-    if (!reservation_make(reservationPtr)) {
+    if (!reservationPtr->make()) {
       //return FALSE;
       return true;
     }
 
-    if (!customer_addReservationInfo(customerPtr, type, id,
-                                     (long)reservationPtr->price))
+    if (!customerPtr->addReservationInfo(type, id,
+                                         (long)reservationPtr->price))
     {
       /* Undo previous successful reservation */
-      bool status = reservation_cancel(reservationPtr);
+      bool status = reservationPtr->cancel();
       if (status == false) {
         //_ITM_abortTransaction(2);
         return false;
@@ -540,16 +540,16 @@ reserve (MAP_T* tablePtr, MAP_T* customerTablePtr,
 
 
 /* =============================================================================
- * manager_reserveCar
+ * manager_t::reserveCar
  * -- Returns failure if the car or customer does not exist
  * -- Returns TRUE on success, else FALSE
  * =============================================================================
  */
 __attribute__((transaction_safe)) bool
-manager_reserveCar (  manager_t* managerPtr, long customerId, long carId)
+manager_t::reserveCar (long customerId, long carId)
 {
-    return reserve(managerPtr->carTablePtr,
-                   managerPtr->customerTablePtr,
+    return reserve(carTablePtr,
+                   customerTablePtr,
                    customerId,
                    carId,
                    RESERVATION_CAR);
@@ -557,16 +557,16 @@ manager_reserveCar (  manager_t* managerPtr, long customerId, long carId)
 
 
 /* =============================================================================
- * manager_reserveRoom
+ * manager_t::reserveRoom
  * -- Returns failure if the room or customer does not exist
  * -- Returns TRUE on success, else FALSE
  * =============================================================================
  */
 __attribute__((transaction_safe)) bool
-manager_reserveRoom (  manager_t* managerPtr, long customerId, long roomId)
+manager_t::reserveRoom (long customerId, long roomId)
 {
-    return reserve(managerPtr->roomTablePtr,
-                   managerPtr->customerTablePtr,
+    return reserve(roomTablePtr,
+                   customerTablePtr,
                    customerId,
                    roomId,
                    RESERVATION_ROOM);
@@ -574,16 +574,16 @@ manager_reserveRoom (  manager_t* managerPtr, long customerId, long roomId)
 
 
 /* =============================================================================
- * manager_reserveFlight
+ * manager_t::reserveFlight
  * -- Returns failure if the flight or customer does not exist
  * -- Returns TRUE on success, else FALSE
  * =============================================================================
  */
 __attribute__((transaction_safe)) bool
-manager_reserveFlight (manager_t* managerPtr, long customerId, long flightId)
+manager_t::reserveFlight (long customerId, long flightId)
 {
-    return reserve(managerPtr->flightTablePtr,
-                   managerPtr->customerTablePtr,
+    return reserve(flightTablePtr,
+                   customerTablePtr,
                    customerId,
                    flightId,
                    RESERVATION_FLIGHT);
@@ -616,13 +616,13 @@ cancel (MAP_T* tablePtr, MAP_T* customerTablePtr,
         return false;
     }
 
-    if (!reservation_cancel(reservationPtr)) {
+    if (!reservationPtr->cancel()) {
         return false;
     }
 
-    if (!customer_removeReservationInfo(customerPtr, type, id)) {
+    if (!customerPtr->removeReservationInfo(type, id)) {
         /* Undo previous successful cancellation */
-      bool status = reservation_make(reservationPtr);
+      bool status = reservationPtr->make();
       if (status == false) {
         //_ITM_abortTransaction(2);
         return false;
@@ -634,16 +634,16 @@ cancel (MAP_T* tablePtr, MAP_T* customerTablePtr,
 
 
 /* =============================================================================
- * manager_cancelCar
+ * manager_t::cancelCar
  * -- Returns failure if the car, reservation, or customer does not exist
  * -- Returns TRUE on success, else FALSE
  * =============================================================================
  */
 __attribute__((transaction_safe)) bool
-manager_cancelCar (  manager_t* managerPtr, long customerId, long carId)
+manager_t::cancelCar (long customerId, long carId)
 {
-    return cancel(managerPtr->carTablePtr,
-                  managerPtr->customerTablePtr,
+    return cancel(carTablePtr,
+                  customerTablePtr,
                   customerId,
                   carId,
                   RESERVATION_CAR);
@@ -651,16 +651,16 @@ manager_cancelCar (  manager_t* managerPtr, long customerId, long carId)
 
 
 /* =============================================================================
- * manager_cancelRoom
+ * manager_t::cancelRoom
  * -- Returns failure if the room, reservation, or customer does not exist
  * -- Returns TRUE on success, else FALSE
  * =============================================================================
  */
 __attribute__((transaction_safe)) bool
-manager_cancelRoom (  manager_t* managerPtr, long customerId, long roomId)
+manager_t::cancelRoom (long customerId, long roomId)
 {
-    return cancel(managerPtr->roomTablePtr,
-                  managerPtr->customerTablePtr,
+    return cancel(roomTablePtr,
+                  customerTablePtr,
                   customerId,
                   roomId,
                   RESERVATION_ROOM);
@@ -669,16 +669,16 @@ manager_cancelRoom (  manager_t* managerPtr, long customerId, long roomId)
 
 
 /* =============================================================================
- * manager_cancelFlight
+ * manager_t::cancelFlight
  * -- Returns failure if the flight, reservation, or customer does not exist
  * -- Returns TRUE on success, else FALSE
  * =============================================================================
  */
 __attribute__((transaction_safe)) bool
-manager_cancelFlight (manager_t* managerPtr, long customerId, long flightId)
+manager_t::cancelFlight (long customerId, long flightId)
 {
-    return cancel(managerPtr->flightTablePtr,
-                  managerPtr->customerTablePtr,
+    return cancel(flightTablePtr,
+                  customerTablePtr,
                   customerId,
                   flightId,
                   RESERVATION_FLIGHT);
@@ -699,13 +699,13 @@ manager_cancelFlight (manager_t* managerPtr, long customerId, long flightId)
 int
 main ()
 {
-    manager_t* managerPtr;
+    manager_t::t* managerPtr;
 
     assert(memory_init(1, 4, 2));
 
     puts("Starting...");
 
-    managerPtr = manager_alloc();
+    managerPtr = manager_t::alloc();
 
     /* Test administrative interface for cars */
     assert(!manager_addCar(managerPtr, 0, -1, 0)); /* negative num */

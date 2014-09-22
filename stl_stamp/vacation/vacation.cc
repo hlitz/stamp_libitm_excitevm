@@ -134,7 +134,20 @@ parseArgs (long argc, char* const argv[])
 static bool
 addCustomer (manager_t* managerPtr, long id, long, long)
 {
-    return manager_addCustomer(managerPtr, id);
+    return managerPtr->addCustomer(id);
+}
+
+/* Three quick-and-dirty functions so that we don't need method pointers in the following code */
+bool manager_addCar(manager_t* m, long a, long b, long c) {
+    return m->addCar(a, b, c);
+}
+
+bool manager_addFlight(manager_t* m, long a, long b, long c) {
+    return m->addFlight(a, b, c);
+}
+
+bool manager_addRoom(manager_t* m, long a, long b, long c) {
+    return m->addRoom(a, b, c);
 }
 
 

@@ -59,16 +59,11 @@ customer_t::~customer_t()
  * -- Returns TRUE if success, else FALSE
  * =============================================================================
  */
-__attribute__((transaction_safe)) bool
-customer_addReservationInfo (customer_t* customerPtr,
-                             reservation_type_t type, long id, long price)
+__attribute__((transaction_safe))
+bool customer_t::addReservationInfo (reservation_type_t type, long id, long price)
 {
     reservation_info_t* reservationInfoPtr =
         new reservation_info_t(type, id, price);
-
-    list_t* reservationInfoListPtr =
-        customerPtr->reservationInfoListPtr;
-
     return TMLIST_INSERT(reservationInfoListPtr, (void*)reservationInfoPtr);
 }
 
@@ -80,14 +75,11 @@ customer_addReservationInfo (customer_t* customerPtr,
  */
 //[wer210] called only in manager.c, cancel() which is used to cancel a
 //         flight/car/room, which never happens...
-__attribute__((transaction_safe)) bool
-customer_removeReservationInfo (customer_t* customerPtr,
-                                reservation_type_t type, long id)
+__attribute__((transaction_safe))
+bool customer_t::removeReservationInfo(reservation_type_t type, long id)
 {
     // NB: price not used to compare reservation infos
     reservation_info_t findReservationInfo(type, id, 0);
-
-    list_t* reservationInfoListPtr = customerPtr->reservationInfoListPtr;
 
     reservation_info_t* reservationInfoPtr =
         (reservation_info_t*)TMLIST_FIND(reservationInfoListPtr,
@@ -97,7 +89,7 @@ customer_removeReservationInfo (customer_t* customerPtr,
         return false;
     }
     bool status = TMLIST_REMOVE(reservationInfoListPtr,
-                                  (void*)&findReservationInfo);
+                                (void*)&findReservationInfo);
 
     //[wer210] get rid of restart()
     if (status == false) {
@@ -116,12 +108,11 @@ customer_removeReservationInfo (customer_t* customerPtr,
  * -- Returns total cost of reservations
  * =============================================================================
  */
-__attribute__((transaction_safe)) long
-customer_getBill (  customer_t* customerPtr)
+__attribute__((transaction_safe))
+long customer_t::getBill()
 {
     long bill = 0;
     list_iter_t it;
-    list_t* reservationInfoListPtr = customerPtr->reservationInfoListPtr;
 
     TMLIST_ITER_RESET(&it, reservationInfoListPtr);
     while (TMLIST_ITER_HASNEXT(&it)) {
