@@ -1,80 +1,5 @@
-/* =============================================================================
- *
- * sequencer.c
- *
- * =============================================================================
- *
- * Copyright (C) Stanford University, 2006.  All Rights Reserved.
- * Author: Chi Cao Minh
- *
- * =============================================================================
- *
- * Algorithm overview:
- *
- * 1) Remove duplicate segments by using hash-set
- * 2) Match segments using hash-based comparisons
- *    - Cycles are prevented by tracking starts/ends of matched chains
- * 3) Build sequence
- *
- * =============================================================================
- *
- * For the license of bayes/sort.h and bayes/sort.c, please see the header
- * of the files.
- *
- * ------------------------------------------------------------------------
- *
- * For the license of kmeans, please see kmeans/LICENSE.kmeans
- *
- * ------------------------------------------------------------------------
- *
- * For the license of ssca2, please see ssca2/COPYRIGHT
- *
- * ------------------------------------------------------------------------
- *
- * For the license of lib/mt19937ar.c and lib/mt19937ar.h, please see the
- * header of the files.
- *
- * ------------------------------------------------------------------------
- *
- * For the license of lib/rbtree.h and lib/rbtree.c, please see
- * lib/LEGALNOTICE.rbtree and lib/LICENSE.rbtree
- *
- * ------------------------------------------------------------------------
- *
- * Unless otherwise noted, the following license applies to STAMP files:
- *
- * Copyright (c) 2007, Stanford University
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are
- * met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above copyright
- *       notice, this list of conditions and the following disclaimer in
- *       the documentation and/or other materials provided with the
- *       distribution.
- *
- *     * Neither the name of Stanford University nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY STANFORD UNIVERSITY ``AS IS'' AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL STANFORD UNIVERSITY BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
- * THE POSSIBILITY OF SUCH DAMAGE.
- *
- * =============================================================================
+/*
+ * PLEASE SEE LICENSE FILE FOR LICENSING AND COPYRIGHT INFORMATION
  */
 
 #include <assert.h>
@@ -89,29 +14,17 @@
 #include "utility.h"
 #include "vector.h"
 #include "tm_transition.h"
+#include "types.h"
 
 // [mfs] This is a hack
 extern
 __attribute__((transaction_pure))
-int strncmp (__const char *__s1, __const char *__s2, size_t __n);
-
+int strncmp (__const char *__s1, __const char *__s2, size_t __n) throw();
 
 struct endInfoEntry_t {
     bool isEnd;
     long jumpToNext;
 };
-
-struct constructEntry_t {
-    bool isStart;
-    char* segment;
-    unsigned long endHash;
-    constructEntry_t* startPtr;
-    constructEntry_t* nextPtr;
-    constructEntry_t* endPtr;
-    long overlap;
-    long length;
-};
-
 
 /* =============================================================================
  * hashString
@@ -248,8 +161,7 @@ sequencer_alloc (long geneLength, long segmentLength, segments_t* segmentsPtr)
         return NULL;
     }
     for (i = 1; i < segmentLength; i++) { /* 0 is dummy entry */
-        sequencerPtr->startHashToConstructEntryTables[i] =
-            table_alloc(geneLength, NULL);
+        sequencerPtr->startHashToConstructEntryTables[i] = new table_t(geneLength);
         if (sequencerPtr->startHashToConstructEntryTables[i] == NULL) {
             return NULL;
         }
@@ -273,7 +185,7 @@ sequencer_alloc (long geneLength, long segmentLength, segments_t* segmentsPtr)
         constructEntryPtr->overlap = 0;
         constructEntryPtr->length = segmentLength;
     }
-    sequencerPtr->hashToConstructEntryTable = table_alloc(geneLength, NULL);
+    sequencerPtr->hashToConstructEntryTable = new table_t(geneLength);
     if (sequencerPtr->hashToConstructEntryTable == NULL) {
         return NULL;
     }
@@ -435,9 +347,8 @@ sequencer_run (void* argPtr)
                 startHash = (unsigned long)segment[j-1] +
                             (startHash << 6) + (startHash << 16) - startHash;
                 __transaction_atomic {
-                  status = TMTABLE_INSERT(startHashToConstructEntryTables[j],
-                                          (unsigned long)startHash,
-                                          (void*)constructEntryPtr );
+                    status = startHashToConstructEntryTables[j]->
+                        insert((unsigned long)startHash, constructEntryPtr);
                 }
                 assert(status);
             }
@@ -448,9 +359,8 @@ sequencer_run (void* argPtr)
             startHash = (unsigned long)segment[j-1] +
                         (startHash << 6) + (startHash << 16) - startHash;
             __transaction_atomic {
-              status = TMTABLE_INSERT(hashToConstructEntryTable,
-                                      (unsigned long)startHash,
-                                      (void*)constructEntryPtr);
+                status = hashToConstructEntryTable->insert((unsigned long)startHash,
+                                                           constructEntryPtr);
             }
             assert(status);
         }
@@ -465,7 +375,7 @@ sequencer_run (void* argPtr)
 
         table_t* startHashToConstructEntryTablePtr =
             startHashToConstructEntryTables[substringLength];
-        list_t** buckets = startHashToConstructEntryTablePtr->buckets;
+        std::set<constructEntry_t*>** buckets = startHashToConstructEntryTablePtr->buckets;
         long numBucket = startHashToConstructEntryTablePtr->numBucket;
 
         long index_start;
@@ -497,15 +407,11 @@ sequencer_run (void* argPtr)
             char* endSegment = endConstructEntryPtr->segment;
             unsigned long endHash = endConstructEntryPtr->endHash;
 
-            list_t* chainPtr = buckets[endHash % numBucket]; /* buckets: constant data */
-            list_iter_t it;
-            list_iter_reset(&it, chainPtr);
+            std::set<constructEntry_t*>* chainPtr = buckets[endHash % numBucket]; /* buckets: constant data */
 
             /* Linked list at chainPtr is constant */
-            while (list_iter_hasNext(&it)) {
-
-                constructEntry_t* startConstructEntryPtr =
-                    (constructEntry_t*)list_iter_next(&it);
+            for (auto i : *chainPtr) {
+                constructEntry_t* startConstructEntryPtr = i;
                 char* startSegment = startConstructEntryPtr->segment;
                 long newLength = 0;
 
@@ -659,10 +565,10 @@ sequencer_free (sequencer_t* sequencerPtr)
 {
     long i;
 
-    table_free(sequencerPtr->hashToConstructEntryTable);
+    delete (sequencerPtr->hashToConstructEntryTable);
     free(sequencerPtr->constructEntries);
     for (i = 1; i < sequencerPtr->segmentLength; i++) {
-        table_free(sequencerPtr->startHashToConstructEntryTables[i]);
+        delete (sequencerPtr->startHashToConstructEntryTables[i]);
     }
     free(sequencerPtr->startHashToConstructEntryTables);
     free(sequencerPtr->endInfoEntries);
@@ -962,11 +868,3 @@ main ()
 
 
 #endif /* TEST_SEQUENCER */
-
-
-/* =============================================================================
- *
- * End of sequencer.c
- *
- * =============================================================================
- */

@@ -119,8 +119,7 @@ struct hashtable_iter_t {
  */
 __attribute__((transaction_safe))
 void
-TMhashtable_iter_reset (
-                        hashtable_iter_t* itPtr, hashtable_t* hashtablePtr);
+TMhashtable_iter_reset(hashtable_iter_t* itPtr, hashtable_t* hashtablePtr);
 
 
 
@@ -130,8 +129,7 @@ TMhashtable_iter_reset (
  */
 __attribute__((transaction_safe))
 bool
-TMhashtable_iter_hasNext (
-                          hashtable_iter_t* itPtr, hashtable_t* hashtablePtr);
+TMhashtable_iter_hasNext(hashtable_iter_t* itPtr, hashtable_t* hashtablePtr);
 
 
 /* =============================================================================
@@ -140,7 +138,7 @@ TMhashtable_iter_hasNext (
  */
 __attribute__((transaction_safe))
 void*
-TMhashtable_iter_next (hashtable_iter_t* itPtr, hashtable_t* hashtablePtr);
+TMhashtable_iter_next(hashtable_iter_t* itPtr, hashtable_t* hashtablePtr);
 
 
 
@@ -152,12 +150,11 @@ TMhashtable_iter_next (hashtable_iter_t* itPtr, hashtable_t* hashtablePtr);
  */
 __attribute__((transaction_safe))
 hashtable_t*
-TMhashtable_alloc (
-                   long initNumBucket,
-                   unsigned long (*hash)(const void*),
-                   long (*comparePairs)(const pair_t*, const pair_t*),
-                   long resizeRatio,
-                   long growthFactor);
+TMhashtable_alloc(long initNumBucket,
+                  unsigned long (*hash)(const void*),
+                  long (*comparePairs)(const pair_t*, const pair_t*),
+                  long resizeRatio,
+                  long growthFactor);
 
 
 
@@ -166,8 +163,7 @@ TMhashtable_alloc (
  * =============================================================================
  */
 __attribute__((transaction_safe))
-void
-TMhashtable_free (  hashtable_t* hashtablePtr);
+void TMhashtable_free(hashtable_t* hashtablePtr);
 
 
 
@@ -176,8 +172,7 @@ TMhashtable_free (  hashtable_t* hashtablePtr);
  * =============================================================================
  */
 __attribute__((transaction_safe))
-bool
-TMhashtable_isEmpty (  hashtable_t* hashtablePtr);
+bool TMhashtable_isEmpty(hashtable_t* hashtablePtr);
 
 
 

@@ -1,78 +1,13 @@
-/* =============================================================================
- *
- * table.c
- * -- Fixed-size hash table
- *
- * =============================================================================
- *
- * Copyright (C) Stanford University, 2006.  All Rights Reserved.
- * Author: Chi Cao Minh
- *
- * =============================================================================
- *
- * For the license of bayes/sort.h and bayes/sort.c, please see the header
- * of the files.
- *
- * ------------------------------------------------------------------------
- *
- * For the license of kmeans, please see kmeans/LICENSE.kmeans
- *
- * ------------------------------------------------------------------------
- *
- * For the license of ssca2, please see ssca2/COPYRIGHT
- *
- * ------------------------------------------------------------------------
- *
- * For the license of lib/mt19937ar.c and lib/mt19937ar.h, please see the
- * header of the files.
- *
- * ------------------------------------------------------------------------
- *
- * For the license of lib/rbtree.h and lib/rbtree.c, please see
- * lib/LEGALNOTICE.rbtree and lib/LICENSE.rbtree
- *
- * ------------------------------------------------------------------------
- *
- * Unless otherwise noted, the following license applies to STAMP files:
- *
- * Copyright (c) 2007, Stanford University
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are
- * met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above copyright
- *       notice, this list of conditions and the following disclaimer in
- *       the documentation and/or other materials provided with the
- *       distribution.
- *
- *     * Neither the name of Stanford University nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY STANFORD UNIVERSITY ``AS IS'' AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL STANFORD UNIVERSITY BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
- * THE POSSIBILITY OF SUCH DAMAGE.
- *
- * =============================================================================
+/*
+ * PLEASE SEE LICENSE FILE FOR LICENSING AND COPYRIGHT INFORMATION
  */
 
+/*
+ * table.c: Fixed-size hash table
+ */
 
-#include <assert.h>
-#include <stdlib.h>
-#include "list.h"
+#include <cassert>
+#include <cstdlib>
 #include "table.h"
 
 /* =============================================================================
@@ -80,32 +15,16 @@
  * -- Returns NULL on failure
  * =============================================================================
  */
-table_t*
-table_alloc (long numBucket, long (*compare)(const void*, const void*))
+table_t::table_t(long _numBucket)
 {
-    table_t* tablePtr;
-    long i;
+    numBucket = _numBucket;
+    buckets = new std::set<constructEntry_t*>*[numBucket];// (list_t**)malloc(numBucket * sizeof(list_t*));
+    assert(buckets != NULL);
 
-    tablePtr = (table_t*)malloc(sizeof(table_t));
-    if (tablePtr == NULL) {
-        return NULL;
+    for (long i = 0; i < numBucket; i++) {
+        buckets[i] = new std::set<constructEntry_t*>();
+        assert(buckets[i]);
     }
-
-    tablePtr->buckets = (list_t**)malloc(numBucket * sizeof(list_t*));
-    if (tablePtr->buckets == NULL) {
-        return NULL;
-    }
-
-    for (i = 0; i < numBucket; i++) {
-        tablePtr->buckets[i] = list_alloc(compare);
-        if (tablePtr->buckets[i] == NULL) {
-            return NULL;
-        }
-    }
-
-    tablePtr->numBucket = numBucket;
-
-    return tablePtr;
 }
 
 
@@ -115,53 +34,27 @@ table_alloc (long numBucket, long (*compare)(const void*, const void*))
  * =============================================================================
  */
 __attribute__((transaction_safe))
-bool
-table_insert (table_t* tablePtr, unsigned long hash, void* dataPtr)
+bool table_t::insert(unsigned long hash, constructEntry_t* dataPtr)
 {
-    long i = hash % tablePtr->numBucket;
-
-    if (!TMLIST_INSERT(tablePtr->buckets[i], dataPtr)) {
-        return false;
-    }
-
-    return true;
+    long i = hash % numBucket;
+    auto res = buckets[i]->insert(dataPtr);
+    return res.second;
 }
 
-
-/* =============================================================================
- * table_remove
- * -- Returns true if successful, else false
- * =============================================================================
- */
-bool
-table_remove (table_t* tablePtr, unsigned long hash, void* dataPtr)
-{
-    long i = hash % tablePtr->numBucket;
-
-    if (!list_remove(tablePtr->buckets[i], dataPtr)) {
-        return false;
-    }
-
-    return true;
-}
 
 
 /* =============================================================================
  * table_free
  * =============================================================================
  */
-void
-table_free (table_t* tablePtr)
+table_t::~table_t()
 {
     /* TODO: fix mixed sequential/parallel allocation */
-    long i;
-
-    for (i = 0; i < tablePtr->numBucket; i++) {
-        list_free(tablePtr->buckets[i]);
+    for (long i = 0; i < numBucket; i++) {
+        delete (buckets[i]);
     }
 
-    free(tablePtr->buckets);
-    free(tablePtr);
+    free(buckets);
 }
 
 
