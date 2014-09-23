@@ -16,49 +16,32 @@
 #include "vector.h"
 
 
-/* =============================================================================
- * segments_alloc
+/*
+ * segments_t constructor
  * -- Does almost all the memory allocation for random segments
  * -- The actual number of segments created by 'segments_create' may be larger
  *    than 'minNum' to ensure the segments overlap and cover the entire gene
- * -- Returns NULL on failure
- * =============================================================================
  */
-segments_t*
-segments_alloc (long length, long minNum)
+segments_t::segments_t(long _length, long _minNum)
 {
-    segments_t* segmentsPtr;
-    long i;
+    length = _length;
+    minNum = _minNum;
     char* string;
 
-    segmentsPtr = (segments_t*)malloc(sizeof(segments_t));
-    if (segmentsPtr == NULL) {
-        return NULL;
-    }
-
     /* Preallocate for the min number of segments we will need */
-    segmentsPtr->strings = (char**)malloc(minNum * sizeof(char*));
-    if (segmentsPtr->strings == NULL) {
-        return NULL;
-    }
+    strings = (char**)malloc(minNum * sizeof(char*));
+    assert(strings != NULL);
 
     string = (char*)malloc(minNum * (length+1) * sizeof(char));
-    if (string == NULL) {
-        return NULL;
-    }
-    for (i = 0; i < minNum; i++) {
-        segmentsPtr->strings[i] = &string[i * (length+1)];
-        segmentsPtr->strings[i][length] = '\0';
-    }
-    segmentsPtr->minNum = minNum;
-    segmentsPtr->length = length;
+    assert(string != NULL);
 
-    segmentsPtr->contentsPtr = vector_alloc(minNum);
-    if (segmentsPtr->contentsPtr == NULL) {
-        return NULL;
+    for (long i = 0; i < minNum; i++) {
+        strings[i] = &string[i * (length+1)];
+        strings[i][length] = '\0';
     }
 
-    return segmentsPtr;
+    contentsPtr = vector_alloc(minNum);
+    assert(contentsPtr != NULL);
 }
 
 
@@ -67,36 +50,22 @@ segments_alloc (long length, long minNum)
  * -- Populates 'contentsPtr'
  * =============================================================================
  */
-void
-segments_create (segments_t* segmentsPtr, gene_t* genePtr, std::mt19937* randomPtr)
+void segments_t::create(gene_t* genePtr, std::mt19937* randomPtr)
 {
-    vector_t* segmentsContentsPtr;
-    char** strings;
-    long segmentLength;
-    long minNumSegment;
-    char* geneString;
-    long geneLength;
-    bitmap_t* startBitmapPtr;
-    long numStart;
-    long i;
-    long maxZeroRunLength;
-
-    assert(segmentsPtr != NULL);
     assert(genePtr != NULL);
     assert(randomPtr != NULL);
 
-    segmentsContentsPtr = segmentsPtr->contentsPtr;
-    strings = segmentsPtr->strings;
-    segmentLength = segmentsPtr->length;
-    minNumSegment = segmentsPtr->minNum;
+    vector_t* segmentsContentsPtr = contentsPtr;
+    long segmentLength = length;
+    long minNumSegment = minNum;
 
-    geneString = genePtr->contents;
-    geneLength = genePtr->length;
-    startBitmapPtr = genePtr->startBitmapPtr;
-    numStart = geneLength - segmentLength + 1;
+    char* geneString = genePtr->contents;
+    long geneLength = genePtr->length;
+    bitmap_t* startBitmapPtr = genePtr->startBitmapPtr;
+    long numStart = geneLength - segmentLength + 1;
 
     /* Pick some random segments to start */
-    for (i = 0; i < minNumSegment; i++) {
+    for (long i = 0; i < minNumSegment; i++) {
         long j = (long)(randomPtr->operator()() % numStart);
         bool status = bitmap_set(startBitmapPtr, j);
         assert(status);
@@ -106,20 +75,19 @@ segments_create (segments_t* segmentsPtr, gene_t* genePtr, std::mt19937* randomP
     }
 
     /* Make sure segment covers start */
-    i = 0;
-    if (!bitmap_isSet(startBitmapPtr, i)) {
+    if (!bitmap_isSet(startBitmapPtr, 0)) {
         char* string = (char*)malloc((segmentLength+1) * sizeof(char));
         string[segmentLength] = '\0';
-        memcpy(string, &(geneString[i]), segmentLength * sizeof(char));
+        memcpy(string, &(geneString[0]), segmentLength * sizeof(char));
         bool status = vector_pushBack(segmentsContentsPtr, (void*)string);
         assert(status);
-        status = bitmap_set(startBitmapPtr, i);
+        status = bitmap_set(startBitmapPtr, 0);
         assert(status);
     }
 
     /* Add extra segments to fill holes and ensure overlap */
-    maxZeroRunLength = segmentLength - 1;
-    for (i = 0; i < numStart; i++) {
+    long maxZeroRunLength = segmentLength - 1;
+    for (long i = 0; i < numStart; i++) {
         long i_stop = MIN((i+maxZeroRunLength), numStart);
         for ( /* continue */; i < i_stop; i++) {
             if (bitmap_isSet(startBitmapPtr, i)) {
@@ -145,15 +113,12 @@ segments_create (segments_t* segmentsPtr, gene_t* genePtr, std::mt19937* randomP
  * segments_free
  * =============================================================================
  */
-void
-segments_free (segments_t* segmentsPtr)
+segments_t::~segments_t()
 {
-    free(vector_at(segmentsPtr->contentsPtr, 0));
-    vector_free(segmentsPtr->contentsPtr);
-    free(segmentsPtr->strings);
-    free(segmentsPtr);
+    free(vector_at(contentsPtr, 0));
+    vector_free(contentsPtr);
+    free(strings);
 }
-
 
 /* =============================================================================
  * TEST_SEGMENTS

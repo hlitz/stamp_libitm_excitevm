@@ -18,7 +18,7 @@
 table_t::table_t(long _numBucket)
 {
     numBucket = _numBucket;
-    buckets = new std::set<constructEntry_t*>*[numBucket];// (list_t**)malloc(numBucket * sizeof(list_t*));
+    buckets = new std::set<constructEntry_t*>*[numBucket];
     assert(buckets != NULL);
 
     for (long i = 0; i < numBucket; i++) {

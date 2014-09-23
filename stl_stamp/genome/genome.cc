@@ -138,9 +138,9 @@ int main (int argc, char** argv)
     gene_create(genePtr, randomPtr);
     char* gene = genePtr->contents;
 
-    segments_t* segmentsPtr = segments_alloc(segmentLength, minNumSegment);
+    segments_t* segmentsPtr = new segments_t(segmentLength, minNumSegment);
     assert(segmentsPtr != NULL);
-    segments_create(segmentsPtr, genePtr, randomPtr);
+    segmentsPtr->create(genePtr, randomPtr);
     sequencer_t* sequencerPtr = sequencer_alloc(geneLength, segmentLength, segmentsPtr);
     assert(sequencerPtr != NULL);
 
@@ -184,7 +184,7 @@ int main (int argc, char** argv)
     printf("Deallocating memory... ");
     fflush(stdout);
     sequencer_free(sequencerPtr);
-    segments_free(segmentsPtr);
+    delete segmentsPtr;
     gene_free(genePtr);
     delete randomPtr;
     puts("done.");
