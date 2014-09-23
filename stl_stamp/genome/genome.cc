@@ -13,7 +13,6 @@
 #include "sequencer.h"
 #include "thread.h"
 #include "timer.h"
-#include "vector.h"
 
 enum param_types {
     PARAM_GENE    = (unsigned char)'g',
@@ -147,7 +146,7 @@ int main (int argc, char** argv)
     puts("done.");
     printf("Gene length     = %li\n", genePtr->length);
     printf("Segment length  = %li\n", segmentsPtr->length);
-    printf("Number segments = %li\n", vector_getSize(segmentsPtr->contentsPtr));
+    printf("Number segments = %li\n", segmentsPtr->contentsPtr->size());
     fflush(stdout);
 
     /* Benchmark */

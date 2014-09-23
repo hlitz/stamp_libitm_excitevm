@@ -9,12 +9,12 @@
 #pragma once
 
 #include "gene.h"
-#include "vector.h"
+#include <vector>
 
 struct segments_t {
     long length;
     long minNum;
-    vector_t* contentsPtr;
+    std::vector<char*>* contentsPtr;
   private:
     char** strings;
   public:

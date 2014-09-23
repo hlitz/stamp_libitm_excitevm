@@ -12,7 +12,6 @@
 #include "table.h"
 #include "thread.h"
 #include "utility.h"
-#include "vector.h"
 #include "tm_transition.h"
 #include "types.h"
 
@@ -221,8 +220,8 @@ sequencer_run (void* argPtr)
 
     segments_t* segmentsPtr         = sequencerPtr->segmentsPtr;
     assert(segmentsPtr);
-    vector_t*   segmentsContentsPtr = segmentsPtr->contentsPtr;
-    long        numSegment          = vector_getSize(segmentsContentsPtr);
+    std::vector<char*>* segmentsContentsPtr = segmentsPtr->contentsPtr;
+    long        numSegment          = segmentsContentsPtr->size();
     long        segmentLength       = segmentsPtr->length;
 
     long i;
@@ -251,11 +250,10 @@ sequencer_run (void* argPtr)
     for (i = i_start; i < i_stop; i+=CHUNK_STEP1) {
       __transaction_atomic {
         {
-          long ii;
           long ii_stop = MIN(i_stop, (i+CHUNK_STEP1));
-          for (ii = i; ii < ii_stop; ii++) {
-            void* segment = vector_at(segmentsContentsPtr, ii);
-            TMHASHTABLE_INSERT(uniqueSegmentsPtr, segment, segment);
+          for (long ii = i; ii < ii_stop; ii++) {
+              void* segment = segmentsContentsPtr->at(ii);
+              TMHASHTABLE_INSERT(uniqueSegmentsPtr, segment, segment);
           } /* ii */
         }
       }

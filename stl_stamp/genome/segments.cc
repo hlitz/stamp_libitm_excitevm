@@ -13,8 +13,6 @@
 #include "gene.h"
 #include "segments.h"
 #include "utility.h"
-#include "vector.h"
-
 
 /*
  * segments_t constructor
@@ -40,8 +38,11 @@ segments_t::segments_t(long _length, long _minNum)
         strings[i][length] = '\0';
     }
 
-    contentsPtr = vector_alloc(minNum);
+    // NB: STAMP allowed allocation with initial capacity.  It takes two
+    //     calls to do it in STL.
+    contentsPtr = new std::vector<char*>();
     assert(contentsPtr != NULL);
+    contentsPtr->reserve(minNum);
 }
 
 
@@ -55,7 +56,7 @@ void segments_t::create(gene_t* genePtr, std::mt19937* randomPtr)
     assert(genePtr != NULL);
     assert(randomPtr != NULL);
 
-    vector_t* segmentsContentsPtr = contentsPtr;
+    std::vector<char*>* segmentsContentsPtr = contentsPtr;
     long segmentLength = length;
     long minNumSegment = minNum;
 
@@ -70,8 +71,7 @@ void segments_t::create(gene_t* genePtr, std::mt19937* randomPtr)
         bool status = bitmap_set(startBitmapPtr, j);
         assert(status);
         memcpy(strings[i], &(geneString[j]), segmentLength * sizeof(char));
-        status = vector_pushBack(segmentsContentsPtr, (void*)strings[i]);
-        assert(status);
+        segmentsContentsPtr->push_back(strings[i]);
     }
 
     /* Make sure segment covers start */
@@ -79,9 +79,8 @@ void segments_t::create(gene_t* genePtr, std::mt19937* randomPtr)
         char* string = (char*)malloc((segmentLength+1) * sizeof(char));
         string[segmentLength] = '\0';
         memcpy(string, &(geneString[0]), segmentLength * sizeof(char));
-        bool status = vector_pushBack(segmentsContentsPtr, (void*)string);
-        assert(status);
-        status = bitmap_set(startBitmapPtr, 0);
+        segmentsContentsPtr->push_back(string);
+        bool status = bitmap_set(startBitmapPtr, 0);
         assert(status);
     }
 
@@ -100,9 +99,8 @@ void segments_t::create(gene_t* genePtr, std::mt19937* randomPtr)
             string[segmentLength] = '\0';
             i = i - 1;
             memcpy(string, &(geneString[i]), segmentLength * sizeof(char));
-            bool status = vector_pushBack(segmentsContentsPtr, (void*)string);
-            assert(status);
-            status = bitmap_set(startBitmapPtr, i);
+            segmentsContentsPtr->push_back(string);
+            bool status = bitmap_set(startBitmapPtr, i);
             assert(status);
         }
     }
@@ -115,8 +113,8 @@ void segments_t::create(gene_t* genePtr, std::mt19937* randomPtr)
  */
 segments_t::~segments_t()
 {
-    free(vector_at(contentsPtr, 0));
-    vector_free(contentsPtr);
+    free(contentsPtr->at(0));
+    delete contentsPtr;
     free(strings);
 }
 

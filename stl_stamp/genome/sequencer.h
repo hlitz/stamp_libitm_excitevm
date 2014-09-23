@@ -13,11 +13,9 @@ struct constructEntry_t;
 
 struct sequencer_t {
 
-/* public: */
-
     char* sequence;
 
-/* private: */
+  // private:
 
     segments_t* segmentsPtr;
 
