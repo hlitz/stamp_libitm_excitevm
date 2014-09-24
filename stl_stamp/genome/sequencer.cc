@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "hash.h"
-#include "hashtable.h"
 #include "segments.h"
 #include "sequencer.h"
 #include "table.h"
@@ -51,27 +50,25 @@ hashString (char* str)
  * -- For hashtable
  * =============================================================================
  */
-//[wer] need to be TM_SAFE
-__attribute__((transaction_safe))
-//__attibute__ ((transaction_pure))
-unsigned long
-hashSegment (const void* keyPtr)
-{
-  //return (unsigned long)hash_sdbm((char*)keyPtr); /* can be any "good" hash function */
+    //[wer] need to be TM_SAFE
+    __attribute__((transaction_safe))
+    //__attibute__ ((transaction_pure))
+    size_t sequencer_hash::operator()(const char* keyPtr) const noexcept
+    {
+        //return (unsigned long)hash_sdbm((char*)keyPtr); /* can be any "good" hash function */
 
-  //[wer] I replaced hash_sdbm with the above sdbm function, which is TM_SAFE
-  unsigned long hash = 0;
-    long c;
-    const char* str = (const char*)keyPtr;
+        //[wer] I replaced hash_sdbm with the above sdbm function, which is TM_SAFE
+        unsigned long hash = 0;
+        long c;
+        const char* str = (const char*)keyPtr;
 
-    /* Note: Do not change this hashing scheme */
-   while ((c = *str++) != '\0') {
-        hash = c + (hash << 6) + (hash << 16) - hash;
+        /* Note: Do not change this hashing scheme */
+        while ((c = *str++) != '\0') {
+            hash = c + (hash << 6) + (hash << 16) - hash;
+        }
+
+        return (unsigned long)hash;
     }
-
-   return (unsigned long)hash;
-
-}
 
 
 //[wer] we need a safe version of strcmp
@@ -113,68 +110,49 @@ inline static long tm_strcmp(void* a, void* b)
  * =============================================================================
  */
 __attribute__((transaction_safe))
-long
-compareSegment (const pair_t* a, const pair_t* b)
+bool sequencer_compare::operator()(const char* a, char* b) const
 {
-  void* aa = (void*)(a -> firstPtr);
-  void* bb = (void*)(b -> firstPtr);
-  //return tm_strcmp(aa, bb);
-  return tm_safe_strcmp(aa, bb); //[wer210] use safe version is TOO slow for write-through alg.
+    return 0 == tm_safe_strcmp(a, b); //[wer210] use safe version is TOO slow for write-through alg.
 }
-
 
 /* =============================================================================
  * sequencer_alloc
  * -- Returns NULL on failure
  * =============================================================================
  */
-sequencer_t*
-sequencer_alloc (long geneLength, long segmentLength, segments_t* segmentsPtr)
+sequencer_t::sequencer_t(long _geneLength, long _segmentLength, segments_t* _segmentsPtr)
 {
-    sequencer_t* sequencerPtr;
-    long maxNumUniqueSegment = geneLength - segmentLength + 1;
-    long i;
+    long maxNumUniqueSegment = _geneLength - _segmentLength + 1;
 
-    sequencerPtr = (sequencer_t*)malloc(sizeof(sequencer_t));
-    if (sequencerPtr == NULL) {
-        return NULL;
-    }
-
-    sequencerPtr->uniqueSegmentsPtr =
-        TMhashtable_alloc(geneLength, &hashSegment, &compareSegment, -1, -1);
-    if (sequencerPtr->uniqueSegmentsPtr == NULL) {
-        return NULL;
-    }
+    uniqueSegmentsPtr =
+        new std::unordered_set<char*, sequencer_hash, sequencer_compare>
+        ((size_t)_geneLength, sequencer_hash(), sequencer_compare());
+    assert(uniqueSegmentsPtr != NULL);
 
     /* For finding a matching entry */
-    sequencerPtr->endInfoEntries =
+    endInfoEntries =
         (endInfoEntry_t*)malloc(maxNumUniqueSegment * sizeof(endInfoEntry_t));
-    for (i = 0; i < maxNumUniqueSegment; i++) {
-        endInfoEntry_t* endInfoEntryPtr = &sequencerPtr->endInfoEntries[i];
+    for (long i = 0; i < maxNumUniqueSegment; i++) {
+        endInfoEntry_t* endInfoEntryPtr = &endInfoEntries[i];
         endInfoEntryPtr->isEnd = true;
         endInfoEntryPtr->jumpToNext = 1;
     }
-    sequencerPtr->startHashToConstructEntryTables =
-        (table_t**)malloc(segmentLength * sizeof(table_t*));
-    if (sequencerPtr->startHashToConstructEntryTables == NULL) {
-        return NULL;
+    startHashToConstructEntryTables =
+        (table_t**)malloc(_segmentLength * sizeof(table_t*));
+    assert(startHashToConstructEntryTables != NULL);
+    for (long i = 1; i < _segmentLength; i++) { /* 0 is dummy entry */
+        startHashToConstructEntryTables[i] = new table_t(_geneLength);
+        assert(startHashToConstructEntryTables[i] != NULL);
     }
-    for (i = 1; i < segmentLength; i++) { /* 0 is dummy entry */
-        sequencerPtr->startHashToConstructEntryTables[i] = new table_t(geneLength);
-        if (sequencerPtr->startHashToConstructEntryTables[i] == NULL) {
-            return NULL;
-        }
-    }
-    sequencerPtr->segmentLength = segmentLength;
+    segmentLength = _segmentLength;
 
     /* For constructing sequence */
-    sequencerPtr->constructEntries =
+    constructEntries =
         (constructEntry_t*)malloc(maxNumUniqueSegment * sizeof(constructEntry_t));
-    if (sequencerPtr->constructEntries == NULL) {
-        return NULL;
-    }
-    for (i= 0; i < maxNumUniqueSegment; i++) {
-        constructEntry_t* constructEntryPtr = &sequencerPtr->constructEntries[i];
+    assert(constructEntries != NULL);
+
+    for (long i = 0; i < maxNumUniqueSegment; i++) {
+        constructEntry_t* constructEntryPtr = &constructEntries[i];
         constructEntryPtr->isStart = true;
         constructEntryPtr->segment = NULL;
         constructEntryPtr->endHash = 0;
@@ -182,16 +160,11 @@ sequencer_alloc (long geneLength, long segmentLength, segments_t* segmentsPtr)
         constructEntryPtr->nextPtr = NULL;
         constructEntryPtr->endPtr = constructEntryPtr;
         constructEntryPtr->overlap = 0;
-        constructEntryPtr->length = segmentLength;
+        constructEntryPtr->length = _segmentLength;
     }
-    sequencerPtr->hashToConstructEntryTable = new table_t(geneLength);
-    if (sequencerPtr->hashToConstructEntryTable == NULL) {
-        return NULL;
-    }
-
-    sequencerPtr->segmentsPtr = segmentsPtr;
-
-    return sequencerPtr;
+    hashToConstructEntryTable = new table_t(_geneLength);
+    assert(hashToConstructEntryTable != NULL);
+    segmentsPtr = _segmentsPtr;
 }
 
 
@@ -206,13 +179,11 @@ sequencer_run (void* argPtr)
 
     sequencer_t* sequencerPtr = (sequencer_t*)argPtr;
 
-    hashtable_t*      uniqueSegmentsPtr;
     endInfoEntry_t*   endInfoEntries;
     table_t**         startHashToConstructEntryTables;
     constructEntry_t* constructEntries;
     table_t*          hashToConstructEntryTable;
 
-    uniqueSegmentsPtr               = sequencerPtr->uniqueSegmentsPtr;
     endInfoEntries                  = sequencerPtr->endInfoEntries;
     startHashToConstructEntryTables = sequencerPtr->startHashToConstructEntryTables;
     constructEntries                = sequencerPtr->constructEntries;
@@ -252,8 +223,8 @@ sequencer_run (void* argPtr)
         {
           long ii_stop = MIN(i_stop, (i+CHUNK_STEP1));
           for (long ii = i; ii < ii_stop; ii++) {
-              void* segment = segmentsContentsPtr->at(ii);
-              TMHASHTABLE_INSERT(uniqueSegmentsPtr, segment, segment);
+              char* segment = segmentsContentsPtr->at(ii);
+              sequencerPtr->uniqueSegmentsPtr->insert(segment);
           } /* ii */
         }
       }
@@ -282,12 +253,12 @@ sequencer_run (void* argPtr)
      */
 
     /* uniqueSegmentsPtr is constant now */
-    numUniqueSegment = TMhashtable_getSize(uniqueSegmentsPtr);
+    numUniqueSegment = sequencerPtr->uniqueSegmentsPtr->size();
     entryIndex = 0;
 
     {
         /* Choose disjoint segments [i_start,i_stop) for each thread */
-        long num = uniqueSegmentsPtr->numBucket;
+        long num = sequencerPtr->uniqueSegmentsPtr->bucket_count();
         long partitionSize = (num + numThread/2) / numThread; /* with rounding */
         i_start = threadId * partitionSize;
         if (threadId == (numThread - 1)) {
@@ -303,15 +274,10 @@ sequencer_run (void* argPtr)
     }
 
     for (i = i_start; i < i_stop; i++) {
-
-        list_t* chainPtr = uniqueSegmentsPtr->buckets[i];
-        list_iter_t it;
-        list_iter_reset(&it, chainPtr);
-
-        while (list_iter_hasNext(&it)) {
-
-            char* segment =
-                (char*)((pair_t*)list_iter_next(&it))->firstPtr;
+        auto chainPtr = sequencerPtr->uniqueSegmentsPtr->begin(i);
+        auto e = sequencerPtr->uniqueSegmentsPtr->end(i);
+        while (chainPtr != e) {
+            char* segment = *chainPtr;
             constructEntry_t* constructEntryPtr;
             long j;
             unsigned long startHash;
@@ -361,6 +327,7 @@ sequencer_run (void* argPtr)
                                                            constructEntryPtr);
             }
             assert(status);
+            ++chainPtr;
         }
     }
 
@@ -554,28 +521,23 @@ sequencer_run (void* argPtr)
 }
 
 
-/* =============================================================================
- * sequencer_free
- * =============================================================================
+/*
+ * destructor
  */
-void
-sequencer_free (sequencer_t* sequencerPtr)
+sequencer_t::~sequencer_t()
 {
-    long i;
-
-    delete (sequencerPtr->hashToConstructEntryTable);
-    free(sequencerPtr->constructEntries);
-    for (i = 1; i < sequencerPtr->segmentLength; i++) {
-        delete (sequencerPtr->startHashToConstructEntryTables[i]);
+    delete(hashToConstructEntryTable);
+    free(constructEntries);
+    for (long i = 1; i < segmentLength; i++) {
+        delete (startHashToConstructEntryTables[i]);
     }
-    free(sequencerPtr->startHashToConstructEntryTables);
-    free(sequencerPtr->endInfoEntries);
+    free(startHashToConstructEntryTables);
+    free(endInfoEntries);
     /* TODO: fix mixed sequential/parallel allocation */
-    TMhashtable_free(sequencerPtr->uniqueSegmentsPtr);
-    if (sequencerPtr->sequence != NULL) {
-        free(sequencerPtr->sequence);
+    delete uniqueSegmentsPtr;
+    if (sequence != NULL) {
+        free(sequence);
     }
-    free(sequencerPtr);
 }
 
 

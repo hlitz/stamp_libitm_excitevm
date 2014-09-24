@@ -21,15 +21,12 @@ enum param_types {
     PARAM_THREAD  = (unsigned char)'t'
 };
 
-
 #define PARAM_DEFAULT_GENE    (1L << 14)
 #define PARAM_DEFAULT_NUMBER  (1L << 24)
 #define PARAM_DEFAULT_SEGMENT (1L << 6)
 #define PARAM_DEFAULT_THREAD  (1L)
 
-
 long global_params[256]; /* 256 = ascii limit */
-
 
 /* =============================================================================
  * displayUsage
@@ -50,13 +47,11 @@ displayUsage (const char* appName)
     exit(1);
 }
 
-
 /* =============================================================================
  * setDefaultParams
  * =============================================================================
  */
-static void
-setDefaultParams( void )
+static void setDefaultParams(void)
 {
     global_params[PARAM_GENE]    = PARAM_DEFAULT_GENE;
     global_params[PARAM_NUMBER]  = PARAM_DEFAULT_NUMBER;
@@ -69,8 +64,7 @@ setDefaultParams( void )
  * parseArgs
  * =============================================================================
  */
-static void
-parseArgs (long argc, char* const argv[])
+static void parseArgs (long argc, char* const argv[])
 {
     long i;
     long opt;
@@ -140,7 +134,7 @@ int main (int argc, char** argv)
     segments_t* segmentsPtr = new segments_t(segmentLength, minNumSegment);
     assert(segmentsPtr != NULL);
     segmentsPtr->create(genePtr, randomPtr);
-    sequencer_t* sequencerPtr = sequencer_alloc(geneLength, segmentLength, segmentsPtr);
+    sequencer_t* sequencerPtr = new sequencer_t(geneLength, segmentLength, segmentsPtr);
     assert(sequencerPtr != NULL);
 
     puts("done.");
@@ -153,14 +147,7 @@ int main (int argc, char** argv)
     printf("Sequencing gene... ");
     fflush(stdout);
     TIMER_READ(start);
-#ifdef OTM
-#pragma omp parallel
-    {
-        sequencer_run(sequencerPtr);
-    }
-#else
     thread_start(sequencer_run, (void*)sequencerPtr);
-#endif
     TIMER_READ(stop);
     puts("done.");
     printf("Time = %lf\n", TIMER_DIFF_SECONDS(start, stop));
@@ -182,23 +169,12 @@ int main (int argc, char** argv)
     /* Clean up */
     printf("Deallocating memory... ");
     fflush(stdout);
-    sequencer_free(sequencerPtr);
+    delete sequencerPtr;
     delete segmentsPtr;
     gene_free(genePtr);
     delete randomPtr;
     puts("done.");
     fflush(stdout);
-
     thread_shutdown();
-
     return result;
 }
-
-
-
-/* =============================================================================
- *
- * End of genome.c
- *
- * =============================================================================
- */

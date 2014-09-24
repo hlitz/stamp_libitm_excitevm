@@ -4,24 +4,38 @@
 
 #pragma once
 
-#include "hashtable.h"
+#include <unordered_set>
 #include "segments.h"
 #include "table.h"
 
 struct endInfoEntry_t;
 struct constructEntry_t;
 
+struct sequencer_hash
+{
+    __attribute__((transaction_safe))
+    size_t operator()(const char*) const noexcept;
+};
+
+struct sequencer_compare
+{
+    __attribute__((transaction_safe))
+    bool operator()(const char* a, char* b) const;
+};
+
 struct sequencer_t {
+
+/* public: */
 
     char* sequence;
 
-  // private:
+/* private: */
 
     segments_t* segmentsPtr;
 
     /* For removing duplicate segments */
-    // [mfs] Replace with std::unordered_map
-    hashtable_t* uniqueSegmentsPtr;
+    // [mfs] Replace with std::unordered_set
+    std::unordered_set<char*, sequencer_hash, sequencer_compare>* uniqueSegmentsPtr;
 
     /* For matching segments */
     endInfoEntry_t* endInfoEntries;
@@ -34,8 +48,10 @@ struct sequencer_t {
     /* For deallocation */
     long segmentLength;
 
-};
+    sequencer_t(long geneLength, long segmentLength, segments_t* segmentsPtr);
 
+    ~sequencer_t();
+};
 
 struct sequencer_run_arg_t {
     sequencer_t* sequencerPtr;
@@ -44,28 +60,8 @@ struct sequencer_run_arg_t {
     char* returnSequence; /* variable stores return value */
 };
 
-
-/* =============================================================================
- * sequencer_alloc
- * -- Returns NULL on failure
- * =============================================================================
- */
-sequencer_t*
-sequencer_alloc (long geneLength, long segmentLength, segments_t* segmentsPtr);
-
-
 /* =============================================================================
  * sequencer_run
  * =============================================================================
  */
-
-void
-sequencer_run (void* argPtr);
-
-
-/* =============================================================================
- * sequencer_free
- * =============================================================================
- */
-void
-sequencer_free (sequencer_t* sequencerPtr);
+void sequencer_run(void* argPtr);

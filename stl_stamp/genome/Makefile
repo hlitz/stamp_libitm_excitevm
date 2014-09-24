@@ -20,7 +20,7 @@ PROG := genome
 
 SRCS += gene.cc genome.cc segments.cc sequencer.cc table.cc
 
-LIBSRCS += bitmap.cc hash.cc hashtable.cc pair.cc list.cc thread.cc
+LIBSRCS += bitmap.cc hash.cc thread.cc
 
 OBJS := ${SRCS:.cc=.o} ${LIBSRCS:%.cc=lib_%.o}
 
