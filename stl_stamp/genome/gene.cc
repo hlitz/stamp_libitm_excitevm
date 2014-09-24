@@ -18,31 +18,17 @@
  * -- Returns NULL on failure
  * =============================================================================
  */
-gene_t*
-gene_alloc (long length)
+gene_t::gene_t(long _length)
 {
-    gene_t* genePtr;
+    assert(_length > 1);
+    contents = (char*)malloc((_length + 1) * sizeof(char));
+    assert(contents != NULL);
 
-    assert(length > 1);
+    contents[_length] = '\0';
+    length = _length;
 
-    genePtr = (gene_t*)malloc(sizeof(gene_t));
-    if (genePtr == NULL) {
-        return NULL;
-    }
-
-    genePtr->contents = (char*)malloc((length + 1) * sizeof(char));
-    if (genePtr->contents == NULL) {
-        return NULL;
-    }
-    genePtr->contents[length] = '\0';
-    genePtr->length = length;
-
-    genePtr->startBitmapPtr = bitmap_alloc(length);
-    if (genePtr->startBitmapPtr == NULL) {
-        return NULL;
-    }
-
-    return genePtr;
+    startBitmapPtr = new std::vector<bool>(_length, false);
+    assert(startBitmapPtr != NULL);
 }
 
 
@@ -51,12 +37,8 @@ gene_alloc (long length)
  * -- Populate contents with random gene
  * =============================================================================
  */
-void
-gene_create (gene_t* genePtr, std::mt19937* randomPtr)
+void gene_t::create(std::mt19937* randomPtr)
 {
-    long length;
-    char* contents;
-    long i;
     const char nucleotides[] = {
         NUCLEOTIDE_ADENINE,
         NUCLEOTIDE_CYTOSINE,
@@ -64,15 +46,10 @@ gene_create (gene_t* genePtr, std::mt19937* randomPtr)
         NUCLEOTIDE_THYMINE,
     };
 
-    assert(genePtr != NULL);
     assert(randomPtr != NULL);
 
-    length = genePtr->length;
-    contents = genePtr->contents;
-
-    for (i = 0; i < length; i++) {
-        contents[i] =
-            nucleotides[(randomPtr->operator()()% NUCLEOTIDE_NUM_TYPE)];
+    for (long i = 0; i < length; i++) {
+        contents[i] = nucleotides[(randomPtr->operator()()% NUCLEOTIDE_NUM_TYPE)];
     }
 }
 
@@ -81,12 +58,10 @@ gene_create (gene_t* genePtr, std::mt19937* randomPtr)
  * gene_free
  * =============================================================================
  */
-void
-gene_free (gene_t* genePtr)
+gene_t::~gene_t()
 {
-  bitmap_free(genePtr->startBitmapPtr);
-  free(genePtr->contents);
-  free(genePtr);
+    delete startBitmapPtr;
+    free(contents);
 }
 
 

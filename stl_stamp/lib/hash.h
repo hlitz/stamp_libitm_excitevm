@@ -77,8 +77,7 @@
  * =============================================================================
  */
 __attribute__((transaction_safe))
-unsigned long
-hash_dbj2 (char* str);
+unsigned long hash_dbj2(char* str);
 
 
 /* =============================================================================
@@ -86,5 +85,4 @@ hash_dbj2 (char* str);
  * =============================================================================
  */
 __attribute__((transaction_safe))
-unsigned long
-hash_sdbm (char* str);
+unsigned long hash_sdbm(char* str);

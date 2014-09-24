@@ -9,32 +9,27 @@
 #pragma once
 
 #include <random>
-#include "bitmap.h"
+#include <vector>
 
 struct gene_t {
     long length;
     char* contents;
     // [mfs] replace with std::bitset?
-    bitmap_t* startBitmapPtr; /* used for creating segments */
+    std::vector<bool>* startBitmapPtr; /* used for creating segments */
+
+    /*
+     * gene_alloc: Does all memory allocation necessary for gene creation
+     */
+    gene_t(long length);
+
+    /*
+     * gene_create: Populate contents with random gene
+     */
+    void create(std::mt19937* randomPtr);
+
+    /*
+     * gene_free
+     */
+    ~gene_t();
 };
 
-/* =============================================================================
- * gene_alloc
- * -- Does all memory allocation necessary for gene creation
- * -- Returns NULL on failure
- * =============================================================================
- */
-gene_t* gene_alloc(long length);
-
-/* =============================================================================
- * gene_create
- * -- Populate contents with random gene
- * =============================================================================
- */
-void gene_create(gene_t* genePtr, std::mt19937* randomPtr);
-
-/* =============================================================================
- * gene_free
- * =============================================================================
- */
-void gene_free(gene_t* genePtr);

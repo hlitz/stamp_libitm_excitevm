@@ -24,12 +24,7 @@ struct sequencer_compare
 };
 
 struct sequencer_t {
-
-/* public: */
-
     char* sequence;
-
-/* private: */
 
     segments_t* segmentsPtr;
 

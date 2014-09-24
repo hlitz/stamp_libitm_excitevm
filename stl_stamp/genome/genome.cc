@@ -126,9 +126,9 @@ int main (int argc, char** argv)
     assert(randomPtr != NULL);
     randomPtr->seed(0);
 
-    gene_t* genePtr = gene_alloc(geneLength);
+    gene_t* genePtr = new gene_t(geneLength);
     assert( genePtr != NULL);
-    gene_create(genePtr, randomPtr);
+    genePtr->create(randomPtr);
     char* gene = genePtr->contents;
 
     segments_t* segmentsPtr = new segments_t(segmentLength, minNumSegment);
@@ -171,7 +171,7 @@ int main (int argc, char** argv)
     fflush(stdout);
     delete sequencerPtr;
     delete segmentsPtr;
-    gene_free(genePtr);
+    delete genePtr;
     delete randomPtr;
     puts("done.");
     fflush(stdout);

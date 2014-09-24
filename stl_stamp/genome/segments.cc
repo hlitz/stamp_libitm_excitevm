@@ -62,26 +62,24 @@ void segments_t::create(gene_t* genePtr, std::mt19937* randomPtr)
 
     char* geneString = genePtr->contents;
     long geneLength = genePtr->length;
-    bitmap_t* startBitmapPtr = genePtr->startBitmapPtr;
+    std::vector<bool>* startBitmapPtr = genePtr->startBitmapPtr;
     long numStart = geneLength - segmentLength + 1;
 
     /* Pick some random segments to start */
     for (long i = 0; i < minNumSegment; i++) {
         long j = (long)(randomPtr->operator()() % numStart);
-        bool status = bitmap_set(startBitmapPtr, j);
-        assert(status);
+        startBitmapPtr->at(j) = true;
         memcpy(strings[i], &(geneString[j]), segmentLength * sizeof(char));
         segmentsContentsPtr->push_back(strings[i]);
     }
 
     /* Make sure segment covers start */
-    if (!bitmap_isSet(startBitmapPtr, 0)) {
+    if (!startBitmapPtr->at(0)) {
         char* string = (char*)malloc((segmentLength+1) * sizeof(char));
         string[segmentLength] = '\0';
         memcpy(string, &(geneString[0]), segmentLength * sizeof(char));
         segmentsContentsPtr->push_back(string);
-        bool status = bitmap_set(startBitmapPtr, 0);
-        assert(status);
+        startBitmapPtr->at(0) = true;
     }
 
     /* Add extra segments to fill holes and ensure overlap */
@@ -89,7 +87,7 @@ void segments_t::create(gene_t* genePtr, std::mt19937* randomPtr)
     for (long i = 0; i < numStart; i++) {
         long i_stop = MIN((i+maxZeroRunLength), numStart);
         for ( /* continue */; i < i_stop; i++) {
-            if (bitmap_isSet(startBitmapPtr, i)) {
+            if (startBitmapPtr->at(i)) {
                 break;
             }
         }
@@ -100,8 +98,7 @@ void segments_t::create(gene_t* genePtr, std::mt19937* randomPtr)
             i = i - 1;
             memcpy(string, &(geneString[i]), segmentLength * sizeof(char));
             segmentsContentsPtr->push_back(string);
-            bool status = bitmap_set(startBitmapPtr, i);
-            assert(status);
+            startBitmapPtr->at(i) = true;
         }
     }
 }
