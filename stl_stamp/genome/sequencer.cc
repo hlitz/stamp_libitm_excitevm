@@ -30,8 +30,7 @@ struct endInfoEntry_t {
  * =============================================================================
  */
 __attribute__((transaction_safe))
-unsigned long
-hashString (char* str)
+unsigned long hashString (char* str)
 {
     unsigned long hash = 0;
     long c;
@@ -44,31 +43,30 @@ hashString (char* str)
     return (unsigned long)hash;
 }
 
-
 /* =============================================================================
  * hashSegment
  * -- For hashtable
  * =============================================================================
  */
-    //[wer] need to be TM_SAFE
-    __attribute__((transaction_safe))
-    //__attibute__ ((transaction_pure))
-    size_t sequencer_hash::operator()(const char* keyPtr) const noexcept
-    {
-        //return (unsigned long)hash_sdbm((char*)keyPtr); /* can be any "good" hash function */
+//[wer] need to be TM_SAFE
+__attribute__((transaction_safe))
+//__attibute__ ((transaction_pure))
+size_t sequencer_hash::operator()(const char* keyPtr) const noexcept
+{
+    //return (unsigned long)hash_sdbm((char*)keyPtr); /* can be any "good" hash function */
 
-        //[wer] I replaced hash_sdbm with the above sdbm function, which is TM_SAFE
-        unsigned long hash = 0;
-        long c;
-        const char* str = (const char*)keyPtr;
+    //[wer] I replaced hash_sdbm with the above sdbm function, which is TM_SAFE
+    unsigned long hash = 0;
+    long c;
+    const char* str = (const char*)keyPtr;
 
-        /* Note: Do not change this hashing scheme */
-        while ((c = *str++) != '\0') {
-            hash = c + (hash << 6) + (hash << 16) - hash;
-        }
-
-        return (unsigned long)hash;
+    /* Note: Do not change this hashing scheme */
+    while ((c = *str++) != '\0') {
+        hash = c + (hash << 6) + (hash << 16) - hash;
     }
+
+    return (unsigned long)hash;
+}
 
 
 //[wer] we need a safe version of strcmp
@@ -85,8 +83,7 @@ inline long tm_safe_strcmp(const void* p1, const void* p2)
   register const unsigned char *s2 = (const unsigned char *) p2;
 
   unsigned char c1, c2;
-  do
-  {
+  do {
       c1 = (unsigned char) *s1++;
       c2 = (unsigned char) *s2++;
 
@@ -172,8 +169,7 @@ sequencer_t::sequencer_t(long _geneLength, long _segmentLength, segments_t* _seg
  * sequencer_run
  * =============================================================================
  */
-void
-sequencer_run (void* argPtr)
+void sequencer_run(void* argPtr)
 {
     long threadId = thread_getId();
 
@@ -519,7 +515,6 @@ sequencer_run (void* argPtr)
     }
 
 }
-
 
 /*
  * destructor

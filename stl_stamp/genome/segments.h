@@ -15,24 +15,23 @@ struct segments_t {
     long length;
     long minNum;
     std::vector<char*>* contentsPtr;
-  private:
     char** strings;
-  public:
-  /*
-   * constructor
-   * -- Does almost all the memory allocation for random segments
-   * -- The actual number of segments created by 'segments_create' may be larger
-   *    than 'minNum' to ensure the segments overlap and cover the entire gene
-   */
-  segments_t(long length, long minNum);
 
-  /*
-   * create(): Populates 'contentsPtr'
-   */
-  void create(gene_t* genePtr, std::mt19937* randomPtr);
+    /*
+     * constructor
+     * -- Does almost all the memory allocation for random segments
+     * -- The actual number of segments created by 'segments_create' may be larger
+     *    than 'minNum' to ensure the segments overlap and cover the entire gene
+     */
+    segments_t(long length, long minNum);
 
-  /*
-   * destructor
-   */
-  ~segments_t();
+    /*
+     * create(): Populates 'contentsPtr'
+     */
+    void create(gene_t* genePtr, std::mt19937* randomPtr);
+
+    /*
+     * destructor
+     */
+    ~segments_t();
 };
