@@ -41,33 +41,13 @@ point_t MOVE_NEGZ = { 0,  0, -1,  0, MOMENTUM_NEGZ};
  * router_alloc
  * =============================================================================
  */
-router_t*
-router_alloc (long xCost, long yCost, long zCost, long bendCost)
+router_t::router_t(long _xCost, long _yCost, long _zCost, long _bendCost)
 {
-    router_t* routerPtr;
-
-    routerPtr = (router_t*)malloc(sizeof(router_t));
-    if (routerPtr) {
-        routerPtr->xCost = xCost;
-        routerPtr->yCost = yCost;
-        routerPtr->zCost = zCost;
-        routerPtr->bendCost = bendCost;
-    }
-
-    return routerPtr;
+    xCost = _xCost;
+    yCost = _yCost;
+    zCost = _zCost;
+    bendCost = _bendCost;
 }
-
-
-/* =============================================================================
- * router_free
- * =============================================================================
- */
-void
-router_free (router_t* routerPtr)
-{
-    free(routerPtr);
-}
-
 
 /* =============================================================================
  * PexpandToNeighbor

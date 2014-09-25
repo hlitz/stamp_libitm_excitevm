@@ -128,10 +128,10 @@ int main (int argc, char** argv)
     parseArgs(argc, (char** const)argv);
     long numThread = global_params[PARAM_THREAD];
     thread_startup(numThread);
-    maze_t* mazePtr = maze_alloc();
+    maze_t* mazePtr = new maze_t();
     assert(mazePtr);
-    long numPathToRoute = maze_read(mazePtr, global_inputFile);
-    router_t* routerPtr = router_alloc(global_params[PARAM_XCOST],
+    long numPathToRoute = mazePtr->read(global_inputFile);
+    router_t* routerPtr = new router_t(global_params[PARAM_XCOST],
                                        global_params[PARAM_YCOST],
                                        global_params[PARAM_ZCOST],
                                        global_params[PARAM_BENDCOST]);
@@ -171,11 +171,11 @@ int main (int argc, char** argv)
      * Check solution and clean up
      */
     assert(numPathRouted <= numPathToRoute);
-    bool status = maze_checkPaths(mazePtr, pathVectorListPtr, global_doPrint);
+    bool status = mazePtr->checkPaths(pathVectorListPtr, global_doPrint);
     assert(status == true);
     puts("Verification passed.");
-    maze_free(mazePtr);
-    router_free(routerPtr);
+    delete mazePtr;
+    delete routerPtr;
 
     list_iter_reset(&it, pathVectorListPtr);
     while (list_iter_hasNext(&it)) {

@@ -17,49 +17,39 @@
  * maze_alloc
  * =============================================================================
  */
-maze_t*
-maze_alloc ()
+maze_t::maze_t()
 {
-    maze_t* mazePtr;
-
-    mazePtr = (maze_t*)malloc(sizeof(maze_t));
-    if (mazePtr) {
-        mazePtr->gridPtr = NULL;
-        mazePtr->workQueuePtr = queue_alloc(1024);
-        mazePtr->wallVectorPtr = vector_alloc(1);
-        mazePtr->srcVectorPtr = vector_alloc(1);
-        mazePtr->dstVectorPtr = vector_alloc(1);
-        assert(mazePtr->workQueuePtr &&
-               mazePtr->wallVectorPtr &&
-               mazePtr->srcVectorPtr &&
-               mazePtr->dstVectorPtr);
-    }
-
-    return mazePtr;
+    gridPtr = NULL;
+    workQueuePtr = queue_alloc(1024);
+    wallVectorPtr = vector_alloc(1);
+    srcVectorPtr = vector_alloc(1);
+    dstVectorPtr = vector_alloc(1);
+    assert(workQueuePtr &&
+           wallVectorPtr &&
+           srcVectorPtr &&
+           dstVectorPtr);
 }
 
 /* =============================================================================
  * maze_free
  * =============================================================================
  */
-void
-maze_free (maze_t* mazePtr)
+maze_t::~maze_t()
 {
+    if (gridPtr != NULL) {
+        grid_free(gridPtr);
+    }
+    queue_free(workQueuePtr);
+    vector_free(wallVectorPtr);
     coordinate_t* coordPtr;
-    if (mazePtr->gridPtr != NULL) {
-        grid_free(mazePtr->gridPtr);
-    }
-    queue_free(mazePtr->workQueuePtr);
-    vector_free(mazePtr->wallVectorPtr);
-    while ((coordPtr = (coordinate_t *)vector_popBack (mazePtr->srcVectorPtr)) != NULL) {
+    while ((coordPtr = (coordinate_t *)vector_popBack(srcVectorPtr)) != NULL) {
         coordinate_free(coordPtr);
     }
-    vector_free(mazePtr->srcVectorPtr);
-    while ((coordPtr = (coordinate_t *)vector_popBack (mazePtr->dstVectorPtr)) != NULL) {
+    vector_free(srcVectorPtr);
+    while ((coordPtr = (coordinate_t *)vector_popBack (dstVectorPtr)) != NULL) {
         coordinate_free(coordPtr);
     }
-    vector_free(mazePtr->dstVectorPtr);
-    free(mazePtr);
+    vector_free(dstVectorPtr);
 }
 
 
@@ -93,8 +83,7 @@ addToGrid (grid_t* gridPtr, vector_t* vectorPtr, const char* type)
  * -- Return number of path to route
  * =============================================================================
  */
-long
-maze_read (maze_t* mazePtr, const char* inputFileName)
+long maze_t::read(const char* inputFileName)
 {
     FILE* inputFile = fopen(inputFileName, "rt");
     if (!inputFile) {
@@ -111,9 +100,6 @@ maze_read (maze_t* mazePtr, const char* inputFileName)
     long depth  = -1;
     char line[256];
     list_t* workListPtr = list_alloc(&coordinate_comparePair);
-    vector_t* wallVectorPtr = mazePtr->wallVectorPtr;
-    vector_t* srcVectorPtr = mazePtr->srcVectorPtr;
-    vector_t* dstVectorPtr = mazePtr->dstVectorPtr;
 
     while (fgets(line, sizeof(line), inputFile)) {
 
@@ -193,9 +179,8 @@ maze_read (maze_t* mazePtr, const char* inputFileName)
                 width, height, depth);
         exit(1);
     }
-    grid_t* gridPtr = grid_alloc(width, height, depth);
+    gridPtr = grid_alloc(width, height, depth);
     assert(gridPtr);
-    mazePtr->gridPtr = gridPtr;
     addToGrid(gridPtr, wallVectorPtr, "wall");
     addToGrid(gridPtr, srcVectorPtr,  "source");
     addToGrid(gridPtr, dstVectorPtr,  "destination");
@@ -205,7 +190,6 @@ maze_read (maze_t* mazePtr, const char* inputFileName)
     /*
      * Initialize work queue
      */
-    queue_t* workQueuePtr = mazePtr->workQueuePtr;
     list_iter_t it;
     list_iter_reset(&it, workListPtr);
     while (list_iter_hasNext(&it)) {
@@ -222,10 +206,8 @@ maze_read (maze_t* mazePtr, const char* inputFileName)
  * maze_checkPaths
  * =============================================================================
  */
-bool
-maze_checkPaths (maze_t* mazePtr, list_t* pathVectorListPtr, bool doPrintPaths)
+bool maze_t::checkPaths(list_t* pathVectorListPtr, bool doPrintPaths)
 {
-    grid_t* gridPtr = mazePtr->gridPtr;
     long width  = gridPtr->width;
     long height = gridPtr->height;
     long depth  = gridPtr->depth;
@@ -233,10 +215,9 @@ maze_checkPaths (maze_t* mazePtr, list_t* pathVectorListPtr, bool doPrintPaths)
 
     /* Mark walls */
     grid_t* testGridPtr = grid_alloc(width, height, depth);
-    grid_addPath(testGridPtr, mazePtr->wallVectorPtr);
+    grid_addPath(testGridPtr, wallVectorPtr);
 
     /* Mark sources */
-    vector_t* srcVectorPtr = mazePtr->srcVectorPtr;
     long numSrc = vector_getSize(srcVectorPtr);
     for (i = 0; i < numSrc; i++) {
         coordinate_t* srcPtr = (coordinate_t*)vector_at(srcVectorPtr, i);
@@ -244,7 +225,6 @@ maze_checkPaths (maze_t* mazePtr, list_t* pathVectorListPtr, bool doPrintPaths)
     }
 
     /* Mark destinations */
-    vector_t* dstVectorPtr = mazePtr->dstVectorPtr;
     long numDst = vector_getSize(dstVectorPtr);
     for (i = 0; i < numDst; i++) {
         coordinate_t* dstPtr = (coordinate_t*)vector_at(dstVectorPtr, i);
