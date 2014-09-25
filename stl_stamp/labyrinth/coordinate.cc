@@ -11,32 +11,12 @@
  * coordinate_alloc
  * =============================================================================
  */
-coordinate_t*
-coordinate_alloc (long x, long y, long z)
+coordinate_t::coordinate_t(long _x, long _y, long _z)
 {
-    coordinate_t* coordinatePtr;
-
-    coordinatePtr = (coordinate_t*)malloc(sizeof(coordinate_t));
-    if (coordinatePtr) {
-        coordinatePtr->x = x;
-        coordinatePtr->y = y;
-        coordinatePtr->z = z;
-    }
-
-    return coordinatePtr;
+    x = _x;
+    y = _y;
+    z = _z;
 }
-
-
-/* =============================================================================
- * coordinate_free
- * =============================================================================
- */
-void
-coordinate_free (coordinate_t* coordinatePtr)
-{
-  free(coordinatePtr);
-}
-
 
 /* =============================================================================
  * coordinate_isEqual

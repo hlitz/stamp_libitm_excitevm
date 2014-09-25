@@ -43,11 +43,11 @@ maze_t::~maze_t()
     vector_free(wallVectorPtr);
     coordinate_t* coordPtr;
     while ((coordPtr = (coordinate_t *)vector_popBack(srcVectorPtr)) != NULL) {
-        coordinate_free(coordPtr);
+        delete coordPtr;
     }
     vector_free(srcVectorPtr);
     while ((coordPtr = (coordinate_t *)vector_popBack (dstVectorPtr)) != NULL) {
-        coordinate_free(coordPtr);
+        delete coordPtr;
     }
     vector_free(dstVectorPtr);
 }
@@ -135,8 +135,8 @@ long maze_t::read(const char* inputFileName)
                 if (numToken != 7) {
                     goto PARSE_ERROR;
                 }
-                coordinate_t* srcPtr = coordinate_alloc(x1, y1, z1);
-                coordinate_t* dstPtr = coordinate_alloc(x2, y2, z2);
+                coordinate_t* srcPtr = new coordinate_t(x1, y1, z1);
+                coordinate_t* dstPtr = new coordinate_t(x2, y2, z2);
                 assert(srcPtr);
                 assert(dstPtr);
                 if (coordinate_isEqual(srcPtr, dstPtr)) {
@@ -154,7 +154,7 @@ long maze_t::read(const char* inputFileName)
                 if (numToken != 4) {
                     goto PARSE_ERROR;
                 }
-                coordinate_t* wallPtr = coordinate_alloc(x1, y1, z1);
+                coordinate_t* wallPtr = new coordinate_t(x1, y1, z1);
                 vector_pushBack(wallVectorPtr, (void*)wallPtr);
                 break;
             }
@@ -251,7 +251,7 @@ bool maze_t::checkPaths(list_t* pathVectorListPtr, bool doPrintPaths)
                 delete testGridPtr;
                 return false;
             }
-            coordinate_t prevCoordinate;
+            coordinate_t prevCoordinate(0,0,0);
             gridPtr->getPointIndices(prevGridPointPtr,
                                      &prevCoordinate.x,
                                      &prevCoordinate.y,
@@ -260,7 +260,7 @@ bool maze_t::checkPaths(list_t* pathVectorListPtr, bool doPrintPaths)
             long j;
             for (j = 1; j < (numPoint-1); j++) { /* no need to check endpoints */
                 long* currGridPointPtr = (long*)vector_at(pointVectorPtr, j);
-                coordinate_t currCoordinate;
+                coordinate_t currCoordinate(0,0,0);
                 gridPtr->getPointIndices(currGridPointPtr,
                                          &currCoordinate.x,
                                          &currCoordinate.y,
