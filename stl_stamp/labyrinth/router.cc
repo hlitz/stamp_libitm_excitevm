@@ -59,8 +59,8 @@ void
 PexpandToNeighbor (grid_t* myGridPtr,
                    long x, long y, long z, long value, queue_t* queuePtr)
 {
-    if (grid_isPointValid(myGridPtr, x, y, z)) {
-        long* neighborGridPointPtr = grid_getPointRef(myGridPtr, x, y, z);
+    if (myGridPtr->isPointValid(x, y, z)) {
+        long* neighborGridPointPtr = myGridPtr->getPointRef(x, y, z);
         long neighborValue = *neighborGridPointPtr;
         if (neighborValue == GRID_POINT_EMPTY) {
             (*neighborGridPointPtr) = value;
@@ -97,14 +97,14 @@ PdoExpansion (router_t* routerPtr, grid_t* myGridPtr, queue_t* queuePtr,
 
     TMQUEUE_CLEAR(queuePtr);
     // __attribute__((transaction_safe))
-    long* srcGridPointPtr = grid_getPointRef(myGridPtr, srcPtr->x,
-                                             srcPtr->y, srcPtr->z);
+    long* srcGridPointPtr =
+        myGridPtr->getPointRef(srcPtr->x, srcPtr->y, srcPtr->z);
     TMQUEUE_PUSH(queuePtr, (void*)srcGridPointPtr);
     // __attribute__((transaction_safe))
-    grid_setPoint(myGridPtr, srcPtr->x, srcPtr->y, srcPtr->z, 0);
-    grid_setPoint(myGridPtr, dstPtr->x, dstPtr->y, dstPtr->z, GRID_POINT_EMPTY);
+    myGridPtr->setPoint(srcPtr->x, srcPtr->y, srcPtr->z, 0);
+    myGridPtr->setPoint(dstPtr->x, dstPtr->y, dstPtr->z, GRID_POINT_EMPTY);
     long* dstGridPointPtr =
-        grid_getPointRef(myGridPtr, dstPtr->x, dstPtr->y, dstPtr->z);
+        myGridPtr->getPointRef(dstPtr->x, dstPtr->y, dstPtr->z);
     bool isPathFound = false;
 
     while (!TMQUEUE_ISEMPTY(queuePtr)) {
@@ -119,7 +119,7 @@ PdoExpansion (router_t* routerPtr, grid_t* myGridPtr, queue_t* queuePtr,
         long y;
         long z;
         // __attribute__((transaction_safe))
-        grid_getPointIndices(myGridPtr, gridPointPtr, &x, &y, &z);
+        myGridPtr->getPointIndices(gridPointPtr, &x, &y, &z);
         long value = (*gridPointPtr);
 
         /*
@@ -165,11 +165,11 @@ traceToNeighbor (grid_t* myGridPtr,
     long y = currPtr->y + movePtr->y;
     long z = currPtr->z + movePtr->z;
 
-    if (grid_isPointValid(myGridPtr, x, y, z) &&
-        !grid_isPointEmpty(myGridPtr, x, y, z) &&
-        !grid_isPointFull(myGridPtr, x, y, z))
+    if (myGridPtr->isPointValid(x, y, z) &&
+        !myGridPtr->isPointEmpty(x, y, z) &&
+        !myGridPtr->isPointFull(x, y, z))
     {
-        long value = grid_getPoint(myGridPtr, x, y, z);
+        long value = myGridPtr->getPoint(x, y, z);
         long b = 0;
         if (useMomentum && (currPtr->momentum != movePtr->momentum)) {
             b = bendCost;
@@ -202,14 +202,14 @@ PdoTraceback (grid_t* gridPtr, grid_t* myGridPtr,
     next.x = dstPtr->x;
     next.y = dstPtr->y;
     next.z = dstPtr->z;
-    next.value = grid_getPoint(myGridPtr, next.x, next.y, next.z);
+    next.value = myGridPtr->getPoint(next.x, next.y, next.z);
     next.momentum = MOMENTUM_ZERO;
 
     while (1) {
 
-        long* gridPointPtr = grid_getPointRef(gridPtr, next.x, next.y, next.z);
+        long* gridPointPtr = gridPtr->getPointRef(next.x, next.y, next.z);
         PVECTOR_PUSHBACK(pointVectorPtr, (void*)gridPointPtr);
-        grid_setPoint(myGridPtr, next.x, next.y, next.z, GRID_POINT_FULL);
+        myGridPtr->setPoint(next.x, next.y, next.z, GRID_POINT_FULL);
 
         /* Check if we are done */
         if (next.value == 0) {
@@ -285,7 +285,7 @@ router_solve (void* argPtr)
     queue_t* workQueuePtr = mazePtr->workQueuePtr;
     grid_t* gridPtr = mazePtr->gridPtr;
     grid_t* myGridPtr =
-        PGRID_ALLOC(gridPtr->width, gridPtr->height, gridPtr->depth);
+        new grid_t(gridPtr->width, gridPtr->height, gridPtr->depth);
     assert(myGridPtr);
     long bendCost = routerPtr->bendCost;
     queue_t* myExpansionQueuePtr = TMQUEUE_ALLOC(-1);
@@ -351,7 +351,7 @@ router_solve (void* argPtr)
                 bool validity = false;
 
                 __transaction_atomic {
-                  validity = TMGRID_ADDPATH(pointVectorPtr);
+                  validity = gridPtr->TMaddPath(pointVectorPtr);
                 }
 
               // if the operation was valid, we just finalized the path
@@ -397,7 +397,7 @@ router_solve (void* argPtr)
       TMLIST_INSERT(pathVectorListPtr, (void*)myPathVectorPtr);
     }
 
-    grid_free(myGridPtr);
+    delete myGridPtr;
     TMQUEUE_FREE(myExpansionQueuePtr);
 
 #ifdef DEBUG

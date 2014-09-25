@@ -16,8 +16,6 @@ LIBSRCS += \
 
 OBJS := ${SRCS:.cc=.o} ${LIBSRCS:%.cc=lib_%.o}
 
-CXXFLAGS += -DUSE_EARLY_RELEASE
-
 LDFLAGS += -lm
 
 include ../Makefile.common
