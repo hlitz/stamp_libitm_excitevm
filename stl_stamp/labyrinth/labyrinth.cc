@@ -161,8 +161,9 @@ int main (int argc, char** argv)
     list_iter_t it;
     list_iter_reset(&it, pathVectorListPtr);
     while (list_iter_hasNext(&it)) {
-        vector_t* pathVectorPtr = (vector_t*)list_iter_next(&it);
-        numPathRouted += vector_getSize(pathVectorPtr);
+        std::vector<std::vector<long*>*>* pathVectorPtr =
+            (std::vector<std::vector<long*>*>*)list_iter_next(&it);
+        numPathRouted += pathVectorPtr->size();
     }
     printf("Paths routed    = %li\n", numPathRouted);
     printf("Time            = %f\n", TIMER_DIFF_SECONDS(startTime, stopTime));
@@ -179,12 +180,12 @@ int main (int argc, char** argv)
 
     list_iter_reset(&it, pathVectorListPtr);
     while (list_iter_hasNext(&it)) {
-        vector_t* pathVectorPtr = (vector_t*)list_iter_next(&it);
-        vector_t *pointVectorPtr;
-        while ((pointVectorPtr = (vector_t *)vector_popBack (pathVectorPtr)) != NULL) {
-            PVECTOR_FREE(pointVectorPtr);
+        std::vector<std::vector<long*>*>* pathVectorPtr =
+            (std::vector<std::vector<long*>*>*)list_iter_next(&it);
+        for (auto i : *pathVectorPtr) {
+            delete i;
         }
-        PVECTOR_FREE(pathVectorPtr);
+        delete pathVectorPtr;
     }
     list_free(pathVectorListPtr);
 

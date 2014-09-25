@@ -6,7 +6,6 @@
 
 #include "grid.h"
 #include "maze.h"
-#include "vector.h"
 
 struct router_t {
     long xCost;

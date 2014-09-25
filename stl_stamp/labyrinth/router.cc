@@ -8,7 +8,7 @@
 #include "grid.h"
 #include "queue.h"
 #include "router.h"
-#include "vector.h"
+#include <vector>
 #include "tm_transition.h"
 
 enum momentum_t {
@@ -191,11 +191,11 @@ traceToNeighbor (grid_t* myGridPtr,
  */
 //static TM_PURE
 __attribute__((transaction_safe))
-vector_t*
+std::vector<long*>*
 PdoTraceback (grid_t* gridPtr, grid_t* myGridPtr,
               coordinate_t* dstPtr, long bendCost)
 {
-    vector_t* pointVectorPtr = PVECTOR_ALLOC(1);
+    std::vector<long*>* pointVectorPtr = new std::vector<long*>();
     assert(pointVectorPtr);
 
     point_t next;
@@ -208,7 +208,7 @@ PdoTraceback (grid_t* gridPtr, grid_t* myGridPtr,
     while (1) {
 
         long* gridPointPtr = gridPtr->getPointRef(next.x, next.y, next.z);
-        PVECTOR_PUSHBACK(pointVectorPtr, (void*)gridPointPtr);
+        pointVectorPtr->push_back(gridPointPtr);
         myGridPtr->setPoint(next.x, next.y, next.z, GRID_POINT_FULL);
 
         /* Check if we are done */
@@ -252,7 +252,7 @@ PdoTraceback (grid_t* gridPtr, grid_t* myGridPtr,
                 (curr.y == next.y) &&
                 (curr.z == next.z))
             {
-                PVECTOR_FREE(pointVectorPtr);
+                delete pointVectorPtr;
 #ifdef DEBUG
                 puts("[dead]");
 #endif
@@ -279,7 +279,7 @@ router_solve (void* argPtr)
     router_solve_arg_t* routerArgPtr = (router_solve_arg_t*)argPtr;
     router_t* routerPtr = routerArgPtr->routerPtr;
     maze_t* mazePtr = routerArgPtr->mazePtr;
-    vector_t* myPathVectorPtr = PVECTOR_ALLOC(1);
+    std::vector<std::vector<long*>*>* myPathVectorPtr = new std::vector<std::vector<long*>*>();
     assert(myPathVectorPtr);
 
     queue_t* workQueuePtr = mazePtr->workQueuePtr;
@@ -314,7 +314,7 @@ router_solve (void* argPtr)
         pair_free(coordinatePairPtr);
 
         bool success = false;
-        vector_t* pointVectorPtr = NULL;
+        std::vector<long*>* pointVectorPtr = NULL;
 
 #if 0
         __transaction_atomic {
@@ -362,10 +362,10 @@ router_solve (void* argPtr)
 
               // otherwise we need to resample the grid
               else {
-                // NB: doing things this way means we can fix a memory
-                // leak from the original STAMP labyrinth
-                PVECTOR_FREE(pointVectorPtr);
-                continue;
+                  // NB: doing things this way means we can fix a memory
+                  // leak from the original STAMP labyrinth
+                  delete pointVectorPtr;
+                  continue;
               }
             }
 
@@ -382,9 +382,7 @@ router_solve (void* argPtr)
         }
         //////// end of change
         if (success) {
-            bool status = PVECTOR_PUSHBACK(myPathVectorPtr,
-                                             (void*)pointVectorPtr);
-            assert(status);
+            myPathVectorPtr->push_back(pointVectorPtr);
         }
 
     }

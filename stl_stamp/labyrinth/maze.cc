@@ -10,8 +10,7 @@
 #include "maze.h"
 #include "queue.h"
 #include "pair.h"
-#include "vector.h"
-
+#include <vector>
 
 /* =============================================================================
  * maze_alloc
@@ -21,9 +20,9 @@ maze_t::maze_t()
 {
     gridPtr = NULL;
     workQueuePtr = queue_alloc(1024);
-    wallVectorPtr = vector_alloc(1);
-    srcVectorPtr = vector_alloc(1);
-    dstVectorPtr = vector_alloc(1);
+    wallVectorPtr = new std::vector<coordinate_t*>();
+    srcVectorPtr = new std::vector<coordinate_t*>();
+    dstVectorPtr = new std::vector<coordinate_t*>();
     assert(workQueuePtr &&
            wallVectorPtr &&
            srcVectorPtr &&
@@ -40,16 +39,17 @@ maze_t::~maze_t()
         delete(gridPtr);
     }
     queue_free(workQueuePtr);
-    vector_free(wallVectorPtr);
-    coordinate_t* coordPtr;
-    while ((coordPtr = (coordinate_t *)vector_popBack(srcVectorPtr)) != NULL) {
-        delete coordPtr;
+    delete wallVectorPtr;
+    while (!srcVectorPtr->empty()) {
+        delete srcVectorPtr->back();
+        srcVectorPtr->pop_back();
     }
-    vector_free(srcVectorPtr);
-    while ((coordPtr = (coordinate_t *)vector_popBack (dstVectorPtr)) != NULL) {
-        delete coordPtr;
+    delete srcVectorPtr;
+    while (!dstVectorPtr->empty()) {
+        delete dstVectorPtr->back();
+        dstVectorPtr->pop_back();
     }
-    vector_free(dstVectorPtr);
+    delete dstVectorPtr;
 }
 
 
@@ -58,12 +58,12 @@ maze_t::~maze_t()
  * =============================================================================
  */
 static void
-addToGrid (grid_t* gridPtr, vector_t* vectorPtr, const char* type)
+addToGrid (grid_t* gridPtr, std::vector<coordinate_t*>* vectorPtr, const char* type)
 {
     long i;
-    long n = vector_getSize(vectorPtr);
+    long n = vectorPtr->size();
     for (i = 0; i < n; i++) {
-        coordinate_t* coordinatePtr = (coordinate_t*)vector_at(vectorPtr, i);
+        coordinate_t* coordinatePtr = vectorPtr->at(i);
         if (!gridPtr->isPointValid(coordinatePtr->x,
                                    coordinatePtr->y,
                                    coordinatePtr->z))
@@ -146,8 +146,8 @@ long maze_t::read(const char* inputFileName)
                 assert(coordinatePairPtr);
                 bool status = list_insert(workListPtr, (void*)coordinatePairPtr);
                 assert(status == true);
-                vector_pushBack(srcVectorPtr, (void*)srcPtr);
-                vector_pushBack(dstVectorPtr, (void*)dstPtr);
+                srcVectorPtr->push_back(srcPtr);
+                dstVectorPtr->push_back(dstPtr);
                 break;
             }
             case 'w': { /* walls (format: w x y z) */
@@ -155,7 +155,7 @@ long maze_t::read(const char* inputFileName)
                     goto PARSE_ERROR;
                 }
                 coordinate_t* wallPtr = new coordinate_t(x1, y1, z1);
-                vector_pushBack(wallVectorPtr, (void*)wallPtr);
+                wallVectorPtr->push_back(wallPtr);
                 break;
             }
             PARSE_ERROR:
@@ -197,7 +197,7 @@ long maze_t::read(const char* inputFileName)
     }
     list_free(workListPtr);
 
-    return vector_getSize(srcVectorPtr);
+    return srcVectorPtr->size();
 }
 
 
@@ -217,16 +217,16 @@ bool maze_t::checkPaths(list_t* pathVectorListPtr, bool doPrintPaths)
     testGridPtr->addPath(wallVectorPtr);
 
     /* Mark sources */
-    long numSrc = vector_getSize(srcVectorPtr);
+    long numSrc = srcVectorPtr->size();
     for (i = 0; i < numSrc; i++) {
-        coordinate_t* srcPtr = (coordinate_t*)vector_at(srcVectorPtr, i);
+        coordinate_t* srcPtr = srcVectorPtr->at(i);
         testGridPtr->setPoint(srcPtr->x, srcPtr->y, srcPtr->z, 0);
     }
 
     /* Mark destinations */
-    long numDst = vector_getSize(dstVectorPtr);
+    long numDst = dstVectorPtr->size();
     for (i = 0; i < numDst; i++) {
-        coordinate_t* dstPtr = (coordinate_t*)vector_at(dstVectorPtr, i);
+        coordinate_t* dstPtr = dstVectorPtr->at(i);
         testGridPtr->setPoint(dstPtr->x, dstPtr->y, dstPtr->z, 0);
     }
 
@@ -235,14 +235,15 @@ bool maze_t::checkPaths(list_t* pathVectorListPtr, bool doPrintPaths)
     list_iter_t it;
     list_iter_reset(&it, pathVectorListPtr);
     while (list_iter_hasNext(&it)) {
-        vector_t* pathVectorPtr = (vector_t*)list_iter_next(&it);
-        long numPath = vector_getSize(pathVectorPtr);
+        std::vector<std::vector<long*>*>* pathVectorPtr =
+            (std::vector<std::vector<long*>*>*)list_iter_next(&it);
+        long numPath = pathVectorPtr->size();
         long i;
         for (i = 0; i < numPath; i++) {
             id++;
-            vector_t* pointVectorPtr = (vector_t*)vector_at(pathVectorPtr, i);
+            auto pointVectorPtr = pathVectorPtr->at(i);
             /* Check start */
-            long* prevGridPointPtr = (long*)vector_at(pointVectorPtr, 0);
+            long* prevGridPointPtr = pointVectorPtr->at(0);
             long x;
             long y;
             long z;
@@ -256,10 +257,10 @@ bool maze_t::checkPaths(list_t* pathVectorListPtr, bool doPrintPaths)
                                      &prevCoordinate.x,
                                      &prevCoordinate.y,
                                      &prevCoordinate.z);
-            long numPoint = vector_getSize(pointVectorPtr);
+            long numPoint = pointVectorPtr->size();
             long j;
             for (j = 1; j < (numPoint-1); j++) { /* no need to check endpoints */
-                long* currGridPointPtr = (long*)vector_at(pointVectorPtr, j);
+                long* currGridPointPtr = pointVectorPtr->at(j);
                 coordinate_t currCoordinate(0,0,0);
                 gridPtr->getPointIndices(currGridPointPtr,
                                          &currCoordinate.x,
@@ -281,7 +282,7 @@ bool maze_t::checkPaths(list_t* pathVectorListPtr, bool doPrintPaths)
                 }
             }
             /* Check end */
-            long* lastGridPointPtr = (long*)vector_at(pointVectorPtr, j);
+            long* lastGridPointPtr = pointVectorPtr->at(j);
             gridPtr->getPointIndices(lastGridPointPtr, &x, &y, &z);
             if (testGridPtr->getPoint(x, y, z) != 0) {
                 delete testGridPtr;

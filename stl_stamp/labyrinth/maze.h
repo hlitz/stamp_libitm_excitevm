@@ -9,14 +9,14 @@
 #include "list.h"
 #include "pair.h"
 #include "queue.h"
-#include "vector.h"
+#include <vector>
 
 struct maze_t {
     grid_t* gridPtr;
     queue_t* workQueuePtr;   /* contains source/destination pairs to route */
-    vector_t* wallVectorPtr; /* obstacles */
-    vector_t* srcVectorPtr;  /* sources */
-    vector_t* dstVectorPtr;  /* destinations */
+    std::vector<coordinate_t*>* wallVectorPtr; /* obstacles */
+    std::vector<coordinate_t*>* srcVectorPtr;  /* sources */
+    std::vector<coordinate_t*>* dstVectorPtr;  /* destinations */
 
     maze_t();
     ~maze_t();

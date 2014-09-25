@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "vector.h"
+#include <vector>
 
 #define GRID_POINT_FULL  (-2L)
 #define GRID_POINT_EMPTY (-1L)
@@ -41,10 +41,10 @@ struct grid_t {
     __attribute__((transaction_safe))
     void setPoint(long x, long y, long z, long value);
 
-    void addPath(vector_t* pointVectorPtr);
+    void addPath(std::vector<coordinate_t*>* pointVectorPtr);
 
     __attribute__((transaction_safe))
-    bool TMaddPath(vector_t* pointVectorPtr);
+    bool TMaddPath(std::vector<long*>* pointVectorPtr);
 
     void print();
 };
