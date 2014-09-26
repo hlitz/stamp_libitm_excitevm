@@ -17,7 +17,7 @@ detector_t::detector_t()
 {
     dictionaryPtr = new dictionary_t();
     assert(dictionaryPtr);
-    preprocessorVectorPtr = vector_alloc(1);
+    preprocessorVectorPtr = new std::vector<preprocessor_t>();
     assert(preprocessorVectorPtr);
 }
 
@@ -28,7 +28,7 @@ detector_t::detector_t()
 detector_t::~detector_t()
 {
     delete dictionaryPtr;
-    vector_free(preprocessorVectorPtr);
+    delete preprocessorVectorPtr;
 }
 
 
@@ -38,8 +38,7 @@ detector_t::~detector_t()
  */
 void detector_t::addPreprocessor(preprocessor_t p)
 {
-    bool status = vector_pushBack(preprocessorVectorPtr, (void*)p);
-    assert(status);
+    preprocessorVectorPtr->push_back(p);
 }
 
 
@@ -52,10 +51,9 @@ int_error_t detector_t::process(char* str)
     /*
      * Apply preprocessors
      */
-    long numPreprocessor = vector_getSize(preprocessorVectorPtr);
+    long numPreprocessor = preprocessorVectorPtr->size();
     for (long p = 0; p < numPreprocessor; p++) {
-        preprocessor_t preprocessor =
-            (preprocessor_t)vector_at(preprocessorVectorPtr, p);
+        preprocessor_t preprocessor = preprocessorVectorPtr->at(p);
         preprocessor(str);
     }
 

@@ -6,12 +6,12 @@
 
 #include "error.h"
 #include "preprocessor.h"
-#include "vector.h"
+#include <vector>
 #include "dictionary.h"
 
 struct detector_t {
     dictionary_t* dictionaryPtr;
-    vector_t* preprocessorVectorPtr;
+    std::vector<preprocessor_t>* preprocessorVectorPtr;
 
     detector_t();
     ~detector_t();

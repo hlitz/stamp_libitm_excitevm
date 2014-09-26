@@ -13,6 +13,7 @@
 #include "stream.h"
 #include "thread.h"
 #include "timer.h"
+#include "vector.h"
 
 enum param_types {
     PARAM_ATTACK = (unsigned char)'a',
