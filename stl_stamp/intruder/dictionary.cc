@@ -86,109 +86,44 @@ const char* global_defaultSignatures[] = {
 const long global_numDefaultSignature =
     sizeof(global_defaultSignatures) / sizeof(global_defaultSignatures[0]);
 
-
-/* =============================================================================
- * dictionary_alloc
- * =============================================================================
- */
-dictionary_t*
-dictionary_alloc ()
+dictionary_t::dictionary_t()
 {
-    dictionary_t* dictionaryPtr = vector_alloc(global_numDefaultSignature);
+    stuff = vector_alloc(global_numDefaultSignature);
 
-    if (dictionaryPtr) {
-        long s;
-        for (s = 0; s < global_numDefaultSignature; s++) {
-            const char* sig = global_defaultSignatures[s];
-            bool status = vector_pushBack(dictionaryPtr,
-                                            (void*)sig);
-            assert(status);
-        }
+    for (long s = 0; s < global_numDefaultSignature; s++) {
+        const char* sig = global_defaultSignatures[s];
+        bool status = vector_pushBack(stuff,
+                                      (void*)sig);
+        assert(status);
     }
-
-    return dictionaryPtr;
 }
 
-
-/* =============================================================================
- * Pdictionary_alloc
- * =============================================================================
- */
-dictionary_t*
-Pdictionary_alloc ()
+dictionary_t::~dictionary_t()
 {
-    dictionary_t* dictionaryPtr = PVECTOR_ALLOC(global_numDefaultSignature);
-
-    if (dictionaryPtr) {
-        long s;
-        for (s = 0; s < global_numDefaultSignature; s++) {
-            const char* sig = global_defaultSignatures[s];
-            bool status = PVECTOR_PUSHBACK(dictionaryPtr,
-                                             (void*)sig);
-            assert(status);
-        }
-    }
-
-    return dictionaryPtr;
+    vector_free(stuff);
 }
 
-
-/* =============================================================================
- * dictionary_free
- * =============================================================================
- */
-void
-dictionary_free (dictionary_t* dictionaryPtr)
+bool dictionary_t::add(char* str)
 {
-    vector_free(dictionaryPtr);
+    return vector_pushBack(stuff, (void*)str);
 }
 
-
-/* =============================================================================
- * Pdictionary_free
- * =============================================================================
- */
-void
-Pdictionary_free (dictionary_t* dictionaryPtr)
+char* dictionary_t::get(long i)
 {
-    PVECTOR_FREE(dictionaryPtr);
+    return (char*)vector_at(stuff, i);
 }
-
-
-/* =============================================================================
- * dictionary_add
- * =============================================================================
- */
-bool
-dictionary_add (dictionary_t* dictionaryPtr, char* str)
-{
-    return vector_pushBack(dictionaryPtr, (void*)str);
-}
-
-
-/* =============================================================================
- * dictionary_get
- * =============================================================================
- */
-char*
-dictionary_get (dictionary_t* dictionaryPtr, long i)
-{
-    return (char*)vector_at(dictionaryPtr, i);
-}
-
 
 /* =============================================================================
  * dictionary_match
  * =============================================================================
  */
-char*
-dictionary_match (dictionary_t* dictionaryPtr, char* str)
+char* dictionary_t::match(char* str)
 {
     long s;
-    long numSignature = vector_getSize(dictionaryPtr);
+    long numSignature = vector_getSize(stuff);
 
     for (s = 0; s < numSignature; s++) {
-        char* sig = (char*)vector_at(dictionaryPtr, s);
+        char* sig = (char*)vector_at(stuff, s);
         if (strstr(str, sig) != NULL) {
             return sig;
         }
@@ -239,11 +174,3 @@ main ()
 
 
 #endif /* TEST_DICTIONARY */
-
-
-/* =============================================================================
- *
- * End of dictionary.c
- *
- * =============================================================================
- */

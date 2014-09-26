@@ -8,9 +8,7 @@
 #include "decoder.h"
 #include "error.h"
 #include "list.h"
-#include "map.h"
 #include "packet.h"
-#include "queue.h"
 #include "tm_transition.h"
 
 __attribute__ ((transaction_pure))
@@ -19,60 +17,29 @@ void TM_print(char* s)
   printf("%s", s);
 }
 
-struct decoder_t {
-    MAP_T* fragmentedMapPtr;  /* contains list of packet_t* */
-    queue_t* decodedQueuePtr; /* contains decoded_t* */
-};
 
 struct decoded_t {
     long flowId;
     char* data;
 };
 
-
-/* =============================================================================
- * decoder_alloc
- * =============================================================================
- */
-decoder_t*
-decoder_alloc ()
+decoder_t::decoder_t()
 {
-    decoder_t* decoderPtr;
-
-    decoderPtr = (decoder_t*)malloc(sizeof(decoder_t));
-    if (decoderPtr) {
-        decoderPtr->fragmentedMapPtr = MAP_ALLOC(NULL, NULL);
-        assert(decoderPtr->fragmentedMapPtr);
-        decoderPtr->decodedQueuePtr = queue_alloc(1024);
-        assert(decoderPtr->decodedQueuePtr);
-    }
-
-    return decoderPtr;
+    fragmentedMapPtr = MAP_ALLOC(NULL, NULL);
+    assert(fragmentedMapPtr);
+    decodedQueuePtr = queue_alloc(1024);
+    assert(decodedQueuePtr);
 }
 
-
-/* =============================================================================
- * decoder_free
- * =============================================================================
- */
-void
-decoder_free (decoder_t* decoderPtr)
+decoder_t::~decoder_t()
 {
-    queue_free(decoderPtr->decodedQueuePtr);
-    MAP_FREE(decoderPtr->fragmentedMapPtr);
-    free(decoderPtr);
+    queue_free(decodedQueuePtr);
+    MAP_FREE(fragmentedMapPtr);
 }
 
-
-
-/* =============================================================================
- * TMdecoder_process
- * =============================================================================
- */
 //[wer] this function was problematic to write-back algorithms.
 __attribute__((transaction_safe))
-int_error_t
-TMdecoder_process (  decoder_t* decoderPtr, char* bytes, long numByte)
+int_error_t decoder_t::process(char* bytes, long numByte)
 {
     bool status;
 
@@ -117,7 +84,6 @@ TMdecoder_process (  decoder_t* decoderPtr, char* bytes, long numByte)
 
     if (numFragment > 1) {
 
-      MAP_T* fragmentedMapPtr = decoderPtr->fragmentedMapPtr;
       list_t* fragmentListPtr =
         (list_t*)TMMAP_FIND(fragmentedMapPtr, (void*)flowId);
 
@@ -215,7 +181,6 @@ TMdecoder_process (  decoder_t* decoderPtr, char* bytes, long numByte)
           decodedPtr->flowId = flowId;
           decodedPtr->data = data;
 
-          queue_t* decodedQueuePtr = decoderPtr->decodedQueuePtr;
           status = TMQUEUE_PUSH(decodedQueuePtr, (void*)decodedPtr);
           assert(status);
 
@@ -244,7 +209,6 @@ TMdecoder_process (  decoder_t* decoderPtr, char* bytes, long numByte)
         decodedPtr->flowId = flowId;
         decodedPtr->data = data;
 
-        queue_t* decodedQueuePtr = decoderPtr->decodedQueuePtr;
         status = TMQUEUE_PUSH(decodedQueuePtr, (void*)decodedPtr);
         assert(status);
 
@@ -260,11 +224,10 @@ TMdecoder_process (  decoder_t* decoderPtr, char* bytes, long numByte)
  * =============================================================================
  */
 __attribute__((transaction_safe))
-char*
-TMdecoder_getComplete (  decoder_t* decoderPtr, long* decodedFlowIdPtr)
+char* decoder_t::getComplete(long* decodedFlowIdPtr)
 {
     char* data;
-    decoded_t* decodedPtr = (decoded_t*)TMQUEUE_POP(decoderPtr->decodedQueuePtr);
+    decoded_t* decodedPtr = (decoded_t*)TMQUEUE_POP(decodedQueuePtr);
 
     if (decodedPtr) {
         *decodedFlowIdPtr = decodedPtr->flowId;

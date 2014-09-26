@@ -105,9 +105,9 @@ long stream_t::generate(dictionary_t* dictionaryPtr,
 {
     long numAttack = 0;
 
-    detector_t* detectorPtr = detector_alloc();
+    detector_t* detectorPtr = new detector_t();
     assert(detectorPtr);
-    detector_addPreprocessor(detectorPtr, &preprocessor_toLower);
+    detectorPtr->addPreprocessor(&preprocessor_toLower);
 
     randomPtr->seed(seed);
     queue_clear(packetQueuePtr);
@@ -121,7 +121,7 @@ long stream_t::generate(dictionary_t* dictionaryPtr,
         //[wer210] added cast to long
         if ((long)(randomPtr->operator()() % 100) < percentAttack) {
             long s = randomPtr->operator()() % global_numDefaultSignature;
-            str = dictionary_get(dictionaryPtr, s);
+            str = dictionaryPtr->get(s);
             bool status =
                 MAP_INSERT(attackMapPtr, (void*)f, (void*)str);
             assert(status);
@@ -142,7 +142,7 @@ long stream_t::generate(dictionary_t* dictionaryPtr,
             char* str2 = (char*)malloc((length + 1) * sizeof(char));
             assert(str2);
             strcpy(str2, str);
-            int_error_t error = detector_process(detectorPtr, str2); /* updates in-place */
+            int_error_t error = detectorPtr->process(str2); /* updates in-place */
             if (error == ERROR_SIGNATURE) {
                 bool status = MAP_INSERT(attackMapPtr,
                                            (void*)f,
@@ -157,7 +157,7 @@ long stream_t::generate(dictionary_t* dictionaryPtr,
 
     queue_shuffle(packetQueuePtr, randomPtr);
 
-    detector_free(detectorPtr);
+    delete detectorPtr;
 
     return numAttack;
 }

@@ -4,41 +4,21 @@
 
 #pragma once
 
+#include "map.h"
+#include "queue.h"
 #include "error.h"
 
-struct decoder_t;
+struct decoder_t {
+    MAP_T* fragmentedMapPtr;  /* contains list of packet_t* */
+    queue_t* decodedQueuePtr; /* contains decoded_t* */
 
+    decoder_t();
 
-/* =============================================================================
- * decoder_alloc
- * =============================================================================
- */
-decoder_t*
-decoder_alloc ();
+    ~decoder_t();
 
+    __attribute__((transaction_safe))
+    int_error_t process(char* bytes, long numByte);
 
-/* =============================================================================
- * decoder_free
- * =============================================================================
- */
-void
-decoder_free (decoder_t* decoderPtr);
-
-
-/* =============================================================================
- * TMdecoder_process
- * =============================================================================
- */
-__attribute__((transaction_safe))
-int_error_t
-TMdecoder_process (  decoder_t* decoderPtr, char* bytes, long numByte);
-
-
-/* =============================================================================
- * TMdecoder_getComplete
- * -- If none, returns NULL
- * =============================================================================
- */
-__attribute__((transaction_safe))
-char*
-TMdecoder_getComplete (  decoder_t* decoderPtr, long* decodedFlowIdPtr);
+    __attribute__((transaction_safe))
+    char* getComplete(long* decodedFlowIdPtr);
+};

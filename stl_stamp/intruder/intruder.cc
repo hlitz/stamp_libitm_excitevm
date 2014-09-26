@@ -120,9 +120,9 @@ processPackets (void* argPtr)
     decoder_t*  decoderPtr   = ((arg_t*)argPtr)->decoderPtr;
     vector_t**  errorVectors = ((arg_t*)argPtr)->errorVectors;
 
-    detector_t* detectorPtr = Pdetector_alloc();
+    detector_t* detectorPtr = new detector_t();
     assert(detectorPtr);
-    detector_addPreprocessor(detectorPtr, &preprocessor_toLower);
+    detectorPtr->addPreprocessor(&preprocessor_toLower);
 
     vector_t* errorVectorPtr = errorVectors[threadId];
 
@@ -141,9 +141,8 @@ processPackets (void* argPtr)
 
         int_error_t error;
         __transaction_atomic {
-          error = TMdecoder_process(decoderPtr,
-                                    bytes,
-                                    (PACKET_HEADER_LENGTH + packetPtr->length));
+            error = decoderPtr->process(bytes,
+                                        (PACKET_HEADER_LENGTH + packetPtr->length));
         }
         //TMprint("2.\n");
         if (error) {
@@ -158,11 +157,11 @@ processPackets (void* argPtr)
         char* data;
         long decodedFlowId;
         __transaction_atomic {
-            data = TMdecoder_getComplete(decoderPtr, &decodedFlowId);
+            data = decoderPtr->getComplete(&decodedFlowId);
         }
         //TMprint("3.\n");
         if (data) {
-            int_error_t error = detector_process(detectorPtr, data);
+            int_error_t error = detectorPtr->process(data);
             free(data);
             if (error) {
                 bool status = PVECTOR_PUSHBACK(errorVectorPtr,
@@ -173,7 +172,7 @@ processPackets (void* argPtr)
 
     }
 
-    Pdetector_free(detectorPtr);
+    delete detectorPtr;
 }
 
 
@@ -201,7 +200,7 @@ int main (int argc, char** argv)
     printf("Num flow        = %li\n", numFlow);
     printf("Random seed     = %li\n", randomSeed);
 
-    dictionary_t* dictionaryPtr = dictionary_alloc();
+    dictionary_t* dictionaryPtr = new dictionary_t();
     assert(dictionaryPtr);
     stream_t* streamPtr = new stream_t(percentAttack);
     assert(streamPtr);
@@ -211,7 +210,7 @@ int main (int argc, char** argv)
                                          maxDataLength);
     printf("Num attack      = %li\n", numAttack);
 
-    decoder_t* decoderPtr = decoder_alloc();
+    decoder_t* decoderPtr = new decoder_t();
     assert(decoderPtr);
 
     vector_t** errorVectors = (vector_t**)malloc(numThread * sizeof(vector_t*));
@@ -275,9 +274,9 @@ int main (int argc, char** argv)
       vector_free(errorVectors[i]);
     }
     free(errorVectors);
-    decoder_free(decoderPtr);
+    delete decoderPtr;
     delete streamPtr;
-    dictionary_free(dictionaryPtr);
+    delete dictionaryPtr;
 
     thread_shutdown();
 

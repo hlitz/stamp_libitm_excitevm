@@ -13,67 +13,22 @@
  * detector_alloc
  * =============================================================================
  */
-detector_t*
-detector_alloc ()
+detector_t::detector_t()
 {
-    detector_t* detectorPtr;
-
-    detectorPtr = (detector_t*)malloc(sizeof(detector_t));
-    if (detectorPtr) {
-        detectorPtr->dictionaryPtr = dictionary_alloc();
-        assert(detectorPtr->dictionaryPtr);
-        detectorPtr->preprocessorVectorPtr = vector_alloc(1);
-        assert(detectorPtr->preprocessorVectorPtr);
-    }
-
-    return detectorPtr;
+    dictionaryPtr = new dictionary_t();
+    assert(dictionaryPtr);
+    preprocessorVectorPtr = vector_alloc(1);
+    assert(preprocessorVectorPtr);
 }
-
-
-/* =============================================================================
- * Pdetector_alloc
- * =============================================================================
- */
-detector_t*
-Pdetector_alloc ()
-{
-    detector_t* detectorPtr;
-
-    detectorPtr = (detector_t*)malloc(sizeof(detector_t));
-    if (detectorPtr) {
-        detectorPtr->dictionaryPtr = Pdictionary_alloc();
-        assert(detectorPtr->dictionaryPtr);
-        detectorPtr->preprocessorVectorPtr = PVECTOR_ALLOC(1);
-        assert(detectorPtr->preprocessorVectorPtr);
-    }
-
-    return detectorPtr;
-}
-
 
 /* =============================================================================
  * detector_free
  * =============================================================================
  */
-void
-detector_free (detector_t* detectorPtr)
+detector_t::~detector_t()
 {
-    dictionary_free(detectorPtr->dictionaryPtr);
-    vector_free(detectorPtr->preprocessorVectorPtr);
-    free(detectorPtr);
-}
-
-
-/* =============================================================================
- * Pdetector_free
- * =============================================================================
- */
-void
-Pdetector_free (detector_t* detectorPtr)
-{
-    Pdictionary_free(detectorPtr->dictionaryPtr);
-    PVECTOR_FREE(detectorPtr->preprocessorVectorPtr);
-    free(detectorPtr);
+    delete dictionaryPtr;
+    vector_free(preprocessorVectorPtr);
 }
 
 
@@ -81,11 +36,9 @@ Pdetector_free (detector_t* detectorPtr)
  * detector_addPreprocessor
  * =============================================================================
  */
-void
-detector_addPreprocessor (detector_t* detectorPtr, preprocessor_t p)
+void detector_t::addPreprocessor(preprocessor_t p)
 {
-    bool status = vector_pushBack(detectorPtr->preprocessorVectorPtr,
-                                    (void*)p);
+    bool status = vector_pushBack(preprocessorVectorPtr, (void*)p);
     assert(status);
 }
 
@@ -94,17 +47,13 @@ detector_addPreprocessor (detector_t* detectorPtr, preprocessor_t p)
  * detector_process
  * =============================================================================
  */
-int_error_t
-detector_process (detector_t* detectorPtr, char* str)
+int_error_t detector_t::process(char* str)
 {
     /*
      * Apply preprocessors
      */
-
-    vector_t* preprocessorVectorPtr = detectorPtr->preprocessorVectorPtr;
-    long p;
     long numPreprocessor = vector_getSize(preprocessorVectorPtr);
-    for (p = 0; p < numPreprocessor; p++) {
+    for (long p = 0; p < numPreprocessor; p++) {
         preprocessor_t preprocessor =
             (preprocessor_t)vector_at(preprocessorVectorPtr, p);
         preprocessor(str);
@@ -114,7 +63,7 @@ detector_process (detector_t* detectorPtr, char* str)
      * Check against signatures of known attacks
      */
 
-    char* signature = dictionary_match(detectorPtr->dictionaryPtr, str);
+    char* signature = dictionaryPtr->match(str);
     if (signature) {
         return ERROR_SIGNATURE;
     }
