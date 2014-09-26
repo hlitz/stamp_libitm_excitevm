@@ -1,73 +1,6 @@
-/* =============================================================================
- *
- * intruder.c
- *
- * =============================================================================
- *
- * Copyright (C) Stanford University, 2006.  All Rights Reserved.
- * Author: Chi Cao Minh
- *
- * =============================================================================
- *
- * For the license of bayes/sort.h and bayes/sort.c, please see the header
- * of the files.
- *
- * ------------------------------------------------------------------------
- *
- * For the license of kmeans, please see kmeans/LICENSE.kmeans
- *
- * ------------------------------------------------------------------------
- *
- * For the license of ssca2, please see ssca2/COPYRIGHT
- *
- * ------------------------------------------------------------------------
- *
- * For the license of lib/mt19937ar.c and lib/mt19937ar.h, please see the
- * header of the files.
- *
- * ------------------------------------------------------------------------
- *
- * For the license of lib/rbtree.h and lib/rbtree.c, please see
- * lib/LEGALNOTICE.rbtree and lib/LICENSE.rbtree
- *
- * ------------------------------------------------------------------------
- *
- * Unless otherwise noted, the following license applies to STAMP files:
- *
- * Copyright (c) 2007, Stanford University
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are
- * met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above copyright
- *       notice, this list of conditions and the following disclaimer in
- *       the documentation and/or other materials provided with the
- *       distribution.
- *
- *     * Neither the name of Stanford University nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY STANFORD UNIVERSITY ``AS IS'' AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL STANFORD UNIVERSITY BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
- * THE POSSIBILITY OF SUCH DAMAGE.
- *
- * =============================================================================
+/*
+ * PLEASE SEE LICENSE FILE FOR LICENSING AND COPYRIGHT INFORMATION
  */
-
 
 #include <assert.h>
 #include <getopt.h>
@@ -80,12 +13,6 @@
 #include "stream.h"
 #include "thread.h"
 #include "timer.h"
-
-__attribute__ ((transaction_pure))
-void TMprint(char* s)
-{
-  printf("%s", s);
-}
 
 enum param_types {
     PARAM_ATTACK = (unsigned char)'a',
@@ -187,16 +114,15 @@ parseArgs (long argc, char* const argv[])
 static void
 processPackets (void* argPtr)
 {
-
     long threadId = thread_getId();
 
     stream_t*   streamPtr    = ((arg_t*)argPtr)->streamPtr;
     decoder_t*  decoderPtr   = ((arg_t*)argPtr)->decoderPtr;
     vector_t**  errorVectors = ((arg_t*)argPtr)->errorVectors;
 
-    detector_t* detectorPtr = PDETECTOR_ALLOC();
+    detector_t* detectorPtr = Pdetector_alloc();
     assert(detectorPtr);
-    PDETECTOR_ADDPREPROCESSOR(detectorPtr, &preprocessor_toLower);
+    detector_addPreprocessor(detectorPtr, &preprocessor_toLower);
 
     vector_t* errorVectorPtr = errorVectors[threadId];
 
@@ -204,8 +130,7 @@ processPackets (void* argPtr)
 
         char* bytes;
         __transaction_atomic {
-          //[wer210] TMQUEUE_POP(streamPtr->packetQueuePtr);
-          bytes = TMSTREAM_GETPACKET(streamPtr);
+            bytes = streamPtr->getPacket();
         }
         if (!bytes) {
             break;
@@ -216,7 +141,7 @@ processPackets (void* argPtr)
 
         int_error_t error;
         __transaction_atomic {
-          error = TMDECODER_PROCESS(decoderPtr,
+          error = TMdecoder_process(decoderPtr,
                                     bytes,
                                     (PACKET_HEADER_LENGTH + packetPtr->length));
         }
@@ -233,11 +158,11 @@ processPackets (void* argPtr)
         char* data;
         long decodedFlowId;
         __transaction_atomic {
-          data = TMDECODER_GETCOMPLETE(decoderPtr, &decodedFlowId);
+            data = TMdecoder_getComplete(decoderPtr, &decodedFlowId);
         }
         //TMprint("3.\n");
         if (data) {
-            int_error_t error = PDETECTOR_PROCESS(detectorPtr, data);
+            int_error_t error = detector_process(detectorPtr, data);
             free(data);
             if (error) {
                 bool status = PVECTOR_PUSHBACK(errorVectorPtr,
@@ -248,7 +173,7 @@ processPackets (void* argPtr)
 
     }
 
-    PDETECTOR_FREE(detectorPtr);
+    Pdetector_free(detectorPtr);
 }
 
 
@@ -278,13 +203,12 @@ int main (int argc, char** argv)
 
     dictionary_t* dictionaryPtr = dictionary_alloc();
     assert(dictionaryPtr);
-    stream_t* streamPtr = stream_alloc(percentAttack);
+    stream_t* streamPtr = new stream_t(percentAttack);
     assert(streamPtr);
-    long numAttack = stream_generate(streamPtr,
-                                     dictionaryPtr,
-                                     numFlow,
-                                     randomSeed,
-                                     maxDataLength);
+    long numAttack = streamPtr->generate(dictionaryPtr,
+                                         numFlow,
+                                         randomSeed,
+                                         maxDataLength);
     printf("Num attack      = %li\n", numAttack);
 
     decoder_t* decoderPtr = decoder_alloc();
@@ -336,7 +260,7 @@ int main (int argc, char** argv)
         numFound += numError;
         for (e = 0; e < numError; e++) {
             long flowId = (long)vector_at(errorVectorPtr, e);
-            bool status = stream_isAttack(streamPtr, flowId);
+            bool status = streamPtr->isAttack(flowId);
             assert(status);
         }
     }
@@ -352,18 +276,10 @@ int main (int argc, char** argv)
     }
     free(errorVectors);
     decoder_free(decoderPtr);
-    stream_free(streamPtr);
+    delete streamPtr;
     dictionary_free(dictionaryPtr);
 
     thread_shutdown();
 
     return 0;
 }
-
-
-/* =============================================================================
- *
- * End of intruder.c
- *
- * =============================================================================
- */

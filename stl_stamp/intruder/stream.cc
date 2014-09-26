@@ -1,145 +1,44 @@
-/* =============================================================================
- *
- * stream.c
- *
- * =============================================================================
- *
- * Copyright (C) Stanford University, 2006.  All Rights Reserved.
- * Author: Chi Cao Minh
- *
- * =============================================================================
- *
- * For the license of bayes/sort.h and bayes/sort.c, please see the header
- * of the files.
- *
- * ------------------------------------------------------------------------
- *
- * For the license of kmeans, please see kmeans/LICENSE.kmeans
- *
- * ------------------------------------------------------------------------
- *
- * For the license of ssca2, please see ssca2/COPYRIGHT
- *
- * ------------------------------------------------------------------------
- *
- * For the license of lib/mt19937ar.c and lib/mt19937ar.h, please see the
- * header of the files.
- *
- * ------------------------------------------------------------------------
- *
- * For the license of lib/rbtree.h and lib/rbtree.c, please see
- * lib/LEGALNOTICE.rbtree and lib/LICENSE.rbtree
- *
- * ------------------------------------------------------------------------
- *
- * Unless otherwise noted, the following license applies to STAMP files:
- *
- * Copyright (c) 2007, Stanford University
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are
- * met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above copyright
- *       notice, this list of conditions and the following disclaimer in
- *       the documentation and/or other materials provided with the
- *       distribution.
- *
- *     * Neither the name of Stanford University nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY STANFORD UNIVERSITY ``AS IS'' AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL STANFORD UNIVERSITY BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
- * THE POSSIBILITY OF SUCH DAMAGE.
- *
- * =============================================================================
+/*
+ * PLEASE SEE LICENSE FILE FOR LICENSING AND COPYRIGHT INFORMATION
  */
-
 
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <random>
 #include "detector.h"
 #include "dictionary.h"
-#include "map.h"
 #include "packet.h"
-#include "queue.h"
 #include "stream.h"
-#include "vector.h"
 
-
-struct stream_t {
-    long percentAttack;
-    std::mt19937* randomPtr;
-    vector_t* allocVectorPtr;
-    queue_t* packetQueuePtr;
-    MAP_T* attackMapPtr;
-};
-
-
-/* =============================================================================
- * stream_alloc
- * =============================================================================
- */
-stream_t*
-stream_alloc (long percentAttack)
+stream_t::stream_t(long _percentAttack)
 {
-    stream_t* streamPtr;
-
-    streamPtr = (stream_t*)malloc(sizeof(stream_t));
-    if (streamPtr) {
-        assert(percentAttack >= 0 && percentAttack <= 100);
-        streamPtr->percentAttack = percentAttack;
-        streamPtr->randomPtr = new std::mt19937();
-        assert(streamPtr->randomPtr);
-        streamPtr->allocVectorPtr = vector_alloc(1);
-        assert(streamPtr->allocVectorPtr);
-        streamPtr->packetQueuePtr = queue_alloc(-1);
-        assert(streamPtr->packetQueuePtr);
-        streamPtr->attackMapPtr = MAP_ALLOC(NULL, NULL);
-        assert(streamPtr->attackMapPtr);
-    }
-
-    return streamPtr;
+    assert(_percentAttack >= 0 && _percentAttack <= 100);
+    percentAttack = _percentAttack;
+    randomPtr = new std::mt19937();
+    assert(randomPtr);
+    allocVectorPtr = vector_alloc(1);
+    assert(allocVectorPtr);
+    packetQueuePtr = queue_alloc(-1);
+    assert(packetQueuePtr);
+    attackMapPtr = MAP_ALLOC(NULL, NULL);
+    assert(attackMapPtr);
 }
 
 
-/* =============================================================================
- * stream_free
- * =============================================================================
- */
-void
-stream_free (stream_t* streamPtr)
+stream_t::~stream_t()
 {
-    vector_t* allocVectorPtr = streamPtr->allocVectorPtr;
-    long a;
     long numAlloc = vector_getSize(allocVectorPtr);
 
-    for (a = 0; a < numAlloc; a++) {
+    for (long a = 0; a < numAlloc; a++) {
         char* str = (char*)vector_at(allocVectorPtr, a);
         free(str);
     }
 
-    MAP_FREE(streamPtr->attackMapPtr);
-    queue_free(streamPtr->packetQueuePtr);
-    vector_free(streamPtr->allocVectorPtr);
-    delete streamPtr->randomPtr;
-    free(streamPtr);
+    MAP_FREE(attackMapPtr);
+    queue_free(packetQueuePtr);
+    vector_free(allocVectorPtr);
+    delete randomPtr;
 }
 
 
@@ -149,12 +48,11 @@ stream_free (stream_t* streamPtr)
  *    all extra bytes
  * =============================================================================
  */
-static void
-splitIntoPackets (char* str,
-                  long flowId,
-                  std::mt19937* randomPtr,
-                  vector_t* allocVectorPtr,
-                  queue_t* packetQueuePtr)
+static void splitIntoPackets(char* str,
+                             long flowId,
+                             std::mt19937* randomPtr,
+                             vector_t* allocVectorPtr,
+                             queue_t* packetQueuePtr)
 {
     long numByte = strlen(str);
     long numPacket = randomPtr->operator()() % numByte + 1;
@@ -200,20 +98,12 @@ splitIntoPackets (char* str,
  * -- Returns number of attacks generated
  * =============================================================================
  */
-long
-stream_generate (stream_t* streamPtr,
-                 dictionary_t* dictionaryPtr,
-                 long numFlow,
-                 long seed,
-                 long maxLength)
+long stream_t::generate(dictionary_t* dictionaryPtr,
+                        long numFlow,
+                        long seed,
+                        long maxLength)
 {
     long numAttack = 0;
-
-    long      percentAttack  = streamPtr->percentAttack;
-    std::mt19937* randomPtr      = streamPtr->randomPtr;
-    vector_t* allocVectorPtr = streamPtr->allocVectorPtr;
-    queue_t*  packetQueuePtr = streamPtr->packetQueuePtr;
-    MAP_T*    attackMapPtr   = streamPtr->attackMapPtr;
 
     detector_t* detectorPtr = detector_alloc();
     assert(detectorPtr);
@@ -280,10 +170,9 @@ stream_generate (stream_t* streamPtr,
  * =============================================================================
  */
 __attribute__((transaction_safe))
-char*
-stream_getPacket (stream_t* streamPtr)
+char* stream_t::getPacket()
 {
-    return (char*)TMQUEUE_POP(streamPtr->packetQueuePtr);
+    return (char*)TMQUEUE_POP(packetQueuePtr);
 }
 
 
@@ -291,10 +180,9 @@ stream_getPacket (stream_t* streamPtr)
  * stream_isAttack
  * =============================================================================
  */
-bool
-stream_isAttack (stream_t* streamPtr, long flowId)
+bool stream_t::isAttack(long flowId)
 {
-    return MAP_CONTAINS(streamPtr->attackMapPtr, (void*)flowId);
+    return MAP_CONTAINS(attackMapPtr, (void*)flowId);
 }
 
 
@@ -352,11 +240,3 @@ main ()
 
 
 #endif /* TEST_STREAM */
-
-
-/* =============================================================================
- *
- * End of stream.c
- *
- * =============================================================================
- */
