@@ -4,16 +4,15 @@
 
 #pragma once
 
-#include "vector.h"
-
+#include <vector>
 
 struct dictionary_t
 {
-    vector_t* stuff;
+    std::vector<char*>* stuff;
 
     dictionary_t();
     ~dictionary_t();
-    bool add(char* str);
+    void add(char* str);
     char* get(long i);
     char* match(char* str);
 

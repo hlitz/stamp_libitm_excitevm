@@ -88,29 +88,28 @@ const long global_numDefaultSignature =
 
 dictionary_t::dictionary_t()
 {
-    stuff = vector_alloc(global_numDefaultSignature);
+    stuff = new std::vector<char*>();
+    stuff->reserve(global_numDefaultSignature);
 
     for (long s = 0; s < global_numDefaultSignature; s++) {
-        const char* sig = global_defaultSignatures[s];
-        bool status = vector_pushBack(stuff,
-                                      (void*)sig);
-        assert(status);
+        char* sig = const_cast<char*>(global_defaultSignatures[s]);
+        stuff->push_back(sig);
     }
 }
 
 dictionary_t::~dictionary_t()
 {
-    vector_free(stuff);
+    delete stuff;
 }
 
-bool dictionary_t::add(char* str)
+void dictionary_t::add(char* str)
 {
-    return vector_pushBack(stuff, (void*)str);
+    stuff->push_back(str);
 }
 
 char* dictionary_t::get(long i)
 {
-    return (char*)vector_at(stuff, i);
+    return stuff->at(i);
 }
 
 /* =============================================================================
@@ -120,10 +119,10 @@ char* dictionary_t::get(long i)
 char* dictionary_t::match(char* str)
 {
     long s;
-    long numSignature = vector_getSize(stuff);
+    long numSignature = stuff->size();
 
     for (s = 0; s < numSignature; s++) {
-        char* sig = (char*)vector_at(stuff, s);
+        char* sig = stuff->at(s);
         if (strstr(str, sig) != NULL) {
             return sig;
         }
