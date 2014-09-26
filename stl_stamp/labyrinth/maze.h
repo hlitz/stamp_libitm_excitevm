@@ -4,16 +4,15 @@
 
 #pragma once
 
+#include <vector>
+#include <set>
+#include <queue>
 #include "coordinate.h"
 #include "grid.h"
-#include "list.h"
-#include "pair.h"
-#include "queue.h"
-#include <vector>
 
 struct maze_t {
     grid_t* gridPtr;
-    queue_t* workQueuePtr;   /* contains source/destination pairs to route */
+    std::queue<std::pair<coordinate_t*, coordinate_t*>*>* workQueuePtr;   /* contains source/destination pairs to route */
     std::vector<coordinate_t*>* wallVectorPtr; /* obstacles */
     std::vector<coordinate_t*>* srcVectorPtr;  /* sources */
     std::vector<coordinate_t*>* dstVectorPtr;  /* destinations */
@@ -26,5 +25,5 @@ struct maze_t {
      */
     long read(const char* inputFileName);
 
-    bool checkPaths(list_t* pathListPtr, bool doPrintPaths);
+    bool checkPaths(std::set<std::vector<std::vector<long*>*>*>* pathListPtr, bool doPrintPaths);
 };

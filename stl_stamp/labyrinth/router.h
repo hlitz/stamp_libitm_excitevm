@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <set>
 #include "grid.h"
 #include "maze.h"
 
@@ -21,7 +22,7 @@ struct router_t {
 struct router_solve_arg_t {
     router_t* routerPtr;
     maze_t* mazePtr;
-    list_t* pathVectorListPtr;
+    std::set<std::vector<std::vector<long*>*>*>* pathVectorListPtr;
 };
 
 /* =============================================================================

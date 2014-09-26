@@ -2,11 +2,10 @@
  * PLEASE SEE LICENSE FILE FOR LICENSING AND COPYRIGHT INFORMATION
  */
 
-#include <assert.h>
+#include <cassert>
 #include <getopt.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include "list.h"
+#include <cstdio>
+#include <cstdlib>
 #include "maze.h"
 #include "router.h"
 #include "thread.h"
@@ -136,7 +135,8 @@ int main (int argc, char** argv)
                                        global_params[PARAM_ZCOST],
                                        global_params[PARAM_BENDCOST]);
     assert(routerPtr);
-    list_t* pathVectorListPtr = list_alloc(NULL);
+    std::set<std::vector<std::vector<long*>*>*>* pathVectorListPtr =
+        new std::set<std::vector<std::vector<long*>*>*>();
     assert(pathVectorListPtr);
 
     /*
@@ -158,12 +158,8 @@ int main (int argc, char** argv)
     TIMER_READ(stopTime);
 
     long numPathRouted = 0;
-    list_iter_t it;
-    list_iter_reset(&it, pathVectorListPtr);
-    while (list_iter_hasNext(&it)) {
-        std::vector<std::vector<long*>*>* pathVectorPtr =
-            (std::vector<std::vector<long*>*>*)list_iter_next(&it);
-        numPathRouted += pathVectorPtr->size();
+    for (auto i : *pathVectorListPtr) {
+        numPathRouted += i->size();
     }
     printf("Paths routed    = %li\n", numPathRouted);
     printf("Time            = %f\n", TIMER_DIFF_SECONDS(startTime, stopTime));
@@ -178,16 +174,14 @@ int main (int argc, char** argv)
     delete mazePtr;
     delete routerPtr;
 
-    list_iter_reset(&it, pathVectorListPtr);
-    while (list_iter_hasNext(&it)) {
-        std::vector<std::vector<long*>*>* pathVectorPtr =
-            (std::vector<std::vector<long*>*>*)list_iter_next(&it);
+    for (auto j : *pathVectorListPtr) {
+        std::vector<std::vector<long*>*>* pathVectorPtr = j;
         for (auto i : *pathVectorPtr) {
             delete i;
         }
         delete pathVectorPtr;
     }
-    list_free(pathVectorListPtr);
+    delete pathVectorListPtr;
 
     thread_shutdown();
 

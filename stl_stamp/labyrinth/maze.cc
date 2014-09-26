@@ -2,15 +2,14 @@
  * PLEASE SEE LICENSE FILE FOR LICENSING AND COPYRIGHT INFORMATION
  */
 
-#include <assert.h>
-#include <stdlib.h>
+#include <cassert>
+#include <cstdlib>
+#include <cstdio>
+#include <vector>
+#include <set>
 #include "coordinate.h"
 #include "grid.h"
-#include "list.h"
 #include "maze.h"
-#include "queue.h"
-#include "pair.h"
-#include <vector>
 
 /* =============================================================================
  * maze_alloc
@@ -19,7 +18,7 @@
 maze_t::maze_t()
 {
     gridPtr = NULL;
-    workQueuePtr = queue_alloc(1024);
+    workQueuePtr = new std::queue<std::pair<coordinate_t*, coordinate_t*>*>();
     wallVectorPtr = new std::vector<coordinate_t*>();
     srcVectorPtr = new std::vector<coordinate_t*>();
     dstVectorPtr = new std::vector<coordinate_t*>();
@@ -38,7 +37,7 @@ maze_t::~maze_t()
     if (gridPtr != NULL) {
         delete(gridPtr);
     }
-    queue_free(workQueuePtr);
+    delete workQueuePtr;
     delete wallVectorPtr;
     while (!srcVectorPtr->empty()) {
         delete srcVectorPtr->back();
@@ -76,6 +75,13 @@ addToGrid (grid_t* gridPtr, std::vector<coordinate_t*>* vectorPtr, const char* t
     gridPtr->addPath(vectorPtr);
 }
 
+struct coord_compare
+{
+    bool operator()(const std::pair<coordinate_t*, coordinate_t*>* a, const std::pair<coordinate_t*, coordinate_t*>* b)
+    {
+        return coordinate_comparePair(a, b);
+    }
+};
 
 /* =============================================================================
  * maze_read
@@ -98,7 +104,8 @@ long maze_t::read(const char* inputFileName)
     long width  = -1;
     long depth  = -1;
     char line[256];
-    list_t* workListPtr = list_alloc(&coordinate_comparePair);
+    std::multiset<std::pair<coordinate_t*, coordinate_t*>*, coord_compare>* workListPtr =
+        new std::multiset<std::pair<coordinate_t*, coordinate_t*>*, coord_compare>();
 
     while (fgets(line, sizeof(line), inputFile)) {
 
@@ -142,10 +149,12 @@ long maze_t::read(const char* inputFileName)
                 if (coordinate_isEqual(srcPtr, dstPtr)) {
                     goto PARSE_ERROR;
                 }
-                pair_t* coordinatePairPtr = pair_alloc(srcPtr, dstPtr);
+                std::pair<coordinate_t*, coordinate_t*>* coordinatePairPtr =
+                    new std::pair<coordinate_t*, coordinate_t*>(srcPtr, dstPtr);
                 assert(coordinatePairPtr);
-                bool status = list_insert(workListPtr, (void*)coordinatePairPtr);
-                assert(status == true);
+                unsigned int c = workListPtr->size();
+                workListPtr->insert(coordinatePairPtr);
+                assert((c + 1) == workListPtr->size());
                 srcVectorPtr->push_back(srcPtr);
                 dstVectorPtr->push_back(dstPtr);
                 break;
@@ -184,18 +193,15 @@ long maze_t::read(const char* inputFileName)
     addToGrid(gridPtr, srcVectorPtr,  "source");
     addToGrid(gridPtr, dstVectorPtr,  "destination");
     printf("Maze dimensions = %li x %li x %li\n", width, height, depth);
-    printf("Paths to route  = %li\n", list_getSize(workListPtr));
+    printf("Paths to route  = %li\n", workListPtr->size());
 
     /*
      * Initialize work queue
      */
-    list_iter_t it;
-    list_iter_reset(&it, workListPtr);
-    while (list_iter_hasNext(&it)) {
-        pair_t* coordinatePairPtr = (pair_t*)list_iter_next(&it);
-        queue_push(workQueuePtr, (void*)coordinatePairPtr);
+    for (auto i : *workListPtr) {
+        workQueuePtr->push(i);
     }
-    list_free(workListPtr);
+    delete workListPtr;
 
     return srcVectorPtr->size();
 }
@@ -205,7 +211,8 @@ long maze_t::read(const char* inputFileName)
  * maze_checkPaths
  * =============================================================================
  */
-bool maze_t::checkPaths(list_t* pathVectorListPtr, bool doPrintPaths)
+bool maze_t::checkPaths(std::set<std::vector<std::vector<long*>*>*>* pathVectorListPtr,
+                        bool doPrintPaths)
 {
     long width  = gridPtr->width;
     long height = gridPtr->height;
@@ -232,11 +239,8 @@ bool maze_t::checkPaths(list_t* pathVectorListPtr, bool doPrintPaths)
 
     /* Make sure path is contiguous and does not overlap */
     long id = 0;
-    list_iter_t it;
-    list_iter_reset(&it, pathVectorListPtr);
-    while (list_iter_hasNext(&it)) {
-        std::vector<std::vector<long*>*>* pathVectorPtr =
-            (std::vector<std::vector<long*>*>*)list_iter_next(&it);
+    for (auto it : *pathVectorListPtr) {
+        std::vector<std::vector<long*>*>* pathVectorPtr = it;
         long numPath = pathVectorPtr->size();
         long i;
         for (i = 0; i < numPath; i++) {

@@ -3,9 +3,9 @@
  */
 
 #include <math.h>
-#include <stdlib.h>
+#include <cstdlib>
+#include <utility>
 #include "coordinate.h"
-#include "pair.h"
 
 /* =============================================================================
  * coordinate_alloc
@@ -38,11 +38,10 @@ coordinate_isEqual (coordinate_t* aPtr, coordinate_t* bPtr)
  * getPairDistance
  * =============================================================================
  */
-static double
-getPairDistance (pair_t* pairPtr)
+static double getPairDistance(const std::pair<coordinate_t*, coordinate_t*>* pairPtr)
 {
-    coordinate_t* aPtr = (coordinate_t*)pairPtr->firstPtr;
-    coordinate_t* bPtr = (coordinate_t*)pairPtr->secondPtr;
+    coordinate_t* aPtr = pairPtr->first;
+    coordinate_t* bPtr = pairPtr->second;
     long dx = aPtr->x - bPtr->x;
     long dy = aPtr->y - bPtr->y;
     long dz = aPtr->z - bPtr->z;
@@ -59,19 +58,13 @@ getPairDistance (pair_t* pairPtr)
  * -- Route longer paths first so they are more likely to succeed
  * =============================================================================
  */
-long
-coordinate_comparePair (const void* aPtr, const void* bPtr)
+bool coordinate_comparePair(const std::pair<coordinate_t*, coordinate_t*>* aPtr,
+                            const std::pair<coordinate_t*, coordinate_t*>* bPtr)
 {
-    double aDistance = getPairDistance((pair_t*)aPtr);
-    double bDistance = getPairDistance((pair_t*)bPtr);
+    double aDistance = getPairDistance(aPtr);
+    double bDistance = getPairDistance(bPtr);
 
-    if (aDistance < bDistance) {
-        return 1;
-    } else if (aDistance > bDistance) {
-        return -1;
-    }
-
-    return 0;
+    return (aDistance > bDistance);
 }
 
 
@@ -79,8 +72,7 @@ coordinate_comparePair (const void* aPtr, const void* bPtr)
  * coordinate_areAdjacent
  * =============================================================================
  */
-bool
-coordinate_areAdjacent (coordinate_t* aPtr, coordinate_t* bPtr)
+bool coordinate_areAdjacent(coordinate_t* aPtr, coordinate_t* bPtr)
 {
     long dx = aPtr->x - bPtr->x;
     long dy = aPtr->y - bPtr->y;

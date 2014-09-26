@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include "coordinate.h"
 #include "grid.h"
-#include "queue.h"
 #include "router.h"
 #include <vector>
 #include "tm_transition.h"
@@ -56,20 +55,20 @@ router_t::router_t(long _xCost, long _yCost, long _zCost, long _bendCost)
 //[wer210] was static
 __attribute__((transaction_safe))
 void
-PexpandToNeighbor (grid_t* myGridPtr,
-                   long x, long y, long z, long value, queue_t* queuePtr)
+PexpandToNeighbor(grid_t* myGridPtr, long x, long y, long z, long value,
+                  std::queue<long*>* queuePtr)
 {
     if (myGridPtr->isPointValid(x, y, z)) {
         long* neighborGridPointPtr = myGridPtr->getPointRef(x, y, z);
         long neighborValue = *neighborGridPointPtr;
         if (neighborValue == GRID_POINT_EMPTY) {
             (*neighborGridPointPtr) = value;
-            TMQUEUE_PUSH(queuePtr, (void*)neighborGridPointPtr);
+            queuePtr->push(neighborGridPointPtr);
         } else if (neighborValue != GRID_POINT_FULL) {
             /* We have expanded here before... is this new path better? */
             if (value < neighborValue) {
                 (*neighborGridPointPtr) = value;
-                TMQUEUE_PUSH(queuePtr, (void*)neighborGridPointPtr);
+                queuePtr->push(neighborGridPointPtr);
             }
         }
     }
@@ -83,7 +82,7 @@ PexpandToNeighbor (grid_t* myGridPtr,
 //static TM_PURE
 __attribute__((transaction_safe))
 bool
-PdoExpansion (router_t* routerPtr, grid_t* myGridPtr, queue_t* queuePtr,
+PdoExpansion (router_t* routerPtr, grid_t* myGridPtr, std::queue<long*>* queuePtr,
               coordinate_t* srcPtr, coordinate_t* dstPtr)
 {
     long xCost = routerPtr->xCost;
@@ -94,12 +93,13 @@ PdoExpansion (router_t* routerPtr, grid_t* myGridPtr, queue_t* queuePtr,
      * Potential Optimization: Make 'src' the one closest to edge.
      * This will likely decrease the area of the emitted wave.
      */
+    while (!queuePtr->empty())
+        queuePtr->pop();
 
-    TMQUEUE_CLEAR(queuePtr);
     // __attribute__((transaction_safe))
     long* srcGridPointPtr =
         myGridPtr->getPointRef(srcPtr->x, srcPtr->y, srcPtr->z);
-    TMQUEUE_PUSH(queuePtr, (void*)srcGridPointPtr);
+    queuePtr->push(srcGridPointPtr);
     // __attribute__((transaction_safe))
     myGridPtr->setPoint(srcPtr->x, srcPtr->y, srcPtr->z, 0);
     myGridPtr->setPoint(dstPtr->x, dstPtr->y, dstPtr->z, GRID_POINT_EMPTY);
@@ -107,9 +107,9 @@ PdoExpansion (router_t* routerPtr, grid_t* myGridPtr, queue_t* queuePtr,
         myGridPtr->getPointRef(dstPtr->x, dstPtr->y, dstPtr->z);
     bool isPathFound = false;
 
-    while (!TMQUEUE_ISEMPTY(queuePtr)) {
+    while (!queuePtr->empty()) {
 
-        long* gridPointPtr = (long*)TMQUEUE_POP(queuePtr);
+        long* gridPointPtr = queuePtr->front(); queuePtr->pop();
         if (gridPointPtr == dstGridPointPtr) {
             isPathFound = true;
             break;
@@ -273,8 +273,7 @@ PdoTraceback (grid_t* gridPtr, grid_t* myGridPtr,
  * router_solve
  * =============================================================================
  */
-void
-router_solve (void* argPtr)
+void router_solve(void* argPtr)
 {
     router_solve_arg_t* routerArgPtr = (router_solve_arg_t*)argPtr;
     router_t* routerPtr = routerArgPtr->routerPtr;
@@ -282,13 +281,13 @@ router_solve (void* argPtr)
     std::vector<std::vector<long*>*>* myPathVectorPtr = new std::vector<std::vector<long*>*>();
     assert(myPathVectorPtr);
 
-    queue_t* workQueuePtr = mazePtr->workQueuePtr;
+    std::queue<std::pair<coordinate_t*, coordinate_t*>*>* workQueuePtr = mazePtr->workQueuePtr;
     grid_t* gridPtr = mazePtr->gridPtr;
     grid_t* myGridPtr =
         new grid_t(gridPtr->width, gridPtr->height, gridPtr->depth);
     assert(myGridPtr);
     long bendCost = routerPtr->bendCost;
-    queue_t* myExpansionQueuePtr = TMQUEUE_ALLOC(-1);
+    std::queue<long*>* myExpansionQueuePtr = new std::queue<long*>();
 
     /*
      * Iterate over work list to route each path. This involves an
@@ -296,22 +295,22 @@ router_solve (void* argPtr)
      */
     while (1) {
 
-        pair_t* coordinatePairPtr;
+        std::pair<coordinate_t*, coordinate_t*>* coordinatePairPtr;
         __transaction_atomic {
-          if (TMQUEUE_ISEMPTY(workQueuePtr)) {
-            coordinatePairPtr = NULL;
+            if (workQueuePtr->empty()) {
+                coordinatePairPtr = NULL;
           } else {
-            coordinatePairPtr = (pair_t*)TMQUEUE_POP(workQueuePtr);
+                coordinatePairPtr = workQueuePtr->front(); workQueuePtr->pop();
           }
         }
         if (coordinatePairPtr == NULL) {
             break;
         }
 
-        coordinate_t* srcPtr = (coordinate_t*)coordinatePairPtr->firstPtr;
-        coordinate_t* dstPtr = (coordinate_t*)coordinatePairPtr->secondPtr;
+        coordinate_t* srcPtr = coordinatePairPtr->first;
+        coordinate_t* dstPtr = coordinatePairPtr->second;
 
-        pair_free(coordinatePairPtr);
+        delete coordinatePairPtr;
 
         bool success = false;
         std::vector<long*>* pointVectorPtr = NULL;
@@ -390,13 +389,12 @@ router_solve (void* argPtr)
     /*
      * Add my paths to global list
      */
-    list_t* pathVectorListPtr = routerArgPtr->pathVectorListPtr;
     __transaction_atomic {
-      TMLIST_INSERT(pathVectorListPtr, (void*)myPathVectorPtr);
+        routerArgPtr->pathVectorListPtr->insert(myPathVectorPtr);
     }
 
     delete myGridPtr;
-    TMQUEUE_FREE(myExpansionQueuePtr);
+    delete myExpansionQueuePtr;
 
 #ifdef DEBUG
     puts("\nFinal Grid:");
