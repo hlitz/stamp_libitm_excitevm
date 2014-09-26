@@ -13,7 +13,7 @@
 #include "stream.h"
 #include "thread.h"
 #include "timer.h"
-#include "vector.h"
+#include <vector>
 
 enum param_types {
     PARAM_ATTACK = (unsigned char)'a',
@@ -47,7 +47,7 @@ typedef struct arg {
     stream_t* streamPtr;
     decoder_t* decoderPtr;
   /* output: */
-    vector_t** errorVectors;
+    std::vector<long>** errorVectors;
 } arg_t;
 
 
@@ -119,13 +119,13 @@ processPackets (void* argPtr)
 
     stream_t*   streamPtr    = ((arg_t*)argPtr)->streamPtr;
     decoder_t*  decoderPtr   = ((arg_t*)argPtr)->decoderPtr;
-    vector_t**  errorVectors = ((arg_t*)argPtr)->errorVectors;
+    std::vector<long>**  errorVectors = ((arg_t*)argPtr)->errorVectors;
 
     detector_t* detectorPtr = new detector_t();
     assert(detectorPtr);
     detectorPtr->addPreprocessor(&preprocessor_toLower);
 
-    vector_t* errorVectorPtr = errorVectors[threadId];
+    std::vector<long>* errorVectorPtr = errorVectors[threadId];
 
     while (1) {
 
@@ -151,8 +151,7 @@ processPackets (void* argPtr)
              * Currently, stream_generate() does not create these errors.
              */
             assert(0);
-            bool status = PVECTOR_PUSHBACK(errorVectorPtr, (void*)flowId);
-            assert(status);
+            errorVectorPtr->push_back(flowId);
         }
 
         char* data;
@@ -165,9 +164,7 @@ processPackets (void* argPtr)
             int_error_t error = detectorPtr->process(data);
             free(data);
             if (error) {
-                bool status = PVECTOR_PUSHBACK(errorVectorPtr,
-                                                 (void*)decodedFlowId);
-                assert(status);
+                errorVectorPtr->push_back(decodedFlowId);
             }
         }
 
@@ -214,12 +211,13 @@ int main (int argc, char** argv)
     decoder_t* decoderPtr = new decoder_t();
     assert(decoderPtr);
 
-    vector_t** errorVectors = (vector_t**)malloc(numThread * sizeof(vector_t*));
+    std::vector<long>** errorVectors = (std::vector<long>**)malloc(numThread * sizeof(std::vector<long>*));
     assert(errorVectors);
     long i;
     for (i = 0; i < numThread; i++) {
-        vector_t* errorVectorPtr = vector_alloc(numFlow);
+        std::vector<long>* errorVectorPtr = new std::vector<long>();
         assert(errorVectorPtr);
+        errorVectorPtr->reserve(numFlow);
         errorVectors[i] = errorVectorPtr;
     }
 
@@ -254,12 +252,12 @@ int main (int argc, char** argv)
 
     long numFound = 0;
     for (i = 0; i < numThread; i++) {
-        vector_t* errorVectorPtr = errorVectors[i];
+        std::vector<long>* errorVectorPtr = errorVectors[i];
         long e;
-        long numError = vector_getSize(errorVectorPtr);
+        long numError = errorVectorPtr->size();
         numFound += numError;
         for (e = 0; e < numError; e++) {
-            long flowId = (long)vector_at(errorVectorPtr, e);
+            long flowId = errorVectorPtr->at(e);
             bool status = streamPtr->isAttack(flowId);
             assert(status);
         }
@@ -272,7 +270,7 @@ int main (int argc, char** argv)
      */
 
     for (i = 0; i < numThread; i++) {
-      vector_free(errorVectors[i]);
+        delete errorVectors[i];
     }
     free(errorVectors);
     delete decoderPtr;

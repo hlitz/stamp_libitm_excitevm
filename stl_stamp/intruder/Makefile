@@ -9,7 +9,7 @@ SRCS += \
 	preprocessor.cc \
 	stream.cc
 
-LIBSRCS += list.cc pair.cc queue.cc rbtree.cc thread.cc vector.cc
+LIBSRCS += list.cc pair.cc queue.cc rbtree.cc thread.cc
 
 OBJS := ${SRCS:.cc=.o} ${LIBSRCS:%.cc=lib_%.o}
 
@@ -25,13 +25,11 @@ test_decoder:
 
 .PHONY: test_detector
 test_detector: CXXFLAGS += -DTEST_DETECTOR -O0
-test_detector: LIB_SRCS := $(LIB)/vector.cc
 test_detector:
 	$(CC) $(CXXFLAGS) detector.cc dictionary.cc preprocessor.cc $(LIB_SRCS) -o $@
 
 .PHONY: test_dictionary
 test_dictionary: CXXFLAGS += -DTEST_DICTIONARY -O0
-test_dictionary: LIB_SRCS := $(LIB)/vector.cc
 test_dictionary:
 	$(CC) $(CXXFLAGS) dictionary.cc $(LIB_SRCS) -o $@
 
@@ -42,7 +40,7 @@ test_preprocessor:
 
 .PHONY: test_stream
 test_stream: CXXFLAGS += -DTEST_STREAM -O0
-test_stream: LIB_SRCS := $(LIB)/{mt19937ar,pair,queue,random,rbtree,vector}.cc
+test_stream: LIB_SRCS := $(LIB)/{mt19937ar,pair,queue,random,rbtree}.cc
 test_stream:
 	$(CC) $(CXXFLAGS) stream.cc detector.cc dictionary.cc preprocessor.cc $(LIB_SRCS) -o $@
 

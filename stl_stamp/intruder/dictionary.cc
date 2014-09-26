@@ -6,8 +6,6 @@
 #include <stdlib.h>
 #include <assert.h>
 #include "dictionary.h"
-#include "vector.h"
-
 
 const char* global_defaultSignatures[] = {
     "about",
