@@ -17,7 +17,7 @@ stream_t::stream_t(long _percentAttack)
     percentAttack = _percentAttack;
     randomPtr = new std::mt19937();
     assert(randomPtr);
-    allocVectorPtr = vector_alloc(1);
+    allocVectorPtr = new std::vector<char*>();
     assert(allocVectorPtr);
     packetQueuePtr = queue_alloc(-1);
     assert(packetQueuePtr);
@@ -28,16 +28,16 @@ stream_t::stream_t(long _percentAttack)
 
 stream_t::~stream_t()
 {
-    long numAlloc = vector_getSize(allocVectorPtr);
+    long numAlloc = allocVectorPtr->size();
 
     for (long a = 0; a < numAlloc; a++) {
-        char* str = (char*)vector_at(allocVectorPtr, a);
+        char* str = allocVectorPtr->at(a);
         free(str);
     }
 
     MAP_FREE(attackMapPtr);
     queue_free(packetQueuePtr);
-    vector_free(allocVectorPtr);
+    delete allocVectorPtr;
     delete randomPtr;
 }
 
@@ -51,7 +51,7 @@ stream_t::~stream_t()
 static void splitIntoPackets(char* str,
                              long flowId,
                              std::mt19937* randomPtr,
-                             vector_t* allocVectorPtr,
+                             std::vector<char*>* allocVectorPtr,
                              queue_t* packetQueuePtr)
 {
     long numByte = strlen(str);
@@ -64,8 +64,7 @@ static void splitIntoPackets(char* str,
         bool status;
         char* bytes = (char*)malloc(PACKET_HEADER_LENGTH + numDataByte);
         assert(bytes);
-        status = vector_pushBack(allocVectorPtr, (void*)bytes);
-        assert(status);
+        allocVectorPtr->push_back(bytes);
         packet_t* packetPtr = (packet_t*)bytes;
         packetPtr->flowId      = flowId;
         packetPtr->fragmentId  = p;
@@ -80,8 +79,7 @@ static void splitIntoPackets(char* str,
     long lastNumDataByte = numDataByte + numByte % numPacket;
     char* bytes = (char*)malloc(PACKET_HEADER_LENGTH + lastNumDataByte);
     assert(bytes);
-    status = vector_pushBack(allocVectorPtr, (void*)bytes);
-    assert(status);
+    allocVectorPtr->push_back(bytes);
     packet_t* packetPtr = (packet_t*)bytes;
     packetPtr->flowId      = flowId;
     packetPtr->fragmentId  = p;
@@ -132,8 +130,7 @@ long stream_t::generate(dictionary_t* dictionaryPtr,
              */
             long length = (randomPtr->operator()() % maxLength) + 1;
             str = (char*)malloc((length + 1) * sizeof(char));
-            bool status = vector_pushBack(allocVectorPtr, (void*)str);
-            assert(status);
+            allocVectorPtr->push_back(str);
             long l;
             for (l = 0; l < length; l++) {
                 str[l] = ' ' + (char)(randomPtr->operator()() % range);

@@ -6,14 +6,14 @@
 
 #include <random>
 #include "queue.h"
-#include "vector.h"
+#include <vector>
 #include "map.h"
 #include "dictionary.h"
 
 struct stream_t {
     long percentAttack;
     std::mt19937* randomPtr;
-    vector_t* allocVectorPtr;
+    std::vector<char*>* allocVectorPtr;
     queue_t* packetQueuePtr;
     MAP_T* attackMapPtr;
 
