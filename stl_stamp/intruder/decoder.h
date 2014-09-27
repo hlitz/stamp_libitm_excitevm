@@ -5,12 +5,17 @@
 #pragma once
 
 #include "map.h"
-#include "queue.h"
+#include <queue>
 #include "error.h"
+
+struct decoded_t {
+    long flowId;
+    char* data;
+};
 
 struct decoder_t {
     MAP_T* fragmentedMapPtr;  /* contains list of packet_t* */
-    queue_t* decodedQueuePtr; /* contains decoded_t* */
+    std::queue<decoded_t*>* decodedQueuePtr; /* contains decoded_t* */
 
     decoder_t();
 

@@ -11,29 +11,17 @@
 #include "packet.h"
 #include "tm_transition.h"
 
-__attribute__ ((transaction_pure))
-void TM_print(char* s)
-{
-  printf("%s", s);
-}
-
-
-struct decoded_t {
-    long flowId;
-    char* data;
-};
-
 decoder_t::decoder_t()
 {
     fragmentedMapPtr = MAP_ALLOC(NULL, NULL);
     assert(fragmentedMapPtr);
-    decodedQueuePtr = queue_alloc(1024);
+    decodedQueuePtr = new std::queue<decoded_t*>();
     assert(decodedQueuePtr);
 }
 
 decoder_t::~decoder_t()
 {
-    queue_free(decodedQueuePtr);
+    delete decodedQueuePtr;
     MAP_FREE(fragmentedMapPtr);
 }
 
@@ -181,8 +169,7 @@ int_error_t decoder_t::process(char* bytes, long numByte)
           decodedPtr->flowId = flowId;
           decodedPtr->data = data;
 
-          status = TMQUEUE_PUSH(decodedQueuePtr, (void*)decodedPtr);
-          assert(status);
+          decodedQueuePtr->push(decodedPtr);
 
           TMLIST_FREE(fragmentListPtr);
           status = TMMAP_REMOVE(fragmentedMapPtr, (void*)flowId);
@@ -209,9 +196,7 @@ int_error_t decoder_t::process(char* bytes, long numByte)
         decodedPtr->flowId = flowId;
         decodedPtr->data = data;
 
-        status = TMQUEUE_PUSH(decodedQueuePtr, (void*)decodedPtr);
-        assert(status);
-
+        decodedQueuePtr->push(decodedPtr);
     }
 
     return ERROR_NONE;
@@ -227,7 +212,11 @@ __attribute__((transaction_safe))
 char* decoder_t::getComplete(long* decodedFlowIdPtr)
 {
     char* data;
-    decoded_t* decodedPtr = (decoded_t*)TMQUEUE_POP(decodedQueuePtr);
+    decoded_t* decodedPtr = NULL;
+    if (!decodedQueuePtr->empty()) {
+        decodedPtr = decodedQueuePtr->front();
+        decodedQueuePtr->pop();
+    }
 
     if (decodedPtr) {
         *decodedFlowIdPtr = decodedPtr->flowId;
