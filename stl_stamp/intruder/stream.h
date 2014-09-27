@@ -7,7 +7,7 @@
 #include <random>
 #include "queue.h"
 #include <vector>
-#include "map.h"
+#include <map>
 #include "dictionary.h"
 
 struct stream_t {
@@ -15,7 +15,7 @@ struct stream_t {
     std::mt19937* randomPtr;
     std::vector<char*>* allocVectorPtr;
     queue_t* packetQueuePtr;
-    MAP_T* attackMapPtr;
+    std::map<long, char*>* attackMapPtr;
 
     stream_t(long percentAttack);
     ~stream_t();

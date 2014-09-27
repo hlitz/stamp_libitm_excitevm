@@ -6,6 +6,7 @@
 #include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <vector>
 #include "decoder.h"
 #include "detector.h"
 #include "dictionary.h"
@@ -13,7 +14,6 @@
 #include "stream.h"
 #include "thread.h"
 #include "timer.h"
-#include <vector>
 
 enum param_types {
     PARAM_ATTACK = (unsigned char)'a',

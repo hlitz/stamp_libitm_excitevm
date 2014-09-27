@@ -21,7 +21,7 @@ stream_t::stream_t(long _percentAttack)
     assert(allocVectorPtr);
     packetQueuePtr = queue_alloc(-1);
     assert(packetQueuePtr);
-    attackMapPtr = MAP_ALLOC(NULL, NULL);
+    attackMapPtr = new std::map<long, char*>();
     assert(attackMapPtr);
 }
 
@@ -35,7 +35,7 @@ stream_t::~stream_t()
         free(str);
     }
 
-    MAP_FREE(attackMapPtr);
+    delete attackMapPtr;
     queue_free(packetQueuePtr);
     delete allocVectorPtr;
     delete randomPtr;
@@ -120,9 +120,7 @@ long stream_t::generate(dictionary_t* dictionaryPtr,
         if ((long)(randomPtr->operator()() % 100) < percentAttack) {
             long s = randomPtr->operator()() % global_numDefaultSignature;
             str = dictionaryPtr->get(s);
-            bool status =
-                MAP_INSERT(attackMapPtr, (void*)f, (void*)str);
-            assert(status);
+            attackMapPtr->insert(std::make_pair(f, str));
             numAttack++;
         } else {
             /*
@@ -141,10 +139,7 @@ long stream_t::generate(dictionary_t* dictionaryPtr,
             strcpy(str2, str);
             int_error_t error = detectorPtr->process(str2); /* updates in-place */
             if (error == ERROR_SIGNATURE) {
-                bool status = MAP_INSERT(attackMapPtr,
-                                           (void*)f,
-                                           (void*)str);
-                assert(status);
+                attackMapPtr->insert(std::make_pair(f, str));
                 numAttack++;
             }
             free(str2);
@@ -179,7 +174,7 @@ char* stream_t::getPacket()
  */
 bool stream_t::isAttack(long flowId)
 {
-    return MAP_CONTAINS(attackMapPtr, (void*)flowId);
+    return attackMapPtr->find(flowId) != attackMapPtr->end();
 }
 
 
