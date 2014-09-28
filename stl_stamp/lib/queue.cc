@@ -159,7 +159,7 @@ queue_clear (queue_t* queuePtr)
  * queue_shuffle
  * =============================================================================
  */
-TM_PURE // [wer] queue_shuffle has to be TM_PURE, use random()
+TM_SAFE // [wer] queue_shuffle has to be TM_PURE, use random()
 void
 queue_shuffle (queue_t* queuePtr, std::mt19937* randomPtr)
 {

@@ -4,9 +4,11 @@
 
 #pragma once
 
-#include "map.h"
+#include <map>
+#include <set>
 #include <queue>
 #include "error.h"
+#include "packet.h"
 
 struct decoded_t {
     long flowId;
@@ -14,7 +16,7 @@ struct decoded_t {
 };
 
 struct decoder_t {
-    MAP_T* fragmentedMapPtr;  /* contains list of packet_t* */
+    std::map<long, std::set<packet_t*, packet_compareFragmentId>*>* fragmentedMapPtr;  /* contains list of packet_t* */
     std::queue<decoded_t*>* decodedQueuePtr; /* contains decoded_t* */
 
     decoder_t();

@@ -13,7 +13,7 @@
 
 decoder_t::decoder_t()
 {
-    fragmentedMapPtr = MAP_ALLOC(NULL, NULL);
+    fragmentedMapPtr = new std::map<long, std::set<packet_t*, packet_compareFragmentId>*>();
     assert(fragmentedMapPtr);
     decodedQueuePtr = new std::queue<decoded_t*>();
     assert(decodedQueuePtr);
@@ -22,15 +22,13 @@ decoder_t::decoder_t()
 decoder_t::~decoder_t()
 {
     delete decodedQueuePtr;
-    MAP_FREE(fragmentedMapPtr);
+    delete fragmentedMapPtr;
 }
 
 //[wer] this function was problematic to write-back algorithms.
 __attribute__((transaction_safe))
 int_error_t decoder_t::process(char* bytes, long numByte)
 {
-    bool status;
-
     /*
      * Basic error checking
      */
@@ -72,20 +70,20 @@ int_error_t decoder_t::process(char* bytes, long numByte)
 
     if (numFragment > 1) {
 
-        std::set<packet_t*, packet_compareFragmentId>* fragmentListPtr =
-            (std::set<packet_t*, packet_compareFragmentId>*)TMMAP_FIND(fragmentedMapPtr, (void*)flowId);
+        std::set<packet_t*, packet_compareFragmentId>* fragmentListPtr = NULL;
+        auto x = fragmentedMapPtr->find(flowId);
+        if (x != fragmentedMapPtr->end())
+            fragmentListPtr = x->second;
 
-      if (fragmentListPtr == NULL) {
+        if (fragmentListPtr == NULL) {
 
         // [wer210] the comparator should be __attribute__((transaction_safe))
           fragmentListPtr = new std::set<packet_t*, packet_compareFragmentId>();
         assert(fragmentListPtr);
         auto res = fragmentListPtr->insert(packetPtr);
         assert(res.second == true);
-        status = TMMAP_INSERT(fragmentedMapPtr,
-                              (void*)flowId,
-                              (void*)fragmentListPtr);
-        assert(status);
+        auto x = fragmentedMapPtr->insert(std::make_pair(flowId, fragmentListPtr));
+        assert(x.second);
 
       }
       else {
@@ -98,8 +96,8 @@ int_error_t decoder_t::process(char* bytes, long numByte)
           long expectedNumFragment = firstFragmentPtr->numFragment;
 
         if (numFragment != expectedNumFragment) {
-          status = TMMAP_REMOVE(fragmentedMapPtr, (void*)flowId);
-          assert(status);
+            int num = fragmentedMapPtr->erase(flowId);
+            assert(num == 1);
           return ERROR_NUMFRAGMENT;
         }
 
@@ -124,8 +122,8 @@ int_error_t decoder_t::process(char* bytes, long numByte)
 
             assert(fragmentPtr->flowId == flowId);
             if (fragmentPtr->fragmentId != i) {
-              status = TMMAP_REMOVE(fragmentedMapPtr, (void*)flowId);
-              assert(status);
+                int num = fragmentedMapPtr->erase(flowId);
+                assert(num == 1);
               return ERROR_INCOMPLETE; /* should be sequential */
             }
             numByte += fragmentPtr->length;
@@ -162,8 +160,8 @@ int_error_t decoder_t::process(char* bytes, long numByte)
           decodedQueuePtr->push(decodedPtr);
 
           delete fragmentListPtr;
-          status = TMMAP_REMOVE(fragmentedMapPtr, (void*)flowId);
-          assert(status);
+          int num = fragmentedMapPtr->erase(flowId);
+          assert(num == 1);
         }
 
       }
