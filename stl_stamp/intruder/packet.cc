@@ -19,25 +19,7 @@ packet_compareFlowId (const void* aPtr, const void* bPtr)
     return (aPacketPtr->flowId - bPacketPtr->flowId);
 }
 
-
-/* =============================================================================
- * packet_compareFragmentId
- * =============================================================================
- */
-__attribute__ ((transaction_safe))
-long
-packet_compareFragmentId (const void* aPtr, const void* bPtr)
+bool packet_compareFragmentId::operator()(packet_t* left, packet_t* right)
 {
-    packet_t* aPacketPtr = (packet_t*)aPtr;
-    packet_t* bPacketPtr = (packet_t*)bPtr;
-
-    return (int)(aPacketPtr->fragmentId - bPacketPtr->fragmentId);
+    return left->fragmentId < right->fragmentId;
 }
-
-
-/* =============================================================================
- *
- * End of packet.c
- *
- * =============================================================================
- */

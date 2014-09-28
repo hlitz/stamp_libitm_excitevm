@@ -24,11 +24,8 @@ __attribute__ ((transaction_safe))
 long
 packet_compareFlowId (const void* aPtr, const void* bPtr);
 
-
-/* =============================================================================
- * packet_compareFragmentId
- * =============================================================================
- */
-__attribute__ ((transaction_safe))
-long
-packet_compareFragmentId (const void* aPtr, const void* bPtr);
+struct packet_compareFragmentId
+{
+  __attribute__((transaction_safe))
+  bool operator()(packet_t* left, packet_t* right);
+};

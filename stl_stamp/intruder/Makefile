@@ -22,7 +22,7 @@ LDFLAGS       += -lstdc++
 PROG := intruder
 SRCS += decoder.cc detector.cc dictionary.cc intruder.cc packet.cc \
         preprocessor.cc stream.cc
-LIBSRCS += list.cc pair.cc queue.cc rbtree.cc thread.cc
+LIBSRCS += pair.cc queue.cc rbtree.cc thread.cc
 OBJS := ${SRCS:.cc=.o} ${LIBSRCS:%.cc=lib_%.o}
 
 CXXFLAGS += -DMAP_USE_RBTREE

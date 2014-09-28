@@ -7,7 +7,7 @@
 #include <string.h>
 #include "decoder.h"
 #include "error.h"
-#include "list.h"
+#include <set>
 #include "packet.h"
 #include "tm_transition.h"
 
@@ -72,16 +72,16 @@ int_error_t decoder_t::process(char* bytes, long numByte)
 
     if (numFragment > 1) {
 
-      list_t* fragmentListPtr =
-        (list_t*)TMMAP_FIND(fragmentedMapPtr, (void*)flowId);
+        std::set<packet_t*, packet_compareFragmentId>* fragmentListPtr =
+            (std::set<packet_t*, packet_compareFragmentId>*)TMMAP_FIND(fragmentedMapPtr, (void*)flowId);
 
       if (fragmentListPtr == NULL) {
 
         // [wer210] the comparator should be __attribute__((transaction_safe))
-        fragmentListPtr = TMLIST_ALLOC(&packet_compareFragmentId);
+          fragmentListPtr = new std::set<packet_t*, packet_compareFragmentId>();
         assert(fragmentListPtr);
-        status = TMLIST_INSERT(fragmentListPtr, (void*)packetPtr);
-        assert(status);
+        auto res = fragmentListPtr->insert(packetPtr);
+        assert(res.second == true);
         status = TMMAP_INSERT(fragmentedMapPtr,
                               (void*)flowId,
                               (void*)fragmentListPtr);
@@ -89,19 +89,13 @@ int_error_t decoder_t::process(char* bytes, long numByte)
 
       }
       else {
-        list_iter_t it;
-        //TMLIST_ITER_RESET(&it, fragmentListPtr);
-        it = &(fragmentListPtr->head);
+          auto it = fragmentListPtr->begin();
+          assert(it != fragmentListPtr->end());
 
-        //assert(TMLIST_ITER_HASNEXT(&it, fragmentListPtr));
-        assert (it->nextPtr != NULL);
+          packet_t* firstFragmentPtr = *it;
+          ++it;
 
-        //packet_t* firstFragmentPtr =
-        //(packet_t*)TMLIST_ITER_NEXT(&it, fragmentListPtr);
-        packet_t* firstFragmentPtr = (packet_t*)it->nextPtr->dataPtr;
-        it = it->nextPtr;
-
-        long expectedNumFragment = firstFragmentPtr->numFragment;
+          long expectedNumFragment = firstFragmentPtr->numFragment;
 
         if (numFragment != expectedNumFragment) {
           status = TMMAP_REMOVE(fragmentedMapPtr, (void*)flowId);
@@ -109,26 +103,24 @@ int_error_t decoder_t::process(char* bytes, long numByte)
           return ERROR_NUMFRAGMENT;
         }
 
-        status = TMLIST_INSERT(fragmentListPtr, (void*)packetPtr);
-        assert(status);
+        auto z = fragmentListPtr->insert(packetPtr);
+        assert(z.second);
 
         /*
          * If we have all the fragments we can reassemble them
          */
 
-        if (TMLIST_GETSIZE(fragmentListPtr) == numFragment) {
+        if (fragmentListPtr->size() == numFragment) {
 
           long numByte = 0;
           long i = 0;
           //TMLIST_ITER_RESET(&it, fragmentListPtr);
-          it = &(fragmentListPtr->head);
+          it = fragmentListPtr->begin();
 
           //while (TMLIST_ITER_HASNEXT(&it, fragmentListPtr)) {
-          while (it->nextPtr != NULL) {
-            //packet_t* fragmentPtr =
-            // (packet_t*)TMLIST_ITER_NEXT(&it, fragmentListPtr);
-            packet_t* fragmentPtr = (packet_t*)it->nextPtr->dataPtr;
-            it = it->nextPtr;
+          while (it != fragmentListPtr->end()) {
+              packet_t* fragmentPtr = *it;
+              ++it;
 
             assert(fragmentPtr->flowId == flowId);
             if (fragmentPtr->fragmentId != i) {
@@ -146,20 +138,18 @@ int_error_t decoder_t::process(char* bytes, long numByte)
           char* dst = data;
 
           //TMLIST_ITER_RESET(&it, fragmentListPtr);
-          it = &(fragmentListPtr->head);
+          it = fragmentListPtr->begin();
 
           //while (TMLIST_ITER_HASNEXT(&it, fragmentListPtr)) {
-          while (it->nextPtr != NULL) {
+          while (it != fragmentListPtr->end()) {
             //packet_t* fragmentPtr =
             //  (packet_t*)TMLIST_ITER_NEXT(&it, fragmentListPtr);
-            packet_t* fragmentPtr = (packet_t*)it->nextPtr->dataPtr;
-            it = it->nextPtr;
+              packet_t* fragmentPtr = *it;
+              ++it;
 
-            long i = 0;
-            for (; i < fragmentPtr->length; i++)
-              dst[i] = fragmentPtr->data[i];
-
-            dst += fragmentPtr->length;
+              for (long i = 0; i < fragmentPtr->length; i++)
+                  dst[i] = fragmentPtr->data[i];
+              dst += fragmentPtr->length;
 
           }
           assert(dst == data + numByte);
@@ -171,7 +161,7 @@ int_error_t decoder_t::process(char* bytes, long numByte)
 
           decodedQueuePtr->push(decodedPtr);
 
-          TMLIST_FREE(fragmentListPtr);
+          delete fragmentListPtr;
           status = TMMAP_REMOVE(fragmentedMapPtr, (void*)flowId);
           assert(status);
         }
