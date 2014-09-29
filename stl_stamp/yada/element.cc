@@ -75,9 +75,8 @@ checkAngles (element_t* elementPtr)
         long i;
         coordinate_t* coordinates = elementPtr->coordinates;
         for (i = 0; i < 3; i++) {
-            double angle = coordinate_angle(&coordinates[i],
-                                            &coordinates[(i + 1) % 3],
-                                            &coordinates[(i + 2) % 3]);
+            double angle = coordinates[i].angle(&coordinates[(i + 1) % 3],
+                                                &coordinates[(i + 2) % 3]);
             assert(angle > 0.0);
             assert(angle < 180.0);
             if (angle > 90.0) {
@@ -165,8 +164,7 @@ calculateCircumCircle (element_t* elementPtr)
         circumCenterPtr->y = ry;
     }
 
-    elementPtr->circumRadius = coordinate_distance(circumCenterPtr,
-                                                   &coordinates[0]);
+    elementPtr->circumRadius = circumCenterPtr->distance(&coordinates[0]);
 }
 
 
@@ -203,7 +201,7 @@ setEdge (element_t* elementPtr, long i)
     midpointPtr->x = (firstPtr->x + secondPtr->x) / 2.0;
     midpointPtr->y = (firstPtr->y + secondPtr->y) / 2.0;
 
-    elementPtr->radii[i] = coordinate_distance(firstPtr, midpointPtr);
+    elementPtr->radii[i] = firstPtr->distance(midpointPtr);
 }
 
 
@@ -461,7 +459,7 @@ __attribute__((transaction_safe))
 bool
 element_isInCircumCircle (element_t* elementPtr, coordinate_t* coordinatePtr)
 {
-    double distance = coordinate_distance(coordinatePtr, &elementPtr->circumCenter);
+    double distance = coordinatePtr->distance(&elementPtr->circumCenter);
     return ((distance <= elementPtr->circumRadius) ? true : false);
 }
 
@@ -686,9 +684,8 @@ element_checkAngles (element_t* elementPtr)
         long i;
         coordinate_t* coordinates = elementPtr->coordinates;
         for (i = 0; i < 3; i++) {
-            double angle = coordinate_angle(&coordinates[i],
-                                            &coordinates[(i + 1) % 3],
-                                            &coordinates[(i + 2) % 3]);
+            double angle = coordinates[i].angle(&coordinates[(i + 1) % 3],
+                                                &coordinates[(i + 2) % 3]);
             if (angle < angleConstraint) {
                 return false;
             }
@@ -711,7 +708,7 @@ element_print (element_t* elementPtr)
     coordinate_t* coordinates = elementPtr->coordinates;
 
     for (c = 0; c < numCoordinate; c++) {
-        coordinate_print(&coordinates[c]);
+        coordinates[c].print();
         printf(" ");
     }
 }
@@ -724,9 +721,9 @@ element_print (element_t* elementPtr)
 void
 element_printEdge (edge_t* edgePtr)
 {
-    coordinate_print((coordinate_t*)edgePtr->firstPtr);
+    ((coordinate_t*)edgePtr->firstPtr)->print();
     printf(" -> ");
-    coordinate_print((coordinate_t*)edgePtr->secondPtr);
+    ((coordinate_t*)edgePtr->secondPtr)->print();
 }
 
 
@@ -743,9 +740,8 @@ element_printAngles (element_t* elementPtr)
         long i;
         coordinate_t* coordinates = elementPtr->coordinates;
         for (i = 0; i < 3; i++) {
-            double angle = coordinate_angle(&coordinates[i],
-                                            &coordinates[(i + 1) % 3],
-                                            &coordinates[(i + 2) % 3]);
+            double angle = coordinates[i].angle(&coordinates[(i + 1) % 3],
+                                                &coordinates[(i + 2) % 3]);
             printf("%0.3lf ", angle);
         }
     }

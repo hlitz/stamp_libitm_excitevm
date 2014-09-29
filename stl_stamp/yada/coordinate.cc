@@ -52,16 +52,11 @@ double sqrt_pure ( double x )
   return sqrt (x);
 }
 
-/* =============================================================================
- * coordinate_distance
- * =============================================================================
- */
 __attribute__ ((transaction_safe))
-double
-coordinate_distance (coordinate_t* coordinatePtr, coordinate_t* aPtr)
+double coordinate_t::distance(coordinate_t* aPtr)
 {
-    double delta_x = coordinatePtr->x - aPtr->x;
-    double delta_y = coordinatePtr->y - aPtr->y;
+    double delta_x = x - aPtr->x;
+    double delta_y = y - aPtr->y;
 
     //[wer] need to be safe!
     //return sqrt((delta_x * delta_x) + (delta_y * delta_y));
@@ -104,8 +99,7 @@ double acos_pure( double x)
  * =============================================================================
  */
 __attribute__ ((transaction_safe))
-double
-coordinate_angle (coordinate_t* aPtr, coordinate_t* bPtr, coordinate_t* cPtr)
+double coordinate_t::angle(coordinate_t* bPtr, coordinate_t* cPtr)
 {
     coordinate_t delta_b;
     coordinate_t delta_c;
@@ -116,16 +110,16 @@ coordinate_angle (coordinate_t* aPtr, coordinate_t* bPtr, coordinate_t* cPtr)
     double cosine;
     double radian;
 
-    delta_b.x = bPtr->x - aPtr->x;
-    delta_b.y = bPtr->y - aPtr->y;
+    delta_b.x = bPtr->x - x;
+    delta_b.y = bPtr->y - y;
 
-    delta_c.x = cPtr->x - aPtr->x;
-    delta_c.y = cPtr->y - aPtr->y;
+    delta_c.x = cPtr->x - x;
+    delta_c.y = cPtr->y - y;
 
     numerator = (delta_b.x * delta_c.x) + (delta_b.y * delta_c.y);
 
-    distance_b = coordinate_distance(aPtr, bPtr);
-    distance_c = coordinate_distance(aPtr, cPtr);
+    distance_b = distance(bPtr);
+    distance_c = distance(cPtr);
     denominator = distance_b * distance_c;
 
     cosine = numerator / denominator;
@@ -141,10 +135,9 @@ coordinate_angle (coordinate_t* aPtr, coordinate_t* bPtr, coordinate_t* cPtr)
  * coordinate_print
  * =============================================================================
  */
-void
-coordinate_print (coordinate_t* coordinatePtr)
+void coordinate_t::print()
 {
-    printf("(%+0.4lg, %+0.4lg)", coordinatePtr->x, coordinatePtr->y);
+    printf("(%+0.4lg, %+0.4lg)", x, y);
 }
 
 
