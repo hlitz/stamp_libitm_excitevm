@@ -16,7 +16,7 @@
 
 __attribute__((transaction_safe))
 void
-TMaddToBadVector (  vector_t* badVectorPtr, element_t* badElementPtr);
+TMaddToBadVector(vector_t* badVectorPtr, element_t* badElementPtr);
 
 __attribute__((transaction_safe))
 long
@@ -32,54 +32,30 @@ TMgrowRegion (element_t* centerElementPtr,
               MAP_T* edgeMapPtr,
               bool* success);
 
-/* =============================================================================
- * Pregion_alloc
- * =============================================================================
- */
-region_t*
-Pregion_alloc ()
+region_t::region_t()
 {
-    region_t* regionPtr;
+    expandQueuePtr = TMQUEUE_ALLOC(-1);
+    assert(expandQueuePtr);
 
-    regionPtr = (region_t*)malloc(sizeof(region_t));
-    if (regionPtr) {
-        regionPtr->expandQueuePtr = TMQUEUE_ALLOC(-1);
-        assert(regionPtr->expandQueuePtr);
+    //[wer210] note the following compare functions should be TM_SAFE...
+    beforeListPtr = TMLIST_ALLOC(&element_listCompare);
+    assert(beforeListPtr);
 
-        //[wer210] note the following compare functions should be TM_SAFE...
-        regionPtr->beforeListPtr = TMLIST_ALLOC(&element_listCompare);
-        assert(regionPtr->beforeListPtr);
+    borderListPtr = TMLIST_ALLOC(&element_listCompareEdge);
+    assert(borderListPtr);
 
-        regionPtr->borderListPtr = TMLIST_ALLOC(&element_listCompareEdge);
-        assert(regionPtr->borderListPtr);
-
-        regionPtr->badVectorPtr = PVECTOR_ALLOC(1);
-        assert(regionPtr->badVectorPtr);
-    }
-
-    return regionPtr;
+    badVectorPtr = PVECTOR_ALLOC(1);
+    assert(badVectorPtr);
 }
 
-
-/* =============================================================================
- * Pregion_free
- * =============================================================================
- */
-void
-Pregion_free (region_t* regionPtr)
+region_t::~region_t()
 {
-    PVECTOR_FREE(regionPtr->badVectorPtr);
-    list_free(regionPtr->borderListPtr);
-    list_free(regionPtr->beforeListPtr);
-    TMQUEUE_FREE(regionPtr->expandQueuePtr);
-    free(regionPtr);
+    PVECTOR_FREE(badVectorPtr);
+    list_free(borderListPtr);
+    list_free(beforeListPtr);
+    TMQUEUE_FREE(expandQueuePtr);
 }
 
-
-/* =============================================================================
- * TMaddToBadVector
- * =============================================================================
- */
 __attribute__((transaction_safe))
 void
 TMaddToBadVector (  vector_t* badVectorPtr, element_t* badElementPtr)
@@ -293,10 +269,8 @@ TMgrowRegion (element_t* centerElementPtr,
  * =============================================================================
  */
 __attribute__((transaction_safe))
-long
-TMregion_refine (region_t* regionPtr, element_t* elementPtr, mesh_t* meshPtr, bool* success)
+long region_t::refine(element_t* elementPtr, mesh_t* meshPtr, bool* success)
 {
-
     long numDelta = 0L;
     MAP_T* edgeMapPtr = NULL;
     element_t* encroachElementPtr = NULL;
@@ -310,16 +284,13 @@ TMregion_refine (region_t* regionPtr, element_t* elementPtr, mesh_t* meshPtr, bo
         assert(edgeMapPtr);
         //[wer210] added one more parameter "success" to indicate successfulness
         encroachElementPtr = TMgrowRegion(elementPtr,
-                                          regionPtr,
+                                          this,
                                           edgeMapPtr,
                                           success);
 
         if (encroachElementPtr) {
             TMelement_setIsReferenced(encroachElementPtr, true);
-            numDelta += TMregion_refine(regionPtr,
-                                        encroachElementPtr,
-                                        meshPtr,
-                                        success);
+            numDelta += refine(encroachElementPtr, meshPtr, success);
             if (TMelement_isGarbage(elementPtr)) {
                 break;
             }
@@ -334,10 +305,7 @@ TMregion_refine (region_t* regionPtr, element_t* elementPtr, mesh_t* meshPtr, bo
      */
 
     if (!TMelement_isGarbage(elementPtr)) {
-      numDelta += TMretriangulate(elementPtr,
-                                    regionPtr,
-                                    meshPtr,
-                                    edgeMapPtr);
+      numDelta += TMretriangulate(elementPtr, this, meshPtr, edgeMapPtr);
     }
 
     MAP_FREE(edgeMapPtr); /* no need to free elements */
@@ -346,32 +314,18 @@ TMregion_refine (region_t* regionPtr, element_t* elementPtr, mesh_t* meshPtr, bo
 }
 
 
-/* =============================================================================
- * Pregion_clearBad
- * =============================================================================
- */
-//TM_PURE
 __attribute__((transaction_safe))
-void
-Pregion_clearBad (region_t* regionPtr)
+void region_t::clearBad()
 {
-    PVECTOR_CLEAR(regionPtr->badVectorPtr);
+    PVECTOR_CLEAR(badVectorPtr);
 }
 
-
-/* =============================================================================
- * TMregion_transferBad
- * =============================================================================
- */
 __attribute__((transaction_safe))
-void
-TMregion_transferBad (region_t* regionPtr, heap_t* workHeapPtr)
+void region_t::transferBad(heap_t* workHeapPtr)
 {
-    vector_t* badVectorPtr = regionPtr->badVectorPtr;
     long numBad = PVECTOR_GETSIZE(badVectorPtr);
-    long i;
 
-    for (i = 0; i < numBad; i++) {
+    for (long i = 0; i < numBad; i++) {
         element_t* badElementPtr = (element_t*)vector_at(badVectorPtr, i);
         if (TMelement_isGarbage(badElementPtr)) {
             TMelement_free(badElementPtr);
@@ -381,11 +335,3 @@ TMregion_transferBad (region_t* regionPtr, heap_t* workHeapPtr)
         }
     }
 }
-
-
-/* =============================================================================
- *
- * End of region.c
- *
- * =============================================================================
- */

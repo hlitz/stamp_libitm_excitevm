@@ -125,7 +125,7 @@ process (void*)
     long totalNumAdded = 0;
     long numProcess = 0;
 
-    regionPtr = Pregion_alloc();
+    regionPtr = new region_t();
     assert(regionPtr);
 
     while (1) {
@@ -158,9 +158,9 @@ process (void*)
         while (1) {
           __transaction_atomic {
             // TM_SAFE: PVECTOR_CLEAR (regionPtr->badVectorPtr);
-            Pregion_clearBad(regionPtr);
+            regionPtr->clearBad();
             //[wer210] problematic function!
-            numAdded = TMregion_refine(regionPtr, elementPtr, meshPtr, &success);
+            numAdded = regionPtr->refine(elementPtr, meshPtr, &success);
             if (success) break;
             else __transaction_cancel;
           }
@@ -180,7 +180,7 @@ process (void*)
         totalNumAdded += numAdded;
 
         __transaction_atomic {
-          TMregion_transferBad(regionPtr, workHeapPtr);
+          regionPtr->transferBad(workHeapPtr);
         }
 
         numProcess++;
@@ -192,7 +192,7 @@ process (void*)
         global_numProcess += numProcess;
     }
 
-    Pregion_free(regionPtr);
+    delete regionPtr;
 }
 
 
