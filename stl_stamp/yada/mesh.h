@@ -8,54 +8,28 @@
 #include "element.h"
 #include "map.h"
 #include "vector.h"
+#include "list.h"
+#include "queue.h"
+#include "set.h"
 
+struct mesh_t {
+    element_t* rootElementPtr;
+    queue_t* initBadQueuePtr;
+    long size;
+    SET_T* boundarySetPtr;
 
-struct mesh_t;
+    mesh_t();
+    ~mesh_t();
 
+    __attribute__((transaction_safe))
+    void insert(element_t* elementPtr, MAP_T* edgeMapPtr);
 
-/* =============================================================================
- * mesh_alloc
- * =============================================================================
- */
-mesh_t*
-mesh_alloc ();
+    __attribute__((transaction_safe))
+    void remove(element_t* elementPtr);
 
-
-/* =============================================================================
- * mesh_free
- * =============================================================================
- */
-void
-mesh_free (mesh_t* meshPtr);
-
-
-
-/* =============================================================================
- * TMmesh_insert
- * =============================================================================
- */
-__attribute__((transaction_safe))
-void
-TMmesh_insert (mesh_t* meshPtr, element_t* elementPtr, MAP_T* edgeMapPtr);
-
-
-/* =============================================================================
- * TMmesh_remove
- * =============================================================================
- */
-__attribute__((transaction_safe))
-void
-TMmesh_remove ( mesh_t* meshPtr, element_t* elementPtr);
-
-
-/* =============================================================================
- * TMmesh_insertBoundary
- * =============================================================================
- */
-__attribute__((transaction_safe))
-bool
-TMmesh_insertBoundary ( mesh_t* meshPtr, edge_t* boundaryPtr);
-
+    __attribute__((transaction_safe))
+    bool insertBoundary(edge_t* boundaryPtr);
+};
 
 /* =============================================================================
  * TMmesh_removeBoundary

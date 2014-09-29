@@ -209,7 +209,7 @@ int main (int argc, char** argv)
     parseArgs(argc, (char** const)argv);
 
     thread_startup(global_numThread);
-    global_meshPtr = mesh_alloc();
+    global_meshPtr = new mesh_t();
     assert(global_meshPtr);
     printf("Angle constraint = %lf\n", global_angleConstraint);
     printf("Reading input... ");

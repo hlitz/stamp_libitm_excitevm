@@ -7,73 +7,36 @@
 #include <stdlib.h>
 #include <string.h>
 #include "element.h"
-#include "list.h"
-#include "map.h"
 #include "mesh.h"
-#include "queue.h"
-#include "set.h"
 #include "utility.h"
 #include "tm_transition.h"
 
-struct mesh_t {
-    element_t* rootElementPtr;
-    queue_t* initBadQueuePtr;
-    long size;
-    SET_T* boundarySetPtr;
-};
-
-
-/* =============================================================================
- * mesh_alloc
- * =============================================================================
- */
-mesh_t*
-mesh_alloc ()
+mesh_t::mesh_t()
 {
-    mesh_t* meshPtr = (mesh_t*)malloc(sizeof(mesh_t));
-
-    if (meshPtr) {
-        meshPtr->rootElementPtr = NULL;
-        meshPtr->initBadQueuePtr = queue_alloc(-1);
-        assert(meshPtr->initBadQueuePtr);
-        meshPtr->size = 0;
-        meshPtr->boundarySetPtr = SET_ALLOC(NULL, &element_listCompareEdge);
-        assert(meshPtr->boundarySetPtr);
-    }
-
-    return meshPtr;
+    rootElementPtr = NULL;
+    initBadQueuePtr = queue_alloc(-1);
+    assert(initBadQueuePtr);
+    size = 0;
+    boundarySetPtr = SET_ALLOC(NULL, &element_listCompareEdge);
+    assert(boundarySetPtr);
 }
 
-
-/* =============================================================================
- * mesh_free
- * =============================================================================
- */
-void
-mesh_free (mesh_t* meshPtr)
+mesh_t::~mesh_t()
 {
-    queue_free(meshPtr->initBadQueuePtr);
-    SET_FREE(meshPtr->boundarySetPtr);
-    free(meshPtr);
+    queue_free(initBadQueuePtr);
+    SET_FREE(boundarySetPtr);
 }
 
-
-
-/* =============================================================================
- * TMmesh_insert
- * =============================================================================
- */
 __attribute__((transaction_safe))
-void
-TMmesh_insert (mesh_t* meshPtr, element_t* elementPtr, MAP_T* edgeMapPtr)
+void mesh_t::insert(element_t* elementPtr, MAP_T* edgeMapPtr)
 {
     /*
      * Assuming fully connected graph, we just need to record one element.
      * The root element is not needed for the actual refining, but rather
      * for checking the validity of the final mesh.
      */
-    if (!meshPtr->rootElementPtr) {
-        meshPtr->rootElementPtr = elementPtr;
+    if (!rootElementPtr) {
+        rootElementPtr = elementPtr;
     }
 
     /*
@@ -113,20 +76,14 @@ TMmesh_insert (mesh_t* meshPtr, element_t* elementPtr, MAP_T* edgeMapPtr)
 
     edge_t* encroachedPtr = element_getEncroachedPtr(elementPtr);
     if (encroachedPtr) {
-        if (!TMSET_CONTAINS(meshPtr->boundarySetPtr, encroachedPtr)) {
+        if (!TMSET_CONTAINS(boundarySetPtr, encroachedPtr)) {
             element_clearEncroached(elementPtr);
         }
     }
 }
 
-
-/* =============================================================================
- * TMmesh_remove
- * =============================================================================
- */
 __attribute__((transaction_safe))
-void
-TMmesh_remove (mesh_t* meshPtr, element_t* elementPtr)
+void mesh_t::remove(element_t* elementPtr)
 {
     assert(!TMelement_isGarbage(elementPtr));
 
@@ -134,8 +91,8 @@ TMmesh_remove (mesh_t* meshPtr, element_t* elementPtr)
      * If removing root, a new root is selected on the next mesh_insert, which
      * always follows a call a mesh_remove.
      */
-    if (meshPtr->rootElementPtr == elementPtr) {
-        meshPtr->rootElementPtr = NULL;
+    if (rootElementPtr == elementPtr) {
+        rootElementPtr = NULL;
     }
 
     /*
@@ -175,10 +132,9 @@ TMmesh_remove (mesh_t* meshPtr, element_t* elementPtr)
  * =============================================================================
  */
 __attribute__((transaction_safe))
-bool
-TMmesh_insertBoundary (mesh_t* meshPtr, edge_t* boundaryPtr)
+bool mesh_t::insertBoundary(edge_t* boundaryPtr)
 {
-    return TMSET_INSERT(meshPtr->boundarySetPtr, boundaryPtr);
+    return TMSET_INSERT(boundarySetPtr, boundaryPtr);
 }
 
 
@@ -213,7 +169,7 @@ createElement (mesh_t* meshPtr,
         assert(status);
     }
 
-    TMmesh_insert(meshPtr, elementPtr, edgeMapPtr);
+    meshPtr->insert(elementPtr, edgeMapPtr);
 
     if (element_isBad(elementPtr)) {
         bool status = queue_push(meshPtr->initBadQueuePtr, (void*)elementPtr);

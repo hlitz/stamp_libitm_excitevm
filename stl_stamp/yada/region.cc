@@ -100,7 +100,7 @@ TMretriangulate (element_t* elementPtr,
       element_t* beforeElementPtr = (element_t*)it->nextPtr->dataPtr;
       it = it->nextPtr;
 
-      TMmesh_remove(meshPtr, beforeElementPtr);
+      meshPtr->remove(beforeElementPtr);
     }
 
 
@@ -120,19 +120,19 @@ TMretriangulate (element_t* elementPtr,
         coordinates[1] = *(coordinate_t*)(edgePtr->firstPtr);
         element_t* aElementPtr = TMelement_alloc(coordinates, 2);
         assert(aElementPtr);
-        TMmesh_insert(meshPtr, aElementPtr, edgeMapPtr);
+        meshPtr->insert(aElementPtr, edgeMapPtr);
 
         coordinates[1] = *(coordinate_t*)(edgePtr->secondPtr);
         element_t* bElementPtr = TMelement_alloc(coordinates, 2);
         assert(bElementPtr);
-        TMmesh_insert(meshPtr, bElementPtr, edgeMapPtr);
+        meshPtr->insert(bElementPtr, edgeMapPtr);
 
         bool status;
         status = TMmesh_removeBoundary(meshPtr, element_getEdge(elementPtr, 0));
         assert(status);
-        status = TMmesh_insertBoundary(meshPtr, element_getEdge(aElementPtr, 0));
+        status = meshPtr->insertBoundary(element_getEdge(aElementPtr, 0));
         assert(status);
-        status = TMmesh_insertBoundary(meshPtr, element_getEdge(bElementPtr, 0));
+        status = meshPtr->insertBoundary(element_getEdge(bElementPtr, 0));
         assert(status);
 
         numDelta += 2;
@@ -160,7 +160,7 @@ TMretriangulate (element_t* elementPtr,
       coordinates[2] = *(coordinate_t*)(borderEdgePtr->secondPtr);
       afterElementPtr = TMelement_alloc(coordinates, 3);
       assert(afterElementPtr);
-      TMmesh_insert(meshPtr, afterElementPtr, edgeMapPtr);
+      meshPtr->insert(afterElementPtr, edgeMapPtr);
       if (element_isBad(afterElementPtr)) {
         TMaddToBadVector(  badVectorPtr, afterElementPtr);
       }
