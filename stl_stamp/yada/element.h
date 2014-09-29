@@ -298,16 +298,4 @@ element_printEdge (edge_t* edgePtr);
  * element_printAngles
  * =============================================================================
  */
-void
-element_printAngles (element_t* elementPtr);
-
-
-
-#define TMELEMENT_ALLOC(c, n)           TMelement_alloc(  c, n)
-#define TMELEMENT_FREE(e)               TMelement_free(  e)
-#define TMELEMENT_ISREFERENCED(e)       TMelement_isReferenced(  e)
-#define TMELEMENT_SETISREFERENCED(e, s) TMelement_setIsReferenced(  e, s)
-#define TMELEMENT_ISGARBAGE(e)          TMelement_isGarbage(  e)
-#define TMELEMENT_SETISGARBAGE(e, s)    TMelement_setIsGarbage(  e, s)
-#define TMELEMENT_ADDNEIGHBOR(e, n)     TMelement_addNeighbor(  e, n)
-#define TMELEMENT_GETNEIGHBORLIST(e)    TMelement_getNeighborListPtr(  e)
+void element_printAngles (element_t* elementPtr);

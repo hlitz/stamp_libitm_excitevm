@@ -5,21 +5,9 @@
 #include <assert.h>
 #include <stdlib.h>
 #include "region.h"
-#include "coordinate.h"
 #include "element.h"
-#include "list.h"
-#include "map.h"
-#include "queue.h"
 #include "mesh.h"
 #include "tm_transition.h"
-
-struct region_t {
-    coordinate_t centerCoordinate;
-    queue_t*     expandQueuePtr;
-    list_t*   beforeListPtr; /* before retriangulation; list to avoid duplicates */
-    list_t* borderListPtr; /* edges adjacent to region; list to avoid duplicates */
-    vector_t*    badVectorPtr;
-};
 
 /* =============================================================================
  * DECLARATION OF TM_SAFE FUNCTIONS
@@ -98,7 +86,7 @@ TMaddToBadVector (  vector_t* badVectorPtr, element_t* badElementPtr)
 {
     bool status = PVECTOR_PUSHBACK(badVectorPtr, (void*)badElementPtr);
     assert(status);
-    TMELEMENT_SETISREFERENCED(badElementPtr, true);
+    TMelement_setIsReferenced(badElementPtr, true);
 }
 
 
@@ -136,7 +124,7 @@ TMretriangulate (element_t* elementPtr,
       element_t* beforeElementPtr = (element_t*)it->nextPtr->dataPtr;
       it = it->nextPtr;
 
-      TMMESH_REMOVE(meshPtr, beforeElementPtr);
+      TMmesh_remove(meshPtr, beforeElementPtr);
     }
 
 
@@ -154,21 +142,21 @@ TMretriangulate (element_t* elementPtr,
         coordinates[0] = centerCoordinate;
 
         coordinates[1] = *(coordinate_t*)(edgePtr->firstPtr);
-        element_t* aElementPtr = TMELEMENT_ALLOC(coordinates, 2);
+        element_t* aElementPtr = TMelement_alloc(coordinates, 2);
         assert(aElementPtr);
-        TMMESH_INSERT(meshPtr, aElementPtr, edgeMapPtr);
+        TMmesh_insert(meshPtr, aElementPtr, edgeMapPtr);
 
         coordinates[1] = *(coordinate_t*)(edgePtr->secondPtr);
-        element_t* bElementPtr = TMELEMENT_ALLOC(coordinates, 2);
+        element_t* bElementPtr = TMelement_alloc(coordinates, 2);
         assert(bElementPtr);
-        TMMESH_INSERT(meshPtr, bElementPtr, edgeMapPtr);
+        TMmesh_insert(meshPtr, bElementPtr, edgeMapPtr);
 
         bool status;
-        status = TMMESH_REMOVEBOUNDARY(meshPtr, element_getEdge(elementPtr, 0));
+        status = TMmesh_removeBoundary(meshPtr, element_getEdge(elementPtr, 0));
         assert(status);
-        status = TMMESH_INSERTBOUNDARY(meshPtr, element_getEdge(aElementPtr, 0));
+        status = TMmesh_insertBoundary(meshPtr, element_getEdge(aElementPtr, 0));
         assert(status);
-        status = TMMESH_INSERTBOUNDARY(meshPtr, element_getEdge(bElementPtr, 0));
+        status = TMmesh_insertBoundary(meshPtr, element_getEdge(bElementPtr, 0));
         assert(status);
 
         numDelta += 2;
@@ -194,9 +182,9 @@ TMretriangulate (element_t* elementPtr,
       coordinates[0] = centerCoordinate;
       coordinates[1] = *(coordinate_t*)(borderEdgePtr->firstPtr);
       coordinates[2] = *(coordinate_t*)(borderEdgePtr->secondPtr);
-      afterElementPtr = TMELEMENT_ALLOC(coordinates, 3);
+      afterElementPtr = TMelement_alloc(coordinates, 3);
       assert(afterElementPtr);
-      TMMESH_INSERT(meshPtr, afterElementPtr, edgeMapPtr);
+      TMmesh_insert(meshPtr, afterElementPtr, edgeMapPtr);
       if (element_isBad(afterElementPtr)) {
         TMaddToBadVector(  badVectorPtr, afterElementPtr);
       }
@@ -261,7 +249,7 @@ TMgrowRegion (element_t* centerElementPtr,
           element_t* neighborElementPtr = (element_t*)it->nextPtr->dataPtr;
           it = it->nextPtr;
 
-            TMELEMENT_ISGARBAGE(neighborElementPtr); /* so we can detect conflicts */
+            TMelement_isGarbage(neighborElementPtr); /* so we can detect conflicts */
             if (!list_find(beforeListPtr, (void*)neighborElementPtr)) {
               //[wer210] below function includes acos() and sqrt(), now safe
               if (element_isInCircumCircle(neighborElementPtr, centerCoordinatePtr)) {
@@ -313,7 +301,7 @@ TMregion_refine (region_t* regionPtr, element_t* elementPtr, mesh_t* meshPtr, bo
     MAP_T* edgeMapPtr = NULL;
     element_t* encroachElementPtr = NULL;
 
-    if (TMELEMENT_ISGARBAGE(elementPtr))
+    if (TMelement_isGarbage(elementPtr))
       return numDelta; /* so we can detect conflicts */
 
     while (1) {
@@ -327,12 +315,12 @@ TMregion_refine (region_t* regionPtr, element_t* elementPtr, mesh_t* meshPtr, bo
                                           success);
 
         if (encroachElementPtr) {
-            TMELEMENT_SETISREFERENCED(encroachElementPtr, true);
+            TMelement_setIsReferenced(encroachElementPtr, true);
             numDelta += TMregion_refine(regionPtr,
                                         encroachElementPtr,
                                         meshPtr,
                                         success);
-            if (TMELEMENT_ISGARBAGE(elementPtr)) {
+            if (TMelement_isGarbage(elementPtr)) {
                 break;
             }
         } else {
@@ -345,7 +333,7 @@ TMregion_refine (region_t* regionPtr, element_t* elementPtr, mesh_t* meshPtr, bo
      * Perform retriangulation.
      */
 
-    if (!TMELEMENT_ISGARBAGE(elementPtr)) {
+    if (!TMelement_isGarbage(elementPtr)) {
       numDelta += TMretriangulate(elementPtr,
                                     regionPtr,
                                     meshPtr,
@@ -385,8 +373,8 @@ TMregion_transferBad (region_t* regionPtr, heap_t* workHeapPtr)
 
     for (i = 0; i < numBad; i++) {
         element_t* badElementPtr = (element_t*)vector_at(badVectorPtr, i);
-        if (TMELEMENT_ISGARBAGE(badElementPtr)) {
-            TMELEMENT_FREE(badElementPtr);
+        if (TMelement_isGarbage(badElementPtr)) {
+            TMelement_free(badElementPtr);
         } else {
             bool status = TMHEAP_INSERT(workHeapPtr, (void*)badElementPtr);
             assert(status);

@@ -96,8 +96,8 @@ TMmesh_insert (mesh_t* meshPtr, element_t* elementPtr, MAP_T* edgeMapPtr)
             bool isSuccess;
             element_t* sharerPtr = (element_t*)MAP_FIND(edgeMapPtr, edgePtr);
             assert(sharerPtr); /* cannot be shared by >2 elements */
-            TMELEMENT_ADDNEIGHBOR(elementPtr, sharerPtr);
-            TMELEMENT_ADDNEIGHBOR(sharerPtr, elementPtr);
+            TMelement_addNeighbor(elementPtr, sharerPtr);
+            TMelement_addNeighbor(sharerPtr, elementPtr);
             isSuccess = MAP_REMOVE(edgeMapPtr, edgePtr);
             assert(isSuccess);
             isSuccess = MAP_INSERT(edgeMapPtr,
@@ -128,7 +128,7 @@ __attribute__((transaction_safe))
 void
 TMmesh_remove (mesh_t* meshPtr, element_t* elementPtr)
 {
-    assert(!TMELEMENT_ISGARBAGE(elementPtr));
+    assert(!TMelement_isGarbage(elementPtr));
 
     /*
      * If removing root, a new root is selected on the next mesh_insert, which
@@ -165,7 +165,7 @@ TMmesh_remove (mesh_t* meshPtr, element_t* elementPtr)
 
     //if (!TMELEMENT_ISREFERENCED(elementPtr)) {
     if (!elementPtr->isReferenced) {
-      TMELEMENT_FREE(elementPtr);
+      TMelement_free(elementPtr);
     }
 }
 

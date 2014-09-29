@@ -125,7 +125,7 @@ process (void*)
     long totalNumAdded = 0;
     long numProcess = 0;
 
-    regionPtr = PREGION_ALLOC();
+    regionPtr = Pregion_alloc();
     assert(regionPtr);
 
     while (1) {
@@ -142,13 +142,13 @@ process (void*)
 
         bool isGarbage;
         __transaction_atomic {
-          isGarbage = TMELEMENT_ISGARBAGE(elementPtr);
+          isGarbage = TMelement_isGarbage(elementPtr);
         }
         if (isGarbage) {
             /*
              * Handle delayed deallocation
              */
-            TMELEMENT_FREE(elementPtr);
+            TMelement_free(elementPtr);
             continue;
         }
 
@@ -158,29 +158,29 @@ process (void*)
         while (1) {
           __transaction_atomic {
             // TM_SAFE: PVECTOR_CLEAR (regionPtr->badVectorPtr);
-            PREGION_CLEARBAD(regionPtr);
+            Pregion_clearBad(regionPtr);
             //[wer210] problematic function!
-            numAdded = TMREGION_REFINE(regionPtr, elementPtr, meshPtr, &success);
+            numAdded = TMregion_refine(regionPtr, elementPtr, meshPtr, &success);
             if (success) break;
             else __transaction_cancel;
           }
         }
 
         __transaction_atomic {
-          TMELEMENT_SETISREFERENCED(elementPtr, false);
-          isGarbage = TMELEMENT_ISGARBAGE(elementPtr);
+          TMelement_setIsReferenced(elementPtr, false);
+          isGarbage = TMelement_isGarbage(elementPtr);
         }
         if (isGarbage) {
             /*
              * Handle delayed deallocation
              */
-            TMELEMENT_FREE(elementPtr);
+            TMelement_free(elementPtr);
         }
 
         totalNumAdded += numAdded;
 
         __transaction_atomic {
-          TMREGION_TRANSFERBAD(regionPtr, workHeapPtr);
+          TMregion_transferBad(regionPtr, workHeapPtr);
         }
 
         numProcess++;
@@ -192,7 +192,7 @@ process (void*)
         global_numProcess += numProcess;
     }
 
-    PREGION_FREE(regionPtr);
+    Pregion_free(regionPtr);
 }
 
 

@@ -101,9 +101,3 @@ mesh_shuffleBad (mesh_t* meshPtr, std::mt19937* randomPtr);
  */
 bool
 mesh_check (mesh_t* meshPtr, long expectedNumElement);
-
-
-#define TMMESH_INSERT(m, e, em)         TMmesh_insert(m, e, em)
-#define TMMESH_REMOVE(m, e)             TMmesh_remove(m, e)
-#define TMMESH_INSERTBOUNDARY(m, b)     TMmesh_insertBoundary(m, b)
-#define TMMESH_REMOVEBOUNDARY(m, b)     TMmesh_removeBoundary(m, b)

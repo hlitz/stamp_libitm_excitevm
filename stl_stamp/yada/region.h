@@ -7,23 +7,31 @@
 #include "element.h"
 #include "heap.h"
 #include "mesh.h"
+#include "coordinate.h"
+#include "map.h"
+#include "list.h"
+#include "queue.h"
 
-struct region_t;
+struct region_t {
+    coordinate_t centerCoordinate;
+    queue_t*     expandQueuePtr;
+    list_t*   beforeListPtr; /* before retriangulation; list to avoid duplicates */
+    list_t* borderListPtr; /* edges adjacent to region; list to avoid duplicates */
+    vector_t*    badVectorPtr;
+};
 
 /* =============================================================================
  * Pregion_alloc
  * =============================================================================
  */
-region_t*
-Pregion_alloc ();
+region_t* Pregion_alloc ();
 
 
 /* =============================================================================
  * Pregion_free
  * =============================================================================
  */
-void
-Pregion_free (region_t* regionPtr);
+void Pregion_free (region_t* regionPtr);
 
 
 /* =============================================================================
@@ -38,8 +46,7 @@ Pregion_free (region_t* regionPtr);
  * =============================================================================
  */
 __attribute__((transaction_safe))
-long
-TMregion_refine (region_t* regionPtr, element_t* elementPtr, mesh_t* meshPtr,
+long TMregion_refine (region_t* regionPtr, element_t* elementPtr, mesh_t* meshPtr,
                  bool* success);
 
 
@@ -48,9 +55,7 @@ TMregion_refine (region_t* regionPtr, element_t* elementPtr, mesh_t* meshPtr,
  * =============================================================================
  */
 __attribute__((transaction_safe))
-//TM_PURE
-void
-Pregion_clearBad (region_t* regionPtr);
+void Pregion_clearBad (region_t* regionPtr);
 
 
 /* =============================================================================
@@ -58,12 +63,4 @@ Pregion_clearBad (region_t* regionPtr);
  * =============================================================================
  */
 __attribute__((transaction_safe))
-void
-TMregion_transferBad (region_t* regionPtr, heap_t* workHeapPtr);
-
-
-#define PREGION_ALLOC()                 Pregion_alloc()
-#define PREGION_FREE(r)                 Pregion_free(r)
-#define PREGION_CLEARBAD(r)             Pregion_clearBad(r)
-#define TMREGION_REFINE(r, e, m, s)        TMregion_refine(r, e, m, s)
-#define TMREGION_TRANSFERBAD(r, q)      TMregion_transferBad(r, q)
+void TMregion_transferBad (region_t* regionPtr, heap_t* workHeapPtr);
