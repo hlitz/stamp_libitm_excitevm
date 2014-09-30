@@ -128,7 +128,7 @@ TMretriangulate (element_t* elementPtr,
         meshPtr->insert(bElementPtr, edgeMapPtr);
 
         bool status;
-        status = TMmesh_removeBoundary(meshPtr, element_getEdge(elementPtr, 0));
+        status = meshPtr->removeBoundary(element_getEdge(elementPtr, 0));
         assert(status);
         status = meshPtr->insertBoundary(element_getEdge(aElementPtr, 0));
         assert(status);

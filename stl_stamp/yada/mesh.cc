@@ -126,29 +126,17 @@ void mesh_t::remove(element_t* elementPtr)
     }
 }
 
-
-/* =============================================================================
- * TMmesh_insertBoundary
- * =============================================================================
- */
 __attribute__((transaction_safe))
 bool mesh_t::insertBoundary(edge_t* boundaryPtr)
 {
     return TMSET_INSERT(boundarySetPtr, boundaryPtr);
 }
 
-
-/* =============================================================================
- * TMmesh_removeBoundary
- * =============================================================================
- */
 __attribute__((transaction_safe))
-bool
-TMmesh_removeBoundary (mesh_t* meshPtr, edge_t* boundaryPtr)
+bool mesh_t::removeBoundary(edge_t* boundaryPtr)
 {
-    return TMSET_REMOVE(meshPtr->boundarySetPtr, boundaryPtr);
+    return TMSET_REMOVE(boundarySetPtr, boundaryPtr);
 }
-
 
 /* =============================================================================
  * createElement
@@ -178,16 +166,7 @@ createElement (mesh_t* meshPtr,
  }
 
 
-/* =============================================================================
- * mesh_read
- *
- * Returns number of elements read from file
- *
- * Refer to http://www.cs.cmu.edu/~quake/triangle.html for file formats.
- * =============================================================================
- */
-long
-mesh_read (mesh_t* meshPtr, const char* fileNamePrefix)
+long mesh_t::read(const char* fileNamePrefix)
 {
     FILE* inputFile;
     coordinate_t* coordinates;
@@ -261,7 +240,7 @@ mesh_read (mesh_t* meshPtr, const char* fileNamePrefix)
         assert(b >= 0 && b < numCoordinate);
         insertCoordinates[0] = coordinates[a];
         insertCoordinates[1] = coordinates[b];
-        createElement(meshPtr, insertCoordinates, 2, edgeMapPtr);
+        createElement(this, insertCoordinates, 2, edgeMapPtr);
     }
     assert(i == numEntry);
     numElement += numEntry;
@@ -295,7 +274,7 @@ mesh_read (mesh_t* meshPtr, const char* fileNamePrefix)
         insertCoordinates[0] = coordinates[a];
         insertCoordinates[1] = coordinates[b];
         insertCoordinates[2] = coordinates[c];
-        createElement(meshPtr, insertCoordinates, 3, edgeMapPtr);
+        createElement(this, insertCoordinates, 3, edgeMapPtr);
     }
     assert(i == numEntry);
     numElement += numEntry;
@@ -313,21 +292,14 @@ mesh_read (mesh_t* meshPtr, const char* fileNamePrefix)
  * -- Returns NULL if none
  * =============================================================================
  */
-element_t*
-mesh_getBad (mesh_t* meshPtr)
+element_t* mesh_t::getBad()
 {
-    return (element_t*)queue_pop(meshPtr->initBadQueuePtr);
+    return (element_t*)queue_pop(initBadQueuePtr);
 }
 
-
-/* =============================================================================
- * mesh_shuffleBad
- * =============================================================================
- */
-void
-mesh_shuffleBad (mesh_t* meshPtr, std::mt19937* randomPtr)
+void mesh_t::shuffleBad(std::mt19937* randomPtr)
 {
-    queue_shuffle(meshPtr->initBadQueuePtr, randomPtr);
+    queue_shuffle(initBadQueuePtr, randomPtr);
 }
 
 
@@ -335,8 +307,7 @@ mesh_shuffleBad (mesh_t* meshPtr, std::mt19937* randomPtr)
  * mesh_check
  * =============================================================================
  */
-bool
-mesh_check (mesh_t* meshPtr, long expectedNumElement)
+bool mesh_t::check(long expectedNumElement)
 {
     queue_t* searchQueuePtr;
     MAP_T* visitedMapPtr;
@@ -355,8 +326,8 @@ mesh_check (mesh_t* meshPtr, long expectedNumElement)
     /*
      * Do breadth-first search starting from rootElementPtr
      */
-    assert(meshPtr->rootElementPtr);
-    queue_push(searchQueuePtr, (void*)meshPtr->rootElementPtr);
+    assert(rootElementPtr);
+    queue_push(searchQueuePtr, (void*)rootElementPtr);
     while (!queue_isEmpty(searchQueuePtr)) {
 
         element_t* currentElementPtr;
@@ -439,11 +410,3 @@ main (int argc, char* argv[])
 
 
 #endif /* TEST_MESH */
-
-
-/* =============================================================================
- *
- * End of mesh.c
- *
- * =============================================================================
- */

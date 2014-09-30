@@ -29,49 +29,23 @@ struct mesh_t {
 
     __attribute__((transaction_safe))
     bool insertBoundary(edge_t* boundaryPtr);
+
+    __attribute__((transaction_safe))
+    bool removeBoundary(edge_t* boundaryPtr);
+
+    /*
+     * mesh_read: Returns number of elements read from file.
+     *
+     * Refer to http://www.cs.cmu.edu/~quake/triangle.html for file formats.
+     */
+    long read(const char* fileNamePrefix);
+
+    /*
+     * mesh_getBad: Returns NULL if none
+     */
+    element_t* getBad();
+
+    void shuffleBad(std::mt19937* randomPtr);
+
+    bool check(long expectedNumElement);
 };
-
-/* =============================================================================
- * TMmesh_removeBoundary
- * =============================================================================
- */
-__attribute__((transaction_safe))
-bool
-TMmesh_removeBoundary ( mesh_t* meshPtr, edge_t* boundaryPtr);
-
-
-/* =============================================================================
- * mesh_read
- *
- * Returns number of elements read from file.
- *
- * Refer to http://www.cs.cmu.edu/~quake/triangle.html for file formats.
- * =============================================================================
- */
-long
-mesh_read (mesh_t* meshPtr, const char* fileNamePrefix);
-
-
-/* =============================================================================
- * mesh_getBad
- * -- Returns NULL if none
- * =============================================================================
- */
-element_t*
-mesh_getBad (mesh_t* meshPtr);
-
-
-/* =============================================================================
- * mesh_shuffleBad
- * =============================================================================
- */
-void
-mesh_shuffleBad (mesh_t* meshPtr, std::mt19937* randomPtr);
-
-
-/* =============================================================================
- * mesh_check
- * =============================================================================
- */
-bool
-mesh_check (mesh_t* meshPtr, long expectedNumElement);

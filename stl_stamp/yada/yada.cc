@@ -93,13 +93,13 @@ initializeWork (heap_t* workHeapPtr, mesh_t* meshPtr)
 {
     std::mt19937* randomPtr = new std::mt19937();
     randomPtr->seed(0);
-    mesh_shuffleBad(meshPtr, randomPtr);
+    meshPtr->shuffleBad(randomPtr);
     delete randomPtr;
 
     long numBad = 0;
 
     while (1) {
-        element_t* elementPtr = mesh_getBad(meshPtr);
+        element_t* elementPtr = meshPtr->getBad();
         if (!elementPtr) {
             break;
         }
@@ -213,7 +213,7 @@ int main (int argc, char** argv)
     assert(global_meshPtr);
     printf("Angle constraint = %lf\n", global_angleConstraint);
     printf("Reading input... ");
-    long initNumElement = mesh_read(global_meshPtr, global_inputPrefix);
+    long initNumElement = global_meshPtr->read(global_inputPrefix);
     puts("done.");
     global_workHeapPtr = heap_alloc(1, &element_heapCompare);
     assert(global_workHeapPtr);
