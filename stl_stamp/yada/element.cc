@@ -206,7 +206,6 @@ setEdge (element_t* elementPtr, long i)
  * initEdges
  * =============================================================================
  */
-//static TM_PURE
 __attribute__((transaction_safe))
 void
 initEdges (element_t* elementPtr, long numCoordinate)
@@ -508,7 +507,6 @@ list_t* element_t::getNeighborListPtr()
  * Returns pointer to aElementPtr's shared edge
  * =============================================================================
  */
-//TM_PURE
 __attribute__((transaction_safe))
 edge_t*
 element_getCommonEdge (element_t* aElementPtr, element_t* bElementPtr)
@@ -539,7 +537,6 @@ element_getCommonEdge (element_t* aElementPtr, element_t* bElementPtr)
  * -- Either the element is encroached or is skinny, so get the new point to add
  * =============================================================================
  */
-//TM_PURE
 __attribute__((transaction_safe))
 //coordinate_t
 void element_t::getNewPoint(coordinate_t* ret)

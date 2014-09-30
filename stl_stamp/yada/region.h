@@ -15,8 +15,8 @@
 struct region_t {
     coordinate_t centerCoordinate;
     queue_t*     expandQueuePtr;
-    list_t*   beforeListPtr; /* before retriangulation; list to avoid duplicates */
-    list_t* borderListPtr; /* edges adjacent to region; list to avoid duplicates */
+    list_t*      beforeListPtr; /* before retriangulation; list to avoid duplicates */
+    list_t*      borderListPtr; /* edges adjacent to region; list to avoid duplicates */
     vector_t*    badVectorPtr;
 
     region_t();
