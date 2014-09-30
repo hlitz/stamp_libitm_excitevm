@@ -75,8 +75,22 @@ struct element_t {
   __attribute__((transaction_safe))
   list_t* getNeighborListPtr();
 
+  /*
+   * element_getNewPoint:  Either the element is encroached or is skinny, so get the new point to add
+   */
+  //[wer210] previous returns a struct, which causes errors
+  // coordinate_t element_getNewPoint(element_t* elementPtr);
+  __attribute__((transaction_safe))
+  void getNewPoint(coordinate_t* ret);
 
+  /*
+   * element_checkAngles: Return false if minimum angle constraint not met
+   */
+  bool eltCheckAngles();
 
+  void print();
+
+  void printAngles();
 };
 
 __attribute__((transaction_safe))
@@ -101,21 +115,3 @@ __attribute__((transaction_safe))
 edge_t* element_getCommonEdge(element_t* aElementPtr, element_t* bElementPtr);
 
 void element_printEdge(edge_t* edgePtr);
-
-
-/*
- * element_getNewPoint:  Either the element is encroached or is skinny, so get the new point to add
- */
-//[wer210] previous returns a struct, which causes errors
-// coordinate_t element_getNewPoint(element_t* elementPtr);
-__attribute__((transaction_safe))
-void element_getNewPoint(element_t* elementPtr, coordinate_t* ret);
-
-/*
- * element_checkAngles: Return false if minimum angle constraint not met
- */
-bool element_checkAngles(element_t* elementPtr);
-
-void element_print(element_t* elementPtr);
-
-void element_printAngles(element_t* elementPtr);

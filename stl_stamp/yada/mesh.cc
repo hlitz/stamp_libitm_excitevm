@@ -339,7 +339,7 @@ bool mesh_t::check(long expectedNumElement)
         }
         isSuccess = MAP_INSERT(visitedMapPtr, (void*)currentElementPtr, NULL);
         assert(isSuccess);
-        if (!element_checkAngles(currentElementPtr)) {
+        if (!currentElementPtr->eltCheckAngles()) {
             numBadTriangle++;
         }
         neighborListPtr = currentElementPtr->getNeighborListPtr();

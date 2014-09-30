@@ -473,8 +473,6 @@ void element_t::setIsReferenced(bool status)
     isReferenced = status;
 }
 
-
-
 /* =============================================================================
  * TMelement_isGarbage
  * -- Can we deallocate?
@@ -503,7 +501,6 @@ list_t* element_t::getNeighborListPtr()
 {
     return neighborListPtr;
 }
-
 
 /* =============================================================================
  * element_getCommonEdge
@@ -545,19 +542,13 @@ element_getCommonEdge (element_t* aElementPtr, element_t* bElementPtr)
 //TM_PURE
 __attribute__((transaction_safe))
 //coordinate_t
-void
-element_getNewPoint (element_t* elementPtr, coordinate_t* ret)
+void element_t::getNewPoint(coordinate_t* ret)
 {
-    edge_t* encroachedEdgePtr = elementPtr->encroachedEdgePtr;
-
     if (encroachedEdgePtr) {
-        long e;
-        long numEdge = elementPtr->numEdge;
-        edge_t* edges = elementPtr->edges;
-        for (e = 0; e < numEdge; e++) {
+        for (long e = 0; e < numEdge; e++) {
             if (compareEdge(encroachedEdgePtr, &edges[e]) == 0) {
-              (*ret).x = elementPtr->midpoints[e].x;
-              (*ret).y = elementPtr->midpoints[e].y;
+              (*ret).x = midpoints[e].x;
+              (*ret).y = midpoints[e].y;
               //return elementPtr->midpoints[e];
               return;
             }
@@ -565,8 +556,8 @@ element_getNewPoint (element_t* elementPtr, coordinate_t* ret)
         assert(0);
     }
 
-    (*ret).x = elementPtr->circumCenter.x;
-    (*ret).y = elementPtr->circumCenter.y;
+    (*ret).x = circumCenter.x;
+    (*ret).y = circumCenter.y;
     //  return elementPtr->circumCenter;
 }
 
@@ -577,16 +568,12 @@ element_getNewPoint (element_t* elementPtr, coordinate_t* ret)
  * Return false if minimum angle constraint not met
  * =============================================================================
  */
-bool
-element_checkAngles (element_t* elementPtr)
+bool element_t::eltCheckAngles ()
 {
-    long numCoordinate = elementPtr->numCoordinate;
     double angleConstraint = global_angleConstraint;
 
     if (numCoordinate == 3) {
-        long i;
-        coordinate_t* coordinates = elementPtr->coordinates;
-        for (i = 0; i < 3; i++) {
+        for (long i = 0; i < 3; i++) {
             double angle = coordinates[i].angle(&coordinates[(i + 1) % 3],
                                                 &coordinates[(i + 2) % 3]);
             if (angle < angleConstraint) {
@@ -603,14 +590,9 @@ element_checkAngles (element_t* elementPtr)
  * element_print
  * =============================================================================
  */
-void
-element_print (element_t* elementPtr)
+void element_t::print()
 {
-    long c;
-    long numCoordinate = elementPtr->numCoordinate;
-    coordinate_t* coordinates = elementPtr->coordinates;
-
-    for (c = 0; c < numCoordinate; c++) {
+    for (long c = 0; c < numCoordinate; c++) {
         coordinates[c].print();
         printf(" ");
     }
@@ -621,8 +603,7 @@ element_print (element_t* elementPtr)
  * element_printEdge
  * =============================================================================
  */
-void
-element_printEdge (edge_t* edgePtr)
+void element_printEdge (edge_t* edgePtr)
 {
     ((coordinate_t*)edgePtr->firstPtr)->print();
     printf(" -> ");
@@ -634,21 +615,15 @@ element_printEdge (edge_t* edgePtr)
  * element_printAngles
  * =============================================================================
  */
-void
-element_printAngles (element_t* elementPtr)
+void element_t::printAngles()
 {
-    long numCoordinate = elementPtr->numCoordinate;
-
     if (numCoordinate == 3) {
-        long i;
-        coordinate_t* coordinates = elementPtr->coordinates;
-        for (i = 0; i < 3; i++) {
+        for (long i = 0; i < 3; i++) {
             double angle = coordinates[i].angle(&coordinates[(i + 1) % 3],
                                                 &coordinates[(i + 2) % 3]);
             printf("%0.3lf ", angle);
         }
     }
-
 }
 
 

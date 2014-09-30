@@ -89,7 +89,7 @@ TMretriangulate (element_t* elementPtr,
     //[wer210] don't return a struct
     //    coordinate_t centerCoordinate = element_getNewPoint(elementPtr);
     coordinate_t centerCoordinate;
-    element_getNewPoint(elementPtr, &centerCoordinate);
+    elementPtr->getNewPoint(&centerCoordinate);
     /*
      * Remove the old triangles
      */
@@ -204,7 +204,7 @@ TMgrowRegion (element_t* centerElementPtr,
     //[wer210]
     //coordinate_t centerCoordinate = element_getNewPoint(centerElementPtr);
     coordinate_t centerCoordinate;
-    element_getNewPoint(centerElementPtr, &centerCoordinate);
+    centerElementPtr->getNewPoint(&centerCoordinate);
 
     coordinate_t* centerCoordinatePtr = &centerCoordinate;
 
