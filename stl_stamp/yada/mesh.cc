@@ -43,9 +43,9 @@ void mesh_t::insert(element_t* elementPtr, MAP_T* edgeMapPtr)
      * Record existence of each of this element's edges
      */
     long i;
-    long numEdge = element_getNumEdge(elementPtr);
+    long numEdge = elementPtr->getNumEdge();
     for (i = 0; i < numEdge; i++) {
-        edge_t* edgePtr = element_getEdge(elementPtr, i);
+        edge_t* edgePtr = elementPtr->getEdge(i);
         if (!MAP_CONTAINS(edgeMapPtr, (void*)edgePtr)) {
             /* Record existance of this edge */
             bool isSuccess;
@@ -152,7 +152,7 @@ createElement (mesh_t* meshPtr,
     assert(elementPtr);
 
     if (numCoordinate == 2) {
-        edge_t* boundaryPtr = element_getEdge(elementPtr, 0);
+        edge_t* boundaryPtr = elementPtr->getEdge(0);
         bool status = SET_INSERT(meshPtr->boundarySetPtr, boundaryPtr);
         assert(status);
     }

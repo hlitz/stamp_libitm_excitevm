@@ -30,6 +30,18 @@ struct element_t {
 
   __attribute__((transaction_safe))
   ~element_t();
+
+  __attribute__((transaction_safe))
+  long getNumEdge();
+
+  /*
+   * element_getEdge: Returned edgePtr is sorted; i.e., coordinate_compare(first, second) < 0
+   */
+  __attribute__((transaction_safe))
+  edge_t* getEdge(long i);
+
+  __attribute__((transaction_safe))
+  bool isInCircumCircle(coordinate_t* coordinatePtr);
 };
 
 __attribute__((transaction_safe))
@@ -50,17 +62,11 @@ long element_mapCompareEdge(const pair_t* aPtr, const pair_t* bPtr);
 __attribute__((transaction_safe))
 long element_heapCompare(const void* aPtr, const void* bPtr);
 
-__attribute__((transaction_safe))
-long element_getNumEdge(element_t* elementPtr);
 
-/*
- * element_getEdge: Returned edgePtr is sorted; i.e., coordinate_compare(first, second) < 0
- */
-__attribute__((transaction_safe))
-edge_t* element_getEdge(element_t* elementPtr, long i);
+// these should become methods of element_t
 
-__attribute__((transaction_safe))
-bool element_isInCircumCircle(element_t* elementPtr, coordinate_t* coordinatePtr);
+
+
 
 __attribute__((transaction_safe))
 void element_clearEncroached(element_t* elementPtr);

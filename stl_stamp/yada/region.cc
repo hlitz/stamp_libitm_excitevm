@@ -110,11 +110,11 @@ TMretriangulate (element_t* elementPtr,
      * If segment is encroached, split it in half
      */
 
-    if (element_getNumEdge(elementPtr) == 1) {
+    if (elementPtr->getNumEdge() == 1) {
 
         coordinate_t coordinates[2];
 
-        edge_t* edgePtr = element_getEdge(elementPtr, 0);
+        edge_t* edgePtr = elementPtr->getEdge(0);
         coordinates[0] = centerCoordinate;
 
         coordinates[1] = *(coordinate_t*)(edgePtr->firstPtr);
@@ -128,11 +128,11 @@ TMretriangulate (element_t* elementPtr,
         meshPtr->insert(bElementPtr, edgeMapPtr);
 
         bool status;
-        status = meshPtr->removeBoundary(element_getEdge(elementPtr, 0));
+        status = meshPtr->removeBoundary(elementPtr->getEdge(0));
         assert(status);
-        status = meshPtr->insertBoundary(element_getEdge(aElementPtr, 0));
+        status = meshPtr->insertBoundary(aElementPtr->getEdge(0));
         assert(status);
-        status = meshPtr->insertBoundary(element_getEdge(bElementPtr, 0));
+        status = meshPtr->insertBoundary(bElementPtr->getEdge(0));
         assert(status);
 
         numDelta += 2;
@@ -189,9 +189,8 @@ TMgrowRegion (element_t* centerElementPtr,
     bool isBoundary = false;
 
     //TM_SAFE
-    if (element_getNumEdge(centerElementPtr) == 1) {
+    if (centerElementPtr->getNumEdge() == 1) {
         isBoundary = true;
-        //TMprints("enter here\n");
     }
 
     list_t* beforeListPtr = regionPtr->beforeListPtr;
@@ -228,9 +227,9 @@ TMgrowRegion (element_t* centerElementPtr,
             TMelement_isGarbage(neighborElementPtr); /* so we can detect conflicts */
             if (!list_find(beforeListPtr, (void*)neighborElementPtr)) {
               //[wer210] below function includes acos() and sqrt(), now safe
-              if (element_isInCircumCircle(neighborElementPtr, centerCoordinatePtr)) {
+              if (neighborElementPtr->isInCircumCircle(centerCoordinatePtr)) {
                   /* This is part of the region */
-                  if (!isBoundary && (element_getNumEdge(neighborElementPtr) == 1)) {
+                  if (!isBoundary && (neighborElementPtr->getNumEdge() == 1)) {
                         /* Encroached on mesh boundary so split it and restart */
                         return neighborElementPtr;
                     } else {

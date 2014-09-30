@@ -311,16 +311,10 @@ element_t::~element_t()
     TMLIST_FREE(neighborListPtr);
 }
 
-
-/* =============================================================================
- * element_getNumEdge
- * =============================================================================
- */
 __attribute__((transaction_safe))
-long
-element_getNumEdge (element_t* elementPtr)
+long element_t::getNumEdge ()
 {
-    return elementPtr->numEdge;
+    return numEdge;
 }
 
 
@@ -331,14 +325,13 @@ element_getNumEdge (element_t* elementPtr)
  * =============================================================================
  */
 __attribute__((transaction_safe))
-edge_t*
-element_getEdge (element_t* elementPtr, long i)
+edge_t* element_t::getEdge(long i)
 {
-    if (i < 0 || i > elementPtr->numEdge) {
+    if (i < 0 || i > numEdge) {
         return NULL;
     }
 
-    return &elementPtr->edges[i];
+    return &edges[i];
 }
 
 
@@ -424,17 +417,11 @@ element_heapCompare (const void* aPtr, const void* bPtr)
 }
 
 
-/* =============================================================================
- * element_isInCircumCircle
- * =============================================================================
- */
-//TM_PURE
 __attribute__((transaction_safe))
-bool
-element_isInCircumCircle (element_t* elementPtr, coordinate_t* coordinatePtr)
+bool element_t::isInCircumCircle(coordinate_t* coordinatePtr)
 {
-    double distance = coordinatePtr->distance(&elementPtr->circumCenter);
-    return ((distance <= elementPtr->circumRadius) ? true : false);
+    double distance = coordinatePtr->distance(&circumCenter);
+    return ((distance <= circumRadius) ? true : false);
 }
 
 
