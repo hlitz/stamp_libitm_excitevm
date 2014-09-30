@@ -59,13 +59,11 @@ void mesh_t::insert(element_t* elementPtr, MAP_T* edgeMapPtr)
             bool isSuccess;
             element_t* sharerPtr = (element_t*)MAP_FIND(edgeMapPtr, edgePtr);
             assert(sharerPtr); /* cannot be shared by >2 elements */
-            TMelement_addNeighbor(elementPtr, sharerPtr);
-            TMelement_addNeighbor(sharerPtr, elementPtr);
+            elementPtr->addNeighbor(sharerPtr);
+            sharerPtr->addNeighbor(elementPtr);
             isSuccess = MAP_REMOVE(edgeMapPtr, edgePtr);
             assert(isSuccess);
-            isSuccess = MAP_INSERT(edgeMapPtr,
-                                    edgePtr,
-                                    NULL); /* marker to check >2 sharers */
+            isSuccess = MAP_INSERT(edgeMapPtr, edgePtr, NULL); /* marker to check >2 sharers */
             assert(isSuccess);
         }
     }
@@ -85,7 +83,7 @@ void mesh_t::insert(element_t* elementPtr, MAP_T* edgeMapPtr)
 __attribute__((transaction_safe))
 void mesh_t::remove(element_t* elementPtr)
 {
-    assert(!TMelement_isGarbage(elementPtr));
+    assert(!elementPtr->isEltGarbage());
 
     /*
      * If removing root, a new root is selected on the next mesh_insert, which
@@ -344,7 +342,7 @@ bool mesh_t::check(long expectedNumElement)
         if (!element_checkAngles(currentElementPtr)) {
             numBadTriangle++;
         }
-        neighborListPtr = element_getNeighborListPtr(currentElementPtr);
+        neighborListPtr = currentElementPtr->getNeighborListPtr();
 
         list_iter_reset(&it, neighborListPtr);
         while (list_iter_hasNext(&it)) {

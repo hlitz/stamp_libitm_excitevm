@@ -59,6 +59,24 @@ struct element_t {
 
   __attribute__((transaction_safe))
   void setIsReferenced(bool status);
+
+  /*
+   * TMelement_isGarbage: Can we deallocate?
+   */
+  __attribute__((transaction_safe))
+  bool isEltGarbage();
+
+  __attribute__((transaction_safe))
+  void setIsGarbage(bool status);
+
+  __attribute__((transaction_safe))
+  void addNeighbor(element_t* neighborPtr);
+
+  __attribute__((transaction_safe))
+  list_t* getNeighborListPtr();
+
+
+
 };
 
 __attribute__((transaction_safe))
@@ -79,26 +97,11 @@ long element_mapCompareEdge(const pair_t* aPtr, const pair_t* bPtr);
 __attribute__((transaction_safe))
 long element_heapCompare(const void* aPtr, const void* bPtr);
 
-
-// these should become methods of element_t
-
-/*
- * TMelement_isGarbage: Can we deallocate?
- */
-__attribute__((transaction_safe))
-bool TMelement_isGarbage(element_t* elementPtr);
-
-__attribute__((transaction_safe))
-void TMelement_setIsGarbage(element_t* elementPtr, bool status);
-
-__attribute__((transaction_safe))
-void TMelement_addNeighbor(element_t* elementPtr, element_t* neighborPtr);
-
-__attribute__((transaction_safe))
-list_t* element_getNeighborListPtr(element_t* elementPtr);
-
 __attribute__((transaction_safe))
 edge_t* element_getCommonEdge(element_t* aElementPtr, element_t* bElementPtr);
+
+void element_printEdge(edge_t* edgePtr);
+
 
 /*
  * element_getNewPoint:  Either the element is encroached or is skinny, so get the new point to add
@@ -114,7 +117,5 @@ void element_getNewPoint(element_t* elementPtr, coordinate_t* ret);
 bool element_checkAngles(element_t* elementPtr);
 
 void element_print(element_t* elementPtr);
-
-void element_printEdge(edge_t* edgePtr);
 
 void element_printAngles(element_t* elementPtr);

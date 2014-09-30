@@ -215,7 +215,7 @@ TMgrowRegion (element_t* centerElementPtr,
 
         TMLIST_INSERT(beforeListPtr, (void*)currentElementPtr); /* no duplicates */
         // __attribute__((transaction_safe))
-        list_t* neighborListPtr = element_getNeighborListPtr(currentElementPtr);
+        list_t* neighborListPtr = currentElementPtr->getNeighborListPtr();
 
         list_iter_t it;
         it = &(neighborListPtr->head);
@@ -224,7 +224,8 @@ TMgrowRegion (element_t* centerElementPtr,
           element_t* neighborElementPtr = (element_t*)it->nextPtr->dataPtr;
           it = it->nextPtr;
 
-            TMelement_isGarbage(neighborElementPtr); /* so we can detect conflicts */
+            // [TODO] This is extremely bad programming.  We shouldn't need this!
+            neighborElementPtr->isEltGarbage(); /* so we can detect conflicts */
             if (!list_find(beforeListPtr, (void*)neighborElementPtr)) {
               //[wer210] below function includes acos() and sqrt(), now safe
               if (neighborElementPtr->isInCircumCircle(centerCoordinatePtr)) {
@@ -274,7 +275,7 @@ long region_t::refine(element_t* elementPtr, mesh_t* meshPtr, bool* success)
     MAP_T* edgeMapPtr = NULL;
     element_t* encroachElementPtr = NULL;
 
-    if (TMelement_isGarbage(elementPtr))
+    if (elementPtr->isEltGarbage())
       return numDelta; /* so we can detect conflicts */
 
     while (1) {
@@ -290,7 +291,7 @@ long region_t::refine(element_t* elementPtr, mesh_t* meshPtr, bool* success)
         if (encroachElementPtr) {
             encroachElementPtr->setIsReferenced(true);
             numDelta += refine(encroachElementPtr, meshPtr, success);
-            if (TMelement_isGarbage(elementPtr)) {
+            if (elementPtr->isEltGarbage()) {
                 break;
             }
         } else {
@@ -303,7 +304,7 @@ long region_t::refine(element_t* elementPtr, mesh_t* meshPtr, bool* success)
      * Perform retriangulation.
      */
 
-    if (!TMelement_isGarbage(elementPtr)) {
+    if (!elementPtr->isEltGarbage()) {
       numDelta += TMretriangulate(elementPtr, this, meshPtr, edgeMapPtr);
     }
 
@@ -326,7 +327,7 @@ void region_t::transferBad(heap_t* workHeapPtr)
 
     for (long i = 0; i < numBad; i++) {
         element_t* badElementPtr = (element_t*)vector_at(badVectorPtr, i);
-        if (TMelement_isGarbage(badElementPtr)) {
+        if (badElementPtr->isEltGarbage()) {
             delete badElementPtr;
         } else {
             bool status = TMHEAP_INSERT(workHeapPtr, (void*)badElementPtr);

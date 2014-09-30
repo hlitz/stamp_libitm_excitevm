@@ -473,8 +473,6 @@ void element_t::setIsReferenced(bool status)
     isReferenced = status;
 }
 
-
-
 /* =============================================================================
  * TMelement_isGarbage
  * -- Can we deallocate?
@@ -503,7 +501,6 @@ list_t* element_t::getNeighborListPtr()
 {
     return neighborListPtr;
 }
-
 
 /* =============================================================================
  * element_getCommonEdge

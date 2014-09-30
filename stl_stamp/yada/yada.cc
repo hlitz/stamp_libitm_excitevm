@@ -142,7 +142,7 @@ process (void*)
 
         bool isGarbage;
         __transaction_atomic {
-          isGarbage = TMelement_isGarbage(elementPtr);
+          isGarbage = elementPtr->isEltGarbage();
         }
         if (isGarbage) {
             /*
@@ -168,7 +168,7 @@ process (void*)
 
         __transaction_atomic {
           elementPtr->setIsReferenced(false);
-          isGarbage = TMelement_isGarbage(elementPtr);
+          isGarbage = elementPtr->isEltGarbage();
         }
         if (isGarbage) {
             /*
