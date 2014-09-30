@@ -118,12 +118,12 @@ TMretriangulate (element_t* elementPtr,
         coordinates[0] = centerCoordinate;
 
         coordinates[1] = *(coordinate_t*)(edgePtr->firstPtr);
-        element_t* aElementPtr = TMelement_alloc(coordinates, 2);
+        element_t* aElementPtr = new element_t(coordinates, 2);
         assert(aElementPtr);
         meshPtr->insert(aElementPtr, edgeMapPtr);
 
         coordinates[1] = *(coordinate_t*)(edgePtr->secondPtr);
-        element_t* bElementPtr = TMelement_alloc(coordinates, 2);
+        element_t* bElementPtr = new element_t(coordinates, 2);
         assert(bElementPtr);
         meshPtr->insert(bElementPtr, edgeMapPtr);
 
@@ -158,7 +158,7 @@ TMretriangulate (element_t* elementPtr,
       coordinates[0] = centerCoordinate;
       coordinates[1] = *(coordinate_t*)(borderEdgePtr->firstPtr);
       coordinates[2] = *(coordinate_t*)(borderEdgePtr->secondPtr);
-      afterElementPtr = TMelement_alloc(coordinates, 3);
+      afterElementPtr = new element_t(coordinates, 3);
       assert(afterElementPtr);
       meshPtr->insert(afterElementPtr, edgeMapPtr);
       if (element_isBad(afterElementPtr)) {
@@ -328,7 +328,7 @@ void region_t::transferBad(heap_t* workHeapPtr)
     for (long i = 0; i < numBad; i++) {
         element_t* badElementPtr = (element_t*)vector_at(badVectorPtr, i);
         if (TMelement_isGarbage(badElementPtr)) {
-            TMelement_free(badElementPtr);
+            delete badElementPtr;
         } else {
             bool status = TMHEAP_INSERT(workHeapPtr, (void*)badElementPtr);
             assert(status);

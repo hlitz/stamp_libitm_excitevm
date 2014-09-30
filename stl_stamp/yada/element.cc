@@ -24,17 +24,14 @@ extern double global_angleConstraint;
  * -- put smallest coordinate in position 0
  * =============================================================================
  */
-//[wer210] previously TM_PURE.
  __attribute__((transaction_safe))
-void
-minimizeCoordinates (element_t* elementPtr)
+void minimizeCoordinates(element_t* elementPtr)
 {
-    long i;
     coordinate_t* coordinates = elementPtr->coordinates;
     long numCoordinate = elementPtr->numCoordinate;
     long minPosition = 0;
 
-    for (i = 1; i < numCoordinate; i++) {
+    for (long i = 1; i < numCoordinate; i++) {
         if (coordinate_compare(&coordinates[i], &coordinates[minPosition]) < 0) {
             minPosition = i;
         }
@@ -291,50 +288,27 @@ element_mapCompare (const pair_t* aPtr, const pair_t* bPtr)
 }
 
 
-/* =============================================================================
- * TMelement_alloc
- *
- * Contains a copy of input arg 'coordinates'
- * =============================================================================
- */
 __attribute__((transaction_safe))
-element_t*
-TMelement_alloc (  coordinate_t* coordinates, long numCoordinate)
+element_t::element_t(coordinate_t* _coordinates, long _numCoordinate)
 {
-    element_t* elementPtr;
-
-    elementPtr = (element_t*)malloc(sizeof(element_t));
-    if (elementPtr) {
-        long i;
-        for (i = 0; i < numCoordinate; i++) {
-            elementPtr->coordinates[i] = coordinates[i];
-        }
-        elementPtr->numCoordinate = numCoordinate;
-        minimizeCoordinates(elementPtr);
-        checkAngles(elementPtr);
-        calculateCircumCircle(elementPtr);
-        initEdges(elementPtr, numCoordinate);
-        elementPtr->neighborListPtr = TMLIST_ALLOC(element_listCompare);
-        assert(elementPtr->neighborListPtr);
-        elementPtr->isGarbage = false;
-        elementPtr->isReferenced = false;
+    for (long i = 0; i < _numCoordinate; i++) {
+        coordinates[i] = _coordinates[i];
     }
-
-    return elementPtr;
+    numCoordinate = _numCoordinate;
+    minimizeCoordinates(this);
+    checkAngles(this);
+    calculateCircumCircle(this);
+    initEdges(this, numCoordinate);
+    neighborListPtr = TMLIST_ALLOC(element_listCompare);
+    assert(neighborListPtr);
+    isGarbage = false;
+    isReferenced = false;
 }
 
-
-
-/* =============================================================================
- * TMelement_free
- * =============================================================================
- */
 __attribute__((transaction_safe))
-void
-TMelement_free (  element_t* elementPtr)
+element_t::~element_t()
 {
-    TMLIST_FREE(elementPtr->neighborListPtr);
-    free(elementPtr);
+    TMLIST_FREE(neighborListPtr);
 }
 
 
@@ -813,11 +787,3 @@ main (int argc, char* argv[])
 
 
 #endif /* TEST_ELEMENT */
-
-
-/* =============================================================================
- *
- * End of element.c
- *
- * =============================================================================
- */

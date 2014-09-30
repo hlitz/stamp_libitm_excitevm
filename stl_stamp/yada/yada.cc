@@ -148,7 +148,7 @@ process (void*)
             /*
              * Handle delayed deallocation
              */
-            TMelement_free(elementPtr);
+            delete elementPtr;
             continue;
         }
 
@@ -174,7 +174,7 @@ process (void*)
             /*
              * Handle delayed deallocation
              */
-            TMelement_free(elementPtr);
+            delete elementPtr;
         }
 
         totalNumAdded += numAdded;

@@ -17,7 +17,6 @@ struct coordinate_t {
   void print();
 };
 
-
 __attribute__ ((transaction_safe))
 long coordinate_compare(coordinate_t* aPtr, coordinate_t* bPtr);
 

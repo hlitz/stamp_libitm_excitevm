@@ -122,7 +122,7 @@ void mesh_t::remove(element_t* elementPtr)
 
     //if (!TMELEMENT_ISREFERENCED(elementPtr)) {
     if (!elementPtr->isReferenced) {
-      TMelement_free(elementPtr);
+        delete elementPtr;
     }
 }
 
@@ -148,7 +148,7 @@ createElement (mesh_t* meshPtr,
                long numCoordinate,
                MAP_T* edgeMapPtr)
 {
-    element_t* elementPtr = TMelement_alloc(coordinates, numCoordinate);
+    element_t* elementPtr = new element_t(coordinates, numCoordinate);
     assert(elementPtr);
 
     if (numCoordinate == 2) {
