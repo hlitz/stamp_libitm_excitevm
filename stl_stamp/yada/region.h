@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <vector>
 #include "element.h"
 #include "heap.h"
 #include "mesh.h"
@@ -17,7 +18,7 @@ struct region_t {
     queue_t*     expandQueuePtr;
     list_t*      beforeListPtr; /* before retriangulation; list to avoid duplicates */
     list_t*      borderListPtr; /* edges adjacent to region; list to avoid duplicates */
-    vector_t*    badVectorPtr;
+    std::vector<element_t*>* badVectorPtr;
 
     region_t();
     ~region_t();

@@ -16,7 +16,7 @@
 
 __attribute__((transaction_safe))
 void
-TMaddToBadVector(vector_t* badVectorPtr, element_t* badElementPtr);
+TMaddToBadVector(std::vector<element_t*>* badVectorPtr, element_t* badElementPtr);
 
 __attribute__((transaction_safe))
 long
@@ -44,13 +44,13 @@ region_t::region_t()
     borderListPtr = TMLIST_ALLOC(&element_listCompareEdge);
     assert(borderListPtr);
 
-    badVectorPtr = PVECTOR_ALLOC(1);
+    badVectorPtr = new std::vector<element_t*>();
     assert(badVectorPtr);
 }
 
 region_t::~region_t()
 {
-    PVECTOR_FREE(badVectorPtr);
+    delete badVectorPtr;
     list_free(borderListPtr);
     list_free(beforeListPtr);
     TMQUEUE_FREE(expandQueuePtr);
@@ -58,10 +58,9 @@ region_t::~region_t()
 
 __attribute__((transaction_safe))
 void
-TMaddToBadVector (  vector_t* badVectorPtr, element_t* badElementPtr)
+TMaddToBadVector (std::vector<element_t*>* badVectorPtr, element_t* badElementPtr)
 {
-    bool status = PVECTOR_PUSHBACK(badVectorPtr, (void*)badElementPtr);
-    assert(status);
+    badVectorPtr->push_back(badElementPtr);
     badElementPtr->setIsReferenced(true);
 }
 
@@ -79,7 +78,7 @@ TMretriangulate (element_t* elementPtr,
                  mesh_t* meshPtr,
                  MAP_T* edgeMapPtr)
 {
-    vector_t* badVectorPtr = regionPtr->badVectorPtr; /* private */
+    std::vector<element_t*>* badVectorPtr = regionPtr->badVectorPtr; /* private */
     list_t* beforeListPtr = regionPtr->beforeListPtr; /* private */
     list_t* borderListPtr = regionPtr->borderListPtr; /* private */
     list_iter_t it;
@@ -317,16 +316,16 @@ long region_t::refine(element_t* elementPtr, mesh_t* meshPtr, bool* success)
 __attribute__((transaction_safe))
 void region_t::clearBad()
 {
-    PVECTOR_CLEAR(badVectorPtr);
+    badVectorPtr->clear();
 }
 
 __attribute__((transaction_safe))
 void region_t::transferBad(heap_t* workHeapPtr)
 {
-    long numBad = PVECTOR_GETSIZE(badVectorPtr);
+    long numBad = badVectorPtr->size();
 
     for (long i = 0; i < numBad; i++) {
-        element_t* badElementPtr = (element_t*)vector_at(badVectorPtr, i);
+        element_t* badElementPtr = badVectorPtr->at(i);
         if (badElementPtr->isEltGarbage()) {
             delete badElementPtr;
         } else {
