@@ -42,6 +42,23 @@ struct element_t {
 
   __attribute__((transaction_safe))
   bool isInCircumCircle(coordinate_t* coordinatePtr);
+
+  __attribute__((transaction_safe))
+  void clearEncroached();
+
+  __attribute__((transaction_safe))
+  edge_t* getEncroachedPtr();
+
+  bool isEltSkinny();
+
+  /*
+   * element_isBad: Does it need to be refined?
+   */
+  __attribute__((transaction_safe))
+  bool isBad();
+
+  __attribute__((transaction_safe))
+  void setIsReferenced(bool status);
 };
 
 __attribute__((transaction_safe))
@@ -64,29 +81,6 @@ long element_heapCompare(const void* aPtr, const void* bPtr);
 
 
 // these should become methods of element_t
-
-
-
-
-__attribute__((transaction_safe))
-void element_clearEncroached(element_t* elementPtr);
-
-__attribute__((transaction_safe))
-edge_t* element_getEncroachedPtr(element_t* elementPtr);
-
-bool element_isSkinny(element_t* elementPtr);
-
-/*
- * element_isBad: Does it need to be refined?
- */
-__attribute__((transaction_safe))
-bool element_isBad(element_t* elementPtr);
-
-__attribute__((transaction_safe))
-bool TMelement_isReferenced(element_t* elementPtr);
-
-__attribute__((transaction_safe))
-void TMelement_setIsReferenced(element_t* elementPtr, bool status);
 
 /*
  * TMelement_isGarbage: Can we deallocate?

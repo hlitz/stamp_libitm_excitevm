@@ -62,7 +62,7 @@ TMaddToBadVector (  vector_t* badVectorPtr, element_t* badElementPtr)
 {
     bool status = PVECTOR_PUSHBACK(badVectorPtr, (void*)badElementPtr);
     assert(status);
-    TMelement_setIsReferenced(badElementPtr, true);
+    badElementPtr->setIsReferenced(true);
 }
 
 
@@ -161,7 +161,7 @@ TMretriangulate (element_t* elementPtr,
       afterElementPtr = new element_t(coordinates, 3);
       assert(afterElementPtr);
       meshPtr->insert(afterElementPtr, edgeMapPtr);
-      if (element_isBad(afterElementPtr)) {
+      if (afterElementPtr->isBad()) {
         TMaddToBadVector(  badVectorPtr, afterElementPtr);
       }
     }
@@ -288,7 +288,7 @@ long region_t::refine(element_t* elementPtr, mesh_t* meshPtr, bool* success)
                                           success);
 
         if (encroachElementPtr) {
-            TMelement_setIsReferenced(encroachElementPtr, true);
+            encroachElementPtr->setIsReferenced(true);
             numDelta += refine(encroachElementPtr, meshPtr, success);
             if (TMelement_isGarbage(elementPtr)) {
                 break;

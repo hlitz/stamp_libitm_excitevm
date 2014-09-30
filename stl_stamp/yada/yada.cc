@@ -106,7 +106,7 @@ initializeWork (heap_t* workHeapPtr, mesh_t* meshPtr)
         numBad++;
         bool status = heap_insert(workHeapPtr, (void*)elementPtr);
         assert(status);
-        TMelement_setIsReferenced(elementPtr, true);
+        elementPtr->setIsReferenced(true);
     }
 
     return numBad;
@@ -167,7 +167,7 @@ process (void*)
         }
 
         __transaction_atomic {
-          TMelement_setIsReferenced(elementPtr, false);
+          elementPtr->setIsReferenced(false);
           isGarbage = TMelement_isGarbage(elementPtr);
         }
         if (isGarbage) {

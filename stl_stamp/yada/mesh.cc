@@ -74,10 +74,10 @@ void mesh_t::insert(element_t* elementPtr, MAP_T* edgeMapPtr)
      * Check if really encroached
      */
 
-    edge_t* encroachedPtr = element_getEncroachedPtr(elementPtr);
+    edge_t* encroachedPtr = elementPtr->getEncroachedPtr();
     if (encroachedPtr) {
         if (!TMSET_CONTAINS(boundarySetPtr, encroachedPtr)) {
-            element_clearEncroached(elementPtr);
+            elementPtr->clearEncroached();
         }
     }
 }
@@ -159,7 +159,7 @@ createElement (mesh_t* meshPtr,
 
     meshPtr->insert(elementPtr, edgeMapPtr);
 
-    if (element_isBad(elementPtr)) {
+    if (elementPtr->isBad()) {
         bool status = queue_push(meshPtr->initBadQueuePtr, (void*)elementPtr);
         assert(status);
     }

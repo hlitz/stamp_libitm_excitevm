@@ -437,39 +437,22 @@ isEncroached (element_t* elementPtr)
 }
 
 
-/* =============================================================================
- * element_setEncroached
- * =============================================================================
- */
 __attribute__((transaction_safe))
-void
-element_clearEncroached (element_t* elementPtr)
+void element_t::clearEncroached ()
 {
-    elementPtr->encroachedEdgePtr = NULL;
+    encroachedEdgePtr = NULL;
 }
 
-
-/* =============================================================================
- * element_getEncroachedPtr
- * =============================================================================
- */
 __attribute__((transaction_safe))
-edge_t*
-element_getEncroachedPtr (element_t* elementPtr)
+edge_t* element_t::getEncroachedPtr()
 {
-    return elementPtr->encroachedEdgePtr;
+    return encroachedEdgePtr;
 }
 
-
-/* =============================================================================
- * element_isSkinny
- * =============================================================================
- */
-bool
 __attribute__((transaction_safe))
-element_isSkinny (element_t* elementPtr)
+bool element_t::isEltSkinny()
 {
-    return ((elementPtr->isSkinny) ? true : false);
+    return ((isSkinny) ? true : false);
 }
 
 
@@ -479,37 +462,15 @@ element_isSkinny (element_t* elementPtr)
  * =============================================================================
  */
 __attribute__((transaction_safe))
-bool
-element_isBad (element_t* elementPtr)
+bool element_t::isBad()
 {
-    return ((isEncroached(elementPtr) || element_isSkinny(elementPtr)) ?
-            true : false);
+    return ((isEncroached(this) || isEltSkinny()) ? true : false);
 }
 
-
-
-/* =============================================================================
- * TMelement_isReferenced
- * -- Held by another data structure?
- * =============================================================================
- */
 __attribute__((transaction_safe))
-bool
-TMelement_isReferenced (  element_t* elementPtr)
+void element_t::setIsReferenced(bool status)
 {
-    return elementPtr->isReferenced;
-}
-
-
-/* =============================================================================
- * TMelement_setIsReferenced
- * =============================================================================
- */
-__attribute__((transaction_safe))
-void
-TMelement_setIsReferenced (  element_t* elementPtr, bool status)
-{
-    elementPtr->isReferenced = status;
+    isReferenced = status;
 }
 
 
