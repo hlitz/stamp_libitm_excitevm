@@ -17,7 +17,9 @@ struct region_t {
     coordinate_t centerCoordinate;
     queue_t*     expandQueuePtr;
     std::set<element_t*, element_listCompare_t>* beforeListPtr; /* before retriangulation; list to avoid duplicates */
-    list_t*      borderListPtr; /* edges adjacent to region; list to avoid duplicates */
+
+    // TODO: this one next!!!
+    std::set<edge_t*, element_listCompareEdge_t>*      borderListPtr; /* edges adjacent to region; list to avoid duplicates */
     std::vector<element_t*>* badVectorPtr;
 
     region_t();

@@ -123,3 +123,11 @@ struct element_listCompare_t
     return element_listCompare(aPtr, bPtr) < 0;
   }
 };
+
+struct element_listCompareEdge_t
+{
+  long operator()(const edge_t* aPtr, const edge_t* bPtr)
+  {
+    return element_listCompareEdge(aPtr, bPtr) < 0;
+  }
+};

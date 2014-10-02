@@ -42,7 +42,7 @@ region_t::region_t()
     beforeListPtr = new std::set<element_t*, element_listCompare_t>();
     assert(beforeListPtr);
 
-    borderListPtr = TMLIST_ALLOC(&element_listCompareEdge);
+    borderListPtr = new std::set<edge_t*, element_listCompareEdge_t>();
     assert(borderListPtr);
 
     badVectorPtr = new std::vector<element_t*>();
@@ -52,7 +52,7 @@ region_t::region_t()
 region_t::~region_t()
 {
     delete badVectorPtr;
-    list_free(borderListPtr);
+    delete borderListPtr;
     delete beforeListPtr;
     TMQUEUE_FREE(expandQueuePtr);
 }
@@ -81,8 +81,7 @@ TMretriangulate (element_t* elementPtr,
 {
     std::vector<element_t*>* badVectorPtr = regionPtr->badVectorPtr; /* private */
     auto beforeListPtr = regionPtr->beforeListPtr; /* private */
-    list_t* borderListPtr = regionPtr->borderListPtr; /* private */
-    list_iter_t it;
+    auto borderListPtr = regionPtr->borderListPtr; /* private */
     long numDelta = 0L;
     assert(edgeMapPtr);
 
@@ -137,32 +136,27 @@ TMretriangulate (element_t* elementPtr,
      * Insert the new triangles. These are contructed using the new
      * point and the two points from the border segment.
      */
-    it = &(borderListPtr->head);
-    //list_iter_reset(&it, borderListPtr);
+    for (auto iter : *borderListPtr) {
+        //while (list_iter_hasNext(&it, borderListPtr)) {
+        element_t* afterElementPtr;
+        coordinate_t coordinates[3];
 
-    while (it->nextPtr != NULL) {
-   //while (list_iter_hasNext(&it, borderListPtr)) {
-      element_t* afterElementPtr;
-      coordinate_t coordinates[3];
-
-      //edge_t* borderEdgePtr = (edge_t*)list_iter_next(&it, borderListPtr);
-      edge_t* borderEdgePtr = (edge_t*) it->nextPtr->dataPtr;
-      it = it->nextPtr;
-
-      assert(borderEdgePtr);
-      coordinates[0] = centerCoordinate;
-      coordinates[1] = *(coordinate_t*)(borderEdgePtr->firstPtr);
-      coordinates[2] = *(coordinate_t*)(borderEdgePtr->secondPtr);
-      afterElementPtr = new element_t(coordinates, 3);
-      assert(afterElementPtr);
-      meshPtr->insert(afterElementPtr, edgeMapPtr);
-      if (afterElementPtr->isBad()) {
-        TMaddToBadVector(  badVectorPtr, afterElementPtr);
-      }
+        //edge_t* borderEdgePtr = (edge_t*)list_iter_next(&it, borderListPtr);
+        edge_t* borderEdgePtr = iter;
+        assert(borderEdgePtr);
+        coordinates[0] = centerCoordinate;
+        coordinates[1] = *(coordinate_t*)(borderEdgePtr->firstPtr);
+        coordinates[2] = *(coordinate_t*)(borderEdgePtr->secondPtr);
+        afterElementPtr = new element_t(coordinates, 3);
+        assert(afterElementPtr);
+        meshPtr->insert(afterElementPtr, edgeMapPtr);
+        if (afterElementPtr->isBad()) {
+            TMaddToBadVector(badVectorPtr, afterElementPtr);
+        }
     }
 
     //numDelta += PLIST_GETSIZE(borderListPtr);
-    numDelta += TMLIST_GETSIZE(borderListPtr);
+    numDelta += borderListPtr->size();
 
     return numDelta;
 }
@@ -189,11 +183,11 @@ TMgrowRegion (element_t* centerElementPtr,
     }
 
     auto beforeListPtr = regionPtr->beforeListPtr;
-    list_t* borderListPtr = regionPtr->borderListPtr;
+    auto borderListPtr = regionPtr->borderListPtr;
     queue_t* expandQueuePtr = regionPtr->expandQueuePtr;
 
     beforeListPtr->clear();
-    list_clear(borderListPtr);
+    borderListPtr->clear();
     TMQUEUE_CLEAR(expandQueuePtr);
 
     //[wer210]
@@ -243,7 +237,7 @@ TMgrowRegion (element_t* centerElementPtr,
                       *success = false;
                       return NULL;
                     }
-                    TMLIST_INSERT(borderListPtr,(void*)borderEdgePtr); /* no duplicates */
+                    borderListPtr->insert(borderEdgePtr); /* no duplicates */
                     if (!MAP_CONTAINS(edgeMapPtr, borderEdgePtr)) {
                         MAP_INSERT(edgeMapPtr, borderEdgePtr, neighborElementPtr);
                     }
