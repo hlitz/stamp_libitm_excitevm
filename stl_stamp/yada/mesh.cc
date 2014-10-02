@@ -313,7 +313,7 @@ void mesh_t::shuffleBad(std::mt19937* randomPtr)
 bool mesh_t::check(long expectedNumElement)
 {
     queue_t* searchQueuePtr;
-    MAP_T* visitedMapPtr;
+    std::map<element_t*, int, element_mapCompare_t>* visitedMapPtr;
     long numBadTriangle = 0;
     long numFalseNeighbor = 0;
     long numElement = 0;
@@ -323,7 +323,7 @@ bool mesh_t::check(long expectedNumElement)
 
     searchQueuePtr = queue_alloc(-1);
     assert(searchQueuePtr);
-    visitedMapPtr = MAP_ALLOC(NULL, &element_mapCompare);
+    visitedMapPtr = new std::map<element_t*, int, element_mapCompare_t>();
     assert(visitedMapPtr);
 
     /*
@@ -339,10 +339,10 @@ bool mesh_t::check(long expectedNumElement)
         bool isSuccess;
 
         currentElementPtr = (element_t*)queue_pop(searchQueuePtr);
-        if (MAP_CONTAINS(visitedMapPtr, (void*)currentElementPtr)) {
+        if (visitedMapPtr->find(currentElementPtr) != visitedMapPtr->end()) {
             continue;
         }
-        isSuccess = MAP_INSERT(visitedMapPtr, (void*)currentElementPtr, NULL);
+        isSuccess = visitedMapPtr->insert(std::make_pair(currentElementPtr, NULL)).second;
         assert(isSuccess);
         if (!currentElementPtr->eltCheckAngles()) {
             numBadTriangle++;
@@ -356,7 +356,7 @@ bool mesh_t::check(long expectedNumElement)
             /*
              * Continue breadth-first search
              */
-            if (!MAP_CONTAINS(visitedMapPtr, (void*)neighborElementPtr)) {
+            if (visitedMapPtr->find(neighborElementPtr) == visitedMapPtr->end()) {
                 bool isSuccess;
                 isSuccess = queue_push(searchQueuePtr,
                                        (void*)neighborElementPtr);
@@ -372,7 +372,7 @@ bool mesh_t::check(long expectedNumElement)
     printf("Number of bad triangles = %li\n", numBadTriangle);
 
     queue_free(searchQueuePtr);
-    MAP_FREE(visitedMapPtr);
+    delete visitedMapPtr;
 
     return ((numBadTriangle > 0 ||
              numFalseNeighbor > 0 ||

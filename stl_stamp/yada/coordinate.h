@@ -18,6 +18,6 @@ struct coordinate_t {
 };
 
 __attribute__ ((transaction_safe))
-long coordinate_compare(coordinate_t* aPtr, coordinate_t* bPtr);
+long coordinate_compare(const coordinate_t* aPtr, const coordinate_t* bPtr);
 
 

@@ -96,7 +96,7 @@ struct element_t {
 };
 
 __attribute__((transaction_safe))
-long element_compare(element_t* aElementPtr, element_t* bElementPtr);
+long element_compare(const element_t* aElementPtr, const element_t* bElementPtr);
 
 __attribute__((transaction_safe))
 long element_listCompare(const void* aPtr, const void* bPtr);
@@ -120,7 +120,7 @@ void element_printEdge(edge_t* edgePtr);
 
 struct element_listCompare_t
 {
-  long operator()(const element_t* aPtr, const element_t* bPtr)
+  bool operator()(const element_t* aPtr, const element_t* bPtr)
   {
     return element_listCompare(aPtr, bPtr) < 0;
   }
@@ -128,7 +128,7 @@ struct element_listCompare_t
 
 struct element_listCompareEdge_t
 {
-  long operator()(const edge_t* aPtr, const edge_t* bPtr)
+  bool operator()(const edge_t* aPtr, const edge_t* bPtr)
   {
     return element_listCompareEdge(aPtr, bPtr) < 0;
   }
@@ -138,4 +138,12 @@ struct element_mapCompareEdge_t
 {
   __attribute__((transaction_safe))
   bool operator()(const edge_t* left, const edge_t* right);
+};
+
+struct element_mapCompare_t
+{
+  bool operator()(const element_t* aPtr, const element_t* bPtr)
+  {
+    return element_compare(aPtr, bPtr) < 0;
+  }
 };

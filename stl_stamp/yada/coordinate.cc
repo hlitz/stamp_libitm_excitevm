@@ -13,7 +13,7 @@
  */
 __attribute__ ((transaction_safe))
 long
-coordinate_compare (coordinate_t* aPtr, coordinate_t* bPtr)
+coordinate_compare (const coordinate_t* aPtr, const coordinate_t* bPtr)
 {
     if (aPtr->x < bPtr->x) {
         return -1;

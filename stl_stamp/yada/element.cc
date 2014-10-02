@@ -227,12 +227,12 @@ initEdges (element_t* elementPtr, long numCoordinate)
  */
 __attribute__((transaction_safe))
 long
-element_compare (element_t* aElementPtr, element_t* bElementPtr)
+element_compare (const element_t* aElementPtr, const element_t* bElementPtr)
 {
     long aNumCoordinate = aElementPtr->numCoordinate;
     long bNumCoordinate = bElementPtr->numCoordinate;
-    coordinate_t* aCoordinates = aElementPtr->coordinates;
-    coordinate_t* bCoordinates = bElementPtr->coordinates;
+    const coordinate_t* aCoordinates = aElementPtr->coordinates;
+    const coordinate_t* bCoordinates = bElementPtr->coordinates;
 
     if (aNumCoordinate < bNumCoordinate) {
         return -1;
