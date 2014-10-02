@@ -111,12 +111,12 @@ TMretriangulate (element_t* elementPtr,
         edge_t* edgePtr = elementPtr->getEdge(0);
         coordinates[0] = centerCoordinate;
 
-        coordinates[1] = *(coordinate_t*)(edgePtr->firstPtr);
+        coordinates[1] = *edgePtr->first;
         element_t* aElementPtr = new element_t(coordinates, 2);
         assert(aElementPtr);
         meshPtr->insert(aElementPtr, edgeMapPtr);
 
-        coordinates[1] = *(coordinate_t*)(edgePtr->secondPtr);
+        coordinates[1] = *edgePtr->second;
         element_t* bElementPtr = new element_t(coordinates, 2);
         assert(bElementPtr);
         meshPtr->insert(bElementPtr, edgeMapPtr);
@@ -145,8 +145,8 @@ TMretriangulate (element_t* elementPtr,
         edge_t* borderEdgePtr = iter;
         assert(borderEdgePtr);
         coordinates[0] = centerCoordinate;
-        coordinates[1] = *(coordinate_t*)(borderEdgePtr->firstPtr);
-        coordinates[2] = *(coordinate_t*)(borderEdgePtr->secondPtr);
+        coordinates[1] = *borderEdgePtr->first;
+        coordinates[2] = *borderEdgePtr->second;
         afterElementPtr = new element_t(coordinates, 3);
         assert(afterElementPtr);
         meshPtr->insert(afterElementPtr, edgeMapPtr);

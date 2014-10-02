@@ -187,11 +187,11 @@ setEdge (element_t* elementPtr, long i)
     long cmp = coordinate_compare(firstPtr, secondPtr);
     assert(cmp != 0);
     if (cmp < 0) {
-        edgePtr->firstPtr  = (void*)firstPtr;
-        edgePtr->secondPtr = (void*)secondPtr;
+        edgePtr->first  = firstPtr;
+        edgePtr->second = secondPtr;
     } else {
-        edgePtr->firstPtr  = (void*)secondPtr;
-        edgePtr->secondPtr = (void*)firstPtr;
+        edgePtr->first  = secondPtr;
+        edgePtr->second = firstPtr;
     }
 
     coordinate_t* midpointPtr = &elementPtr->midpoints[i];
@@ -342,13 +342,11 @@ edge_t* element_t::getEdge(long i)
 long
 compareEdge (edge_t* aEdgePtr, edge_t* bEdgePtr)
 {
-    long diffFirst = coordinate_compare((coordinate_t*)aEdgePtr->firstPtr,
-                                        (coordinate_t*)bEdgePtr->firstPtr);
+    long diffFirst = coordinate_compare(aEdgePtr->first, bEdgePtr->first);
 
     return ((diffFirst != 0) ?
             (diffFirst) :
-            (coordinate_compare((coordinate_t*)aEdgePtr->secondPtr,
-                                (coordinate_t*)bEdgePtr->secondPtr)));
+            (coordinate_compare(aEdgePtr->second, bEdgePtr->second)));
 }
 
 
@@ -602,9 +600,9 @@ void element_t::print()
  */
 void element_printEdge (edge_t* edgePtr)
 {
-    ((coordinate_t*)edgePtr->firstPtr)->print();
+    edgePtr->first->print();
     printf(" -> ");
-    ((coordinate_t*)edgePtr->secondPtr)->print();
+    edgePtr->second->print();
 }
 
 

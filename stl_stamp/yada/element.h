@@ -4,11 +4,13 @@
 
 #pragma once
 
+#include <utility>
 #include "coordinate.h"
 #include "list.h"
 #include "pair.h"
 
-typedef pair_t         edge_t;
+typedef std::pair<coordinate_t*, coordinate_t*> edge_t;
+
 struct element_t {
     coordinate_t coordinates[3];
     long numCoordinate;
