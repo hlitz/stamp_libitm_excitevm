@@ -5,18 +5,18 @@
 #pragma once
 
 #include <vector>
+#include <set>
 #include "element.h"
 #include "heap.h"
 #include "mesh.h"
 #include "coordinate.h"
-#include "map.h"
 #include "list.h"
 #include "queue.h"
 
 struct region_t {
     coordinate_t centerCoordinate;
     queue_t*     expandQueuePtr;
-    list_t*      beforeListPtr; /* before retriangulation; list to avoid duplicates */
+    std::set<element_t*, element_listCompare_t>* beforeListPtr; /* before retriangulation; list to avoid duplicates */
     list_t*      borderListPtr; /* edges adjacent to region; list to avoid duplicates */
     std::vector<element_t*>* badVectorPtr;
 

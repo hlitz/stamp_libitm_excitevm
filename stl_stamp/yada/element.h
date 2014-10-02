@@ -115,3 +115,11 @@ __attribute__((transaction_safe))
 edge_t* element_getCommonEdge(element_t* aElementPtr, element_t* bElementPtr);
 
 void element_printEdge(edge_t* edgePtr);
+
+struct element_listCompare_t
+{
+  long operator()(const element_t* aPtr, const element_t* bPtr)
+  {
+    return element_listCompare(aPtr, bPtr) < 0;
+  }
+};

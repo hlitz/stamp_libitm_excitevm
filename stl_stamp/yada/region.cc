@@ -8,6 +8,7 @@
 #include "element.h"
 #include "mesh.h"
 #include "tm_transition.h"
+#include "map.h"
 
 /* =============================================================================
  * DECLARATION OF TM_SAFE FUNCTIONS
@@ -38,7 +39,7 @@ region_t::region_t()
     assert(expandQueuePtr);
 
     //[wer210] note the following compare functions should be TM_SAFE...
-    beforeListPtr = TMLIST_ALLOC(&element_listCompare);
+    beforeListPtr = new std::set<element_t*, element_listCompare_t>();
     assert(beforeListPtr);
 
     borderListPtr = TMLIST_ALLOC(&element_listCompareEdge);
@@ -52,7 +53,7 @@ region_t::~region_t()
 {
     delete badVectorPtr;
     list_free(borderListPtr);
-    list_free(beforeListPtr);
+    delete beforeListPtr;
     TMQUEUE_FREE(expandQueuePtr);
 }
 
@@ -79,7 +80,7 @@ TMretriangulate (element_t* elementPtr,
                  MAP_T* edgeMapPtr)
 {
     std::vector<element_t*>* badVectorPtr = regionPtr->badVectorPtr; /* private */
-    list_t* beforeListPtr = regionPtr->beforeListPtr; /* private */
+    auto beforeListPtr = regionPtr->beforeListPtr; /* private */
     list_t* borderListPtr = regionPtr->borderListPtr; /* private */
     list_iter_t it;
     long numDelta = 0L;
@@ -89,21 +90,16 @@ TMretriangulate (element_t* elementPtr,
     //    coordinate_t centerCoordinate = element_getNewPoint(elementPtr);
     coordinate_t centerCoordinate;
     elementPtr->getNewPoint(&centerCoordinate);
+
     /*
      * Remove the old triangles
      */
-
-    it = &(beforeListPtr->head);
-
-    while (it ->nextPtr != NULL) {
-      element_t* beforeElementPtr = (element_t*)it->nextPtr->dataPtr;
-      it = it->nextPtr;
-
-      meshPtr->remove(beforeElementPtr);
+    for (auto iter : *beforeListPtr) {
+        element_t* elt = iter;
+        meshPtr->remove(elt);
     }
 
-
-    numDelta -= TMLIST_GETSIZE(beforeListPtr);
+    numDelta -= beforeListPtr->size();
 
     /*
      * If segment is encroached, split it in half
@@ -192,11 +188,11 @@ TMgrowRegion (element_t* centerElementPtr,
         isBoundary = true;
     }
 
-    list_t* beforeListPtr = regionPtr->beforeListPtr;
+    auto beforeListPtr = regionPtr->beforeListPtr;
     list_t* borderListPtr = regionPtr->borderListPtr;
     queue_t* expandQueuePtr = regionPtr->expandQueuePtr;
 
-    list_clear(beforeListPtr);
+    beforeListPtr->clear();
     list_clear(borderListPtr);
     TMQUEUE_CLEAR(expandQueuePtr);
 
@@ -212,7 +208,7 @@ TMgrowRegion (element_t* centerElementPtr,
 
         element_t* currentElementPtr = (element_t*)TMQUEUE_POP(expandQueuePtr);
 
-        TMLIST_INSERT(beforeListPtr, (void*)currentElementPtr); /* no duplicates */
+        beforeListPtr->insert(currentElementPtr); /* no duplicates */
         // __attribute__((transaction_safe))
         list_t* neighborListPtr = currentElementPtr->getNeighborListPtr();
 
@@ -225,7 +221,7 @@ TMgrowRegion (element_t* centerElementPtr,
 
             // [TODO] This is extremely bad programming.  We shouldn't need this!
             neighborElementPtr->isEltGarbage(); /* so we can detect conflicts */
-            if (!list_find(beforeListPtr, (void*)neighborElementPtr)) {
+            if (beforeListPtr->find(neighborElementPtr) == beforeListPtr->end()) {
               //[wer210] below function includes acos() and sqrt(), now safe
               if (neighborElementPtr->isInCircumCircle(centerCoordinatePtr)) {
                   /* This is part of the region */

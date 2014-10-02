@@ -7,10 +7,9 @@
 #include <random>
 #include <vector>
 #include "element.h"
-#include "map.h"
-#include "list.h"
 #include "queue.h"
 #include "set.h"
+#include "map.h"
 
 struct mesh_t {
     element_t* rootElementPtr;
