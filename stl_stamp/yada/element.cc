@@ -340,7 +340,7 @@ edge_t* element_t::getEdge(long i)
  */
  __attribute__((transaction_safe))
 long
-compareEdge (edge_t* aEdgePtr, edge_t* bEdgePtr)
+compareEdge (const edge_t* aEdgePtr, const edge_t* bEdgePtr)
 {
     long diffFirst = coordinate_compare(aEdgePtr->first, bEdgePtr->first);
 
@@ -621,6 +621,10 @@ void element_t::printAngles()
     }
 }
 
+bool element_mapCompareEdge_t::operator()(const edge_t* left, const edge_t* right)
+{
+    return compareEdge(left, right) < 0;
+}
 
 #ifdef TEST_ELEMENT
 /* =============================================================================

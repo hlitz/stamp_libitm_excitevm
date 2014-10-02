@@ -9,6 +9,7 @@
 #include "mesh.h"
 #include "tm_transition.h"
 #include "map.h"
+#include "tm_hacks.h"
 
 /* =============================================================================
  * DECLARATION OF TM_SAFE FUNCTIONS
@@ -24,13 +25,13 @@ long
 TMretriangulate (element_t* elementPtr,
                  region_t* regionPtr,
                  mesh_t* meshPtr,
-                 MAP_T* edgeMapPtr);
+                 std::map<edge_t*, element_t*, element_mapCompareEdge_t>* edgeMapPtr);
 
 __attribute__((transaction_safe))
 element_t*
 TMgrowRegion (element_t* centerElementPtr,
               region_t* regionPtr,
-              MAP_T* edgeMapPtr,
+              std::map<edge_t*, element_t*, element_mapCompareEdge_t>* edgeMapPtr,
               bool* success);
 
 region_t::region_t()
@@ -77,7 +78,7 @@ long
 TMretriangulate (element_t* elementPtr,
                  region_t* regionPtr,
                  mesh_t* meshPtr,
-                 MAP_T* edgeMapPtr)
+                 std::map<edge_t*, element_t*, element_mapCompareEdge_t>* edgeMapPtr)
 {
     std::vector<element_t*>* badVectorPtr = regionPtr->badVectorPtr; /* private */
     auto beforeListPtr = regionPtr->beforeListPtr; /* private */
@@ -93,8 +94,8 @@ TMretriangulate (element_t* elementPtr,
     /*
      * Remove the old triangles
      */
-    for (auto iter : *beforeListPtr) {
-        element_t* elt = iter;
+    for (auto iter = beforeListPtr->begin(); iter != beforeListPtr->end(); ++iter) {
+        element_t* elt = *iter;
         meshPtr->remove(elt);
     }
 
@@ -136,13 +137,13 @@ TMretriangulate (element_t* elementPtr,
      * Insert the new triangles. These are contructed using the new
      * point and the two points from the border segment.
      */
-    for (auto iter : *borderListPtr) {
+    for (auto iter = borderListPtr->begin(); iter != borderListPtr->end(); ++iter) {
         //while (list_iter_hasNext(&it, borderListPtr)) {
         element_t* afterElementPtr;
         coordinate_t coordinates[3];
 
         //edge_t* borderEdgePtr = (edge_t*)list_iter_next(&it, borderListPtr);
-        edge_t* borderEdgePtr = iter;
+        edge_t* borderEdgePtr = *iter;
         assert(borderEdgePtr);
         coordinates[0] = centerCoordinate;
         coordinates[1] = *borderEdgePtr->first;
@@ -171,10 +172,10 @@ __attribute__((transaction_safe))
 element_t*
 TMgrowRegion (element_t* centerElementPtr,
               region_t* regionPtr,
-              MAP_T* edgeMapPtr,
+              std::map<edge_t*, element_t*, element_mapCompareEdge_t>* edgeMapPtr,
               bool* success)
 {
-  *success = true;
+    *success = true;
     bool isBoundary = false;
 
     //TM_SAFE
@@ -238,16 +239,13 @@ TMgrowRegion (element_t* centerElementPtr,
                       return NULL;
                     }
                     borderListPtr->insert(borderEdgePtr); /* no duplicates */
-                    if (!MAP_CONTAINS(edgeMapPtr, borderEdgePtr)) {
-                        MAP_INSERT(edgeMapPtr, borderEdgePtr, neighborElementPtr);
+                    if (edgeMapPtr->find(borderEdgePtr) == edgeMapPtr->end()) {
+                        custom_map_insertion(edgeMapPtr, borderEdgePtr, neighborElementPtr);
                     }
                 }
             } /* not visited before */
-
         } /* for each neighbor */
-
     } /* breadth-first search */
-
     return NULL;
 }
 
@@ -261,7 +259,7 @@ __attribute__((transaction_safe))
 long region_t::refine(element_t* elementPtr, mesh_t* meshPtr, bool* success)
 {
     long numDelta = 0L;
-    MAP_T* edgeMapPtr = NULL;
+    std::map<edge_t*, element_t*, element_mapCompareEdge_t>* edgeMapPtr = NULL;
     element_t* encroachElementPtr = NULL;
 
     if (elementPtr->isEltGarbage())
@@ -269,7 +267,7 @@ long region_t::refine(element_t* elementPtr, mesh_t* meshPtr, bool* success)
 
     while (1) {
       //[wer] MAP_ALLOC = jsw_avlnew(cmp), where cmp should be SAFE
-        edgeMapPtr = MAP_ALLOC(NULL, &element_mapCompareEdge);
+        edgeMapPtr = new std::map<edge_t*, element_t*, element_mapCompareEdge_t>();
         assert(edgeMapPtr);
         //[wer210] added one more parameter "success" to indicate successfulness
         encroachElementPtr = TMgrowRegion(elementPtr,
@@ -286,7 +284,7 @@ long region_t::refine(element_t* elementPtr, mesh_t* meshPtr, bool* success)
         } else {
             break;
         }
-        MAP_FREE(edgeMapPtr); // jsw_avldelete(edgeMapPtr)
+        delete edgeMapPtr; // jsw_avldelete(edgeMapPtr)
     }
 
     /*
@@ -297,7 +295,7 @@ long region_t::refine(element_t* elementPtr, mesh_t* meshPtr, bool* success)
       numDelta += TMretriangulate(elementPtr, this, meshPtr, edgeMapPtr);
     }
 
-    MAP_FREE(edgeMapPtr); /* no need to free elements */
+    delete edgeMapPtr; /* no need to free elements */
 
     return numDelta;
 }

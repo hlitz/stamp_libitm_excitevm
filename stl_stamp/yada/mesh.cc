@@ -6,10 +6,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <map>
 #include "element.h"
 #include "mesh.h"
 #include "utility.h"
 #include "tm_transition.h"
+#include "map.h"
+#include "tm_hacks.h"
 
 mesh_t::mesh_t()
 {
@@ -28,7 +31,8 @@ mesh_t::~mesh_t()
 }
 
 __attribute__((transaction_safe))
-void mesh_t::insert(element_t* elementPtr, MAP_T* edgeMapPtr)
+void mesh_t::insert(element_t* elementPtr,
+                    std::map<edge_t*, element_t*, element_mapCompareEdge_t>* edgeMapPtr)
 {
     /*
      * Assuming fully connected graph, we just need to record one element.
@@ -46,24 +50,24 @@ void mesh_t::insert(element_t* elementPtr, MAP_T* edgeMapPtr)
     long numEdge = elementPtr->getNumEdge();
     for (i = 0; i < numEdge; i++) {
         edge_t* edgePtr = elementPtr->getEdge(i);
-        if (!MAP_CONTAINS(edgeMapPtr, (void*)edgePtr)) {
+        if (edgeMapPtr->find(edgePtr) == edgeMapPtr->end()) {
             /* Record existance of this edge */
             bool isSuccess;
-            isSuccess =
-                MAP_INSERT(edgeMapPtr, (void*)edgePtr, (void*)elementPtr);
+            isSuccess = custom_map_insertion(edgeMapPtr, edgePtr, elementPtr);
             assert(isSuccess);
         } else {
             /*
              * Shared edge; update each element's neighborList
              */
             bool isSuccess;
-            element_t* sharerPtr = (element_t*)MAP_FIND(edgeMapPtr, edgePtr);
+            auto x = edgeMapPtr->find(edgePtr);
+            element_t* sharerPtr = x->second;
             assert(sharerPtr); /* cannot be shared by >2 elements */
             elementPtr->addNeighbor(sharerPtr);
             sharerPtr->addNeighbor(elementPtr);
-            isSuccess = MAP_REMOVE(edgeMapPtr, edgePtr);
+            isSuccess = edgeMapPtr->erase(edgePtr) == 1;
             assert(isSuccess);
-            isSuccess = MAP_INSERT(edgeMapPtr, edgePtr, NULL); /* marker to check >2 sharers */
+            isSuccess = custom_map_insertion(edgeMapPtr, edgePtr, NULL); /* marker to check >2 sharers */
             assert(isSuccess);
         }
     }
@@ -144,7 +148,7 @@ static void
 createElement (mesh_t* meshPtr,
                coordinate_t* coordinates,
                long numCoordinate,
-               MAP_T* edgeMapPtr)
+               std::map<edge_t*, element_t*, element_mapCompareEdge_t>* edgeMapPtr)
 {
     element_t* elementPtr = new element_t(coordinates, numCoordinate);
     assert(elementPtr);
@@ -178,7 +182,8 @@ long mesh_t::read(const char* fileNamePrefix)
     long i;
     long numElement = 0;
 
-    MAP_T* edgeMapPtr = MAP_ALLOC(NULL, &element_mapCompareEdge);
+    std::map<edge_t*, element_t*, element_mapCompareEdge_t>* edgeMapPtr =
+        new std::map<edge_t*, element_t*, element_mapCompareEdge_t>();
     assert(edgeMapPtr);
 
     /*
@@ -279,7 +284,7 @@ long mesh_t::read(const char* fileNamePrefix)
     fclose(inputFile);
 
     free(coordinates);
-    MAP_FREE(edgeMapPtr);
+    delete edgeMapPtr;
 
     return numElement;
 }

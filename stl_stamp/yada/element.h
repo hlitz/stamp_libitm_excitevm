@@ -133,3 +133,9 @@ struct element_listCompareEdge_t
     return element_listCompareEdge(aPtr, bPtr) < 0;
   }
 };
+
+struct element_mapCompareEdge_t
+{
+  __attribute__((transaction_safe))
+  bool operator()(const edge_t* left, const edge_t* right);
+};

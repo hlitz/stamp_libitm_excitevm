@@ -6,10 +6,10 @@
 
 #include <random>
 #include <vector>
+#include <map>
 #include "element.h"
 #include "queue.h"
 #include "set.h"
-#include "map.h"
 
 struct mesh_t {
     element_t* rootElementPtr;
@@ -21,7 +21,8 @@ struct mesh_t {
     ~mesh_t();
 
     __attribute__((transaction_safe))
-    void insert(element_t* elementPtr, MAP_T* edgeMapPtr);
+    void insert(element_t* elementPtr,
+                std::map<edge_t*, element_t*, element_mapCompareEdge_t>* edgeMapPtr);
 
     __attribute__((transaction_safe))
     void remove(element_t* elementPtr);

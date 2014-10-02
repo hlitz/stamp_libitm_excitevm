@@ -21,7 +21,7 @@ LDFLAGS       += -lstdc++
 #
 PROG := yada
 
-SRCS += coordinate.cc element.cc mesh.cc region.cc yada.cc
+SRCS += coordinate.cc element.cc mesh.cc region.cc yada.cc tm_hacks.cc
 
 LIBSRCS += avltree.cc heap.cc list.cc pair.cc queue.cc rbtree.cc thread.cc
 
