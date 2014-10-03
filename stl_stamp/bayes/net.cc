@@ -1,72 +1,7 @@
-/* =============================================================================
- *
- * net.c
- *
- * =============================================================================
- *
- * Copyright (C) Stanford University, 2006.  All Rights Reserved.
- * Author: Chi Cao Minh
- *
- * =============================================================================
- *
- * For the license of bayes/sort.h and bayes/sort.c, please see the header
- * of the files.
- *
- * ------------------------------------------------------------------------
- *
- * For the license of kmeans, please see kmeans/LICENSE.kmeans
- *
- * ------------------------------------------------------------------------
- *
- * For the license of ssca2, please see ssca2/COPYRIGHT
- *
- * ------------------------------------------------------------------------
- *
- * For the license of lib/mt19937ar.c and lib/mt19937ar.h, please see the
- * header of the files.
- *
- * ------------------------------------------------------------------------
- *
- * For the license of lib/rbtree.h and lib/rbtree.c, please see
- * lib/LEGALNOTICE.rbtree and lib/LICENSE.rbtree
- *
- * ------------------------------------------------------------------------
- *
- * Unless otherwise noted, the following license applies to STAMP files:
- *
- * Copyright (c) 2007, Stanford University
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are
- * met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above copyright
- *       notice, this list of conditions and the following disclaimer in
- *       the documentation and/or other materials provided with the
- *       distribution.
- *
- *     * Neither the name of Stanford University nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY STANFORD UNIVERSITY ``AS IS'' AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL STANFORD UNIVERSITY BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
- * THE POSSIBILITY OF SUCH DAMAGE.
- *
- * =============================================================================
+/*
+ * PLEASE SEE LICENSE FILE FOR LICENSING AND COPYRIGHT INFORMATION
  */
+
 #include <assert.h>
 #include <stdlib.h>
 #include "bitmap.h"
@@ -75,25 +10,7 @@
 #include "net.h"
 #include "operation.h"
 #include "queue.h"
-#include "vector.h"
 #include "tm_transition.h"
-
-enum net_node_mark_t {
-    NET_NODE_MARK_INIT = 0,
-    NET_NODE_MARK_DONE = 1,
-    NET_NODE_MARK_TEST = 2
-};
-
-struct net_node_t {
-    long id;
-    list_t* parentIdListPtr;
-    list_t* childIdListPtr;
-    net_node_mark_t mark;
-};
-
-struct net_t {
-    vector_t* nodeVectorPtr;
-};
 
 /* =============================================================================
  * DECLARATION OF TM_SAFE FUNCTIONS
@@ -172,38 +89,25 @@ freeNode (net_node_t* nodePtr)
  * net_alloc
  * =============================================================================
  */
-net_t*
-net_alloc (long numNode)
+net_t::net_t(long numNode)
 {
-    net_t* netPtr;
-
-    netPtr = (net_t*)malloc(sizeof(net_t));
-    if (netPtr) {
-        vector_t* nodeVectorPtr = vector_alloc(numNode);
-        if (nodeVectorPtr == NULL) {
-            free(netPtr);
-            return NULL;
-        }
-        long i;
-        for (i = 0; i < numNode; i++) {
-            net_node_t* nodePtr = allocNode(i);
-            if (nodePtr == NULL) {
-                long j;
-                for (j = 0; j < i; j++) {
-                    nodePtr = (net_node_t*)vector_at(nodeVectorPtr, j);
-                    freeNode(nodePtr);
-                }
-                vector_free(nodeVectorPtr);
-                free(netPtr);
-                return NULL;
-            }
-            bool status = vector_pushBack(nodeVectorPtr, (void*)nodePtr);
-            assert(status);
-        }
-        netPtr->nodeVectorPtr = nodeVectorPtr;
+    nodeVectorPtr = new std::vector<net_node_t*>();
+    if (nodeVectorPtr == NULL) {
+        assert(false);
     }
-
-    return netPtr;
+    nodeVectorPtr->reserve(numNode);
+    for (long i = 0; i < numNode; i++) {
+        net_node_t* nodePtr = allocNode(i);
+        if (nodePtr == NULL) {
+            for (long j = 0; j < i; j++) {
+                nodePtr = nodeVectorPtr->at(j);
+                freeNode(nodePtr);
+            }
+            delete nodeVectorPtr;
+            assert(false);
+        }
+        nodeVectorPtr->push_back(nodePtr);
+    }
 }
 
 
@@ -211,18 +115,14 @@ net_alloc (long numNode)
  * net_free
  * =============================================================================
  */
-void
-net_free (net_t* netPtr)
+net_t::~net_t()
 {
-    long i;
-    vector_t* nodeVectorPtr = netPtr->nodeVectorPtr;
-    long numNode = vector_getSize(nodeVectorPtr);
-    for (i = 0; i < numNode; i++) {
-        net_node_t* nodePtr = (net_node_t*)vector_at(nodeVectorPtr, i);
+    long numNode = nodeVectorPtr->size();
+    for (long i = 0; i < numNode; i++) {
+        net_node_t* nodePtr = nodeVectorPtr->at(i);
         freeNode(nodePtr);
     }
-    vector_free(netPtr->nodeVectorPtr);
-    free(netPtr);
+    delete nodeVectorPtr;
 }
 
 /* =============================================================================
@@ -233,15 +133,15 @@ __attribute__((transaction_safe))
 void
 TMinsertEdge (  net_t* netPtr, long fromId, long toId)
 {
-    vector_t* nodeVectorPtr = netPtr->nodeVectorPtr;
+    std::vector<net_node_t*>* nodeVectorPtr = netPtr->nodeVectorPtr;
     bool status;
 
-    net_node_t* childNodePtr = (net_node_t*)vector_at(nodeVectorPtr, toId);
+    net_node_t* childNodePtr = nodeVectorPtr->at(toId);
     list_t* parentIdListPtr = childNodePtr->parentIdListPtr;
     status = TMLIST_INSERT(parentIdListPtr, (void*)fromId);
     assert(status);
 
-    net_node_t* parentNodePtr = (net_node_t*)vector_at(nodeVectorPtr, fromId);
+    net_node_t* parentNodePtr = nodeVectorPtr->at(fromId);
     list_t* childIdListPtr = parentNodePtr->childIdListPtr;
     status = TMLIST_INSERT(childIdListPtr, (void*)toId);
     assert(status);
@@ -256,15 +156,15 @@ __attribute__((transaction_safe))
 void
 TMremoveEdge (  net_t* netPtr, long fromId, long toId)
 {
-    vector_t* nodeVectorPtr = netPtr->nodeVectorPtr;
+    std::vector<net_node_t*>* nodeVectorPtr = netPtr->nodeVectorPtr;
     bool status;
 
-    net_node_t* childNodePtr = (net_node_t*)vector_at(nodeVectorPtr, toId);
+    net_node_t* childNodePtr = nodeVectorPtr->at(toId);
     list_t* parentIdListPtr = childNodePtr->parentIdListPtr;
     status = TMLIST_REMOVE(parentIdListPtr, (void*)fromId);
     assert(status);
 
-    net_node_t* parentNodePtr = (net_node_t*)vector_at(nodeVectorPtr, fromId);
+    net_node_t* parentNodePtr = nodeVectorPtr->at(fromId);
     list_t* childIdListPtr = parentNodePtr->childIdListPtr;
     status = TMLIST_REMOVE(childIdListPtr, (void*)toId);
     assert(status);
@@ -308,8 +208,8 @@ __attribute__((transaction_safe))
 bool
 TMnet_hasEdge (  net_t* netPtr, long fromId, long toId)
 {
-    vector_t* nodeVectorPtr = netPtr->nodeVectorPtr;
-    net_node_t* childNodePtr = (net_node_t*)vector_at(nodeVectorPtr, toId);
+    std::vector<net_node_t*>* nodeVectorPtr = netPtr->nodeVectorPtr;
+    net_node_t* childNodePtr = nodeVectorPtr->at(toId);
     list_t* parentIdListPtr = childNodePtr->parentIdListPtr;
 
     list_iter_t it;
@@ -343,8 +243,8 @@ TMnet_isPath (net_t* netPtr,
 {
     bool status;
 
-    vector_t* nodeVectorPtr = netPtr->nodeVectorPtr;
-    assert(visitedBitmapPtr->numBit == vector_getSize(nodeVectorPtr));
+    std::vector<net_node_t*>* nodeVectorPtr = netPtr->nodeVectorPtr;
+    assert(visitedBitmapPtr->numBit == nodeVectorPtr->size());
     //TM_SAFE
     TMBITMAP_CLEARALL(visitedBitmapPtr);
     TMQUEUE_CLEAR(workQueuePtr);
@@ -363,7 +263,7 @@ TMnet_isPath (net_t* netPtr,
         status = TMBITMAP_SET(visitedBitmapPtr, id);
         assert(status);
 
-        net_node_t* nodePtr = (net_node_t*)vector_at(nodeVectorPtr, id);
+        net_node_t* nodePtr = nodeVectorPtr->at(id);
         list_t* childIdListPtr = nodePtr->childIdListPtr;
         list_iter_t it;
 
@@ -391,7 +291,7 @@ TMnet_isPath (net_t* netPtr,
  * =============================================================================
  */
 static bool
-isCycle (vector_t* nodeVectorPtr, net_node_t* nodePtr)
+isCycle (std::vector<net_node_t*>* nodeVectorPtr, net_node_t* nodePtr)
 {
     switch (nodePtr->mark) {
         case NET_NODE_MARK_INIT: {
@@ -401,8 +301,7 @@ isCycle (vector_t* nodeVectorPtr, net_node_t* nodePtr)
             list_iter_reset(&it, childIdListPtr);
             while (list_iter_hasNext(&it)) {
                 long childId = (long)list_iter_next(&it);
-                net_node_t* childNodePtr =
-                    (net_node_t*)vector_at(nodeVectorPtr, childId);
+                net_node_t* childNodePtr = nodeVectorPtr->at(childId);
                 if (isCycle(nodeVectorPtr, childNodePtr)) {
                     return true;
                 }
@@ -430,16 +329,16 @@ isCycle (vector_t* nodeVectorPtr, net_node_t* nodePtr)
 bool
 net_isCycle (net_t* netPtr)
 {
-    vector_t* nodeVectorPtr = netPtr->nodeVectorPtr;
-    long numNode = vector_getSize(nodeVectorPtr);
+    std::vector<net_node_t*>* nodeVectorPtr = netPtr->nodeVectorPtr;
+    long numNode = nodeVectorPtr->size();
     long n;
     for (n = 0; n < numNode; n++) {
-        net_node_t* nodePtr = (net_node_t*)vector_at(nodeVectorPtr, n);
+        net_node_t* nodePtr = nodeVectorPtr->at(n);
         nodePtr->mark = NET_NODE_MARK_INIT;
     }
 
     for (n = 0; n < numNode; n++) {
-        net_node_t* nodePtr = (net_node_t*)vector_at(nodeVectorPtr, n);
+        net_node_t* nodePtr = nodeVectorPtr->at(n);
         switch (nodePtr->mark) {
             case NET_NODE_MARK_INIT:
                 if (isCycle(nodeVectorPtr, nodePtr)) {
@@ -471,7 +370,7 @@ __attribute__((transaction_safe))
 list_t*
 net_getParentIdListPtr (net_t* netPtr, long id)
 {
-    net_node_t* nodePtr = (net_node_t*)vector_at(netPtr->nodeVectorPtr, id);
+    net_node_t* nodePtr = netPtr->nodeVectorPtr->at(id);
     assert(nodePtr);
 
     return nodePtr->parentIdListPtr;
@@ -485,7 +384,7 @@ net_getParentIdListPtr (net_t* netPtr, long id)
 list_t*
 net_getChildIdListPtr (net_t* netPtr, long id)
 {
-    net_node_t* nodePtr = (net_node_t*)vector_at(netPtr->nodeVectorPtr, id);
+    net_node_t* nodePtr = netPtr->nodeVectorPtr->at(id);
     assert(nodePtr);
 
     return nodePtr->childIdListPtr;
@@ -509,14 +408,14 @@ TMnet_findAncestors (
 {
     bool status;
 
-    vector_t* nodeVectorPtr = netPtr->nodeVectorPtr;
-    assert(ancestorBitmapPtr->numBit == vector_getSize(nodeVectorPtr));
+    std::vector<net_node_t*>* nodeVectorPtr = netPtr->nodeVectorPtr;
+    assert(ancestorBitmapPtr->numBit == nodeVectorPtr->size());
 
     TMBITMAP_CLEARALL(ancestorBitmapPtr);
     TMQUEUE_CLEAR(workQueuePtr);
 
     {
-        net_node_t* nodePtr = (net_node_t*)vector_at(nodeVectorPtr, id);
+        net_node_t* nodePtr = nodeVectorPtr->at(id);
         list_t* parentIdListPtr = nodePtr->parentIdListPtr;
         list_iter_t it;
         //TMLIST_ITER_RESET(&it, parentIdListPtr);
@@ -541,7 +440,7 @@ TMnet_findAncestors (
             TMQUEUE_CLEAR(workQueuePtr);
             return false;
         }
-        net_node_t* nodePtr = (net_node_t*)vector_at(nodeVectorPtr, parentId);
+        net_node_t* nodePtr = nodeVectorPtr->at(parentId);
         list_t* grandParentIdListPtr = nodePtr->parentIdListPtr;
         list_iter_t it;
         //TMLIST_ITER_RESET(&it, grandParentIdListPtr);
@@ -581,13 +480,13 @@ TMnet_findDescendants (net_t* netPtr,
 {
     bool status;
 
-    vector_t* nodeVectorPtr = netPtr->nodeVectorPtr;
-    assert(descendantBitmapPtr->numBit == vector_getSize(nodeVectorPtr));
+    std::vector<net_node_t*>* nodeVectorPtr = netPtr->nodeVectorPtr;
+    assert(descendantBitmapPtr->numBit == nodeVectorPtr->size());
 
     TMBITMAP_CLEARALL(descendantBitmapPtr);
     TMQUEUE_CLEAR(workQueuePtr);
 
-    net_node_t* nodePtr = (net_node_t*)vector_at(nodeVectorPtr, id);
+    net_node_t* nodePtr = nodeVectorPtr->at(id);
     list_t* childIdListPtr = nodePtr->childIdListPtr;
     list_iter_t it;
     it = &(childIdListPtr->head);
@@ -609,7 +508,7 @@ TMnet_findDescendants (net_t* netPtr,
             TMQUEUE_CLEAR(workQueuePtr);
             return false;
         }
-        net_node_t* nodePtr = (net_node_t*)vector_at(nodeVectorPtr, childId);
+        net_node_t* nodePtr = nodeVectorPtr->at(childId);
         list_t* grandChildIdListPtr = nodePtr->childIdListPtr;
         list_iter_t it;
         it = &(grandChildIdListPtr->head);
@@ -641,9 +540,9 @@ net_generateRandomEdges (net_t* netPtr,
                          long percentParent,
                          std::mt19937* randomPtr)
 {
-    vector_t* nodeVectorPtr = netPtr->nodeVectorPtr;
+    std::vector<net_node_t*>* nodeVectorPtr = netPtr->nodeVectorPtr;
 
-    long numNode = vector_getSize(nodeVectorPtr);
+    long numNode = nodeVectorPtr->size();
     bitmap_t* visitedBitmapPtr = (bitmap_t*)bitmap_alloc(numNode);
     assert(visitedBitmapPtr);
     queue_t* workQueuePtr = queue_alloc(-1);
@@ -766,11 +665,3 @@ main ()
 
 
 #endif /* TEST_NET */
-
-
-/* =============================================================================
- *
- * End of net.c
- *
- * =============================================================================
- */

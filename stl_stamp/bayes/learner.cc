@@ -1,3 +1,7 @@
+/*
+ * PLEASE SEE LICENSE FILE FOR LICENSING AND COPYRIGHT INFORMATION
+ */
+
 /* =============================================================================
  *
  * learn.c
@@ -55,64 +59,6 @@
  * Conference on Uncertainty in Artificial Intelligence (1997), pp. 80-89.
  *
  * =============================================================================
- *
- * For the license of bayes/sort.h and bayes/sort.c, please see the header
- * of the files.
- *
- * ------------------------------------------------------------------------
- *
- * For the license of kmeans, please see kmeans/LICENSE.kmeans
- *
- * ------------------------------------------------------------------------
- *
- * For the license of ssca2, please see ssca2/COPYRIGHT
- *
- * ------------------------------------------------------------------------
- *
- * For the license of lib/mt19937ar.c and lib/mt19937ar.h, please see the
- * header of the files.
- *
- * ------------------------------------------------------------------------
- *
- * For the license of lib/rbtree.h and lib/rbtree.c, please see
- * lib/LEGALNOTICE.rbtree and lib/LICENSE.rbtree
- *
- * ------------------------------------------------------------------------
- *
- * Unless otherwise noted, the following license applies to STAMP files:
- *
- * Copyright (c) 2007, Stanford University
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are
- * met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above copyright
- *       notice, this list of conditions and the following disclaimer in
- *       the documentation and/or other materials provided with the
- *       distribution.
- *
- *     * Neither the name of Stanford University nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY STANFORD UNIVERSITY ``AS IS'' AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL STANFORD UNIVERSITY BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
- * THE POSSIBILITY OF SUCH DAMAGE.
- *
- * =============================================================================
  */
 
 
@@ -130,51 +76,31 @@
 #include "thread.h"
 #include "timer.h"
 #include "utility.h"
-#include "vector.h"
 #include "tm_transition.h"
+#include <algorithm>
+#include "tm_hacks.h"
 
-__attribute__ ((transaction_pure))
-void tmp_string(char* s)
-{
-  printf("%s", s);
-}
-__attribute__ ((transaction_pure))
-void tmp_int(int i)
-{
-  printf("%d", i);
-}
-__attribute__ ((transaction_pure))
-void tmp_long(long l)
-{
-  printf("%ld", l);
-}
-__attribute__ ((transaction_pure))
-void tmp_float(float f)
-{
-  printf("%f", f);
-}
-
-struct learner_task {
+struct learner_task_t {
     operation_t op;
     long fromId;
     long toId;
     float score;
 };
 
-typedef struct findBestTaskArg {
+struct findBestTaskArg_t {
     long toId;
     learner_t* learnerPtr;
     query_t* queries;
-    vector_t* queryVectorPtr;
-    vector_t* parentQueryVectorPtr;
+    std::vector<query_t*>* queryVectorPtr;
+    std::vector<query_t*>* parentQueryVectorPtr;
     long numTotalParent;
     float basePenalty;
     float baseLogLikelihood;
     bitmap_t* bitmapPtr;
     queue_t* workQueuePtr;
-    vector_t* aQueryVectorPtr;
-    vector_t* bQueryVectorPtr;
-} findBestTaskArg_t;
+    std::vector<query_t*>* aQueryVectorPtr;
+    std::vector<query_t*>* bQueryVectorPtr;
+};
 
 #ifdef TEST_LEARNER
 long global_maxNumEdgeLearned = -1L;
@@ -209,15 +135,15 @@ void
 TMpopulateParentQueryVector (net_t* netPtr,
                              long id,
                              query_t* queries,
-                             vector_t* parentQueryVectorPtr);
+                             std::vector<query_t*>* parentQueryVectorPtr);
 
 __attribute__((transaction_safe))
 void
 TMpopulateQueryVectors (net_t* netPtr,
                         long id,
                         query_t* queries,
-                        vector_t* queryVectorPtr,
-                        vector_t* parentQueryVectorPtr);
+                        std::vector<query_t*>* queryVectorPtr,
+                        std::vector<query_t*>* parentQueryVectorPtr);
 
 __attribute__((transaction_safe))
 learner_task_t*
@@ -254,8 +180,8 @@ compareTask (const void* aPtr, const void* bPtr)
  * -- For vector_sort
  * =============================================================================
  */
-__attribute__((transaction_safe)) int
-compareQuery (const void* aPtr, const void* bPtr)
+__attribute__((transaction_safe))
+int compareQuery (const void* aPtr, const void* bPtr)
 {
     query_t* aQueryPtr = (query_t*)(*(void**)aPtr);
     query_t* bQueryPtr = (query_t*)(*(void**)bPtr);
@@ -263,6 +189,13 @@ compareQuery (const void* aPtr, const void* bPtr)
     return (aQueryPtr->index - bQueryPtr->index);
 }
 
+struct compareQuery_t
+{
+    bool operator()(query_t* l, query_t* r)
+    {
+        return l->index < r->index;
+    }
+};
 
 /* =============================================================================
  * learner_alloc
@@ -276,7 +209,7 @@ learner_alloc (data_t* dataPtr, adtree_t* adtreePtr)
     learnerPtr = (learner_t*)malloc(sizeof(learner_t));
     if (learnerPtr) {
         learnerPtr->adtreePtr = adtreePtr;
-        learnerPtr->netPtr = net_alloc(dataPtr->numVar);
+        learnerPtr->netPtr = new net_t(dataPtr->numVar);
         assert(learnerPtr->netPtr);
         learnerPtr->localBaseLogLikelihoods =
             (float*)malloc(dataPtr->numVar * sizeof(float));
@@ -304,9 +237,10 @@ learner_free (learner_t* learnerPtr)
     list_free(learnerPtr->taskListPtr);
     free(learnerPtr->tasks);
     free(learnerPtr->localBaseLogLikelihoods);
-    net_free(learnerPtr->netPtr);
+    delete learnerPtr->netPtr;
     free(learnerPtr);
 }
+
 /* =============================================================================
  * Logarithm(s)
  * =============================================================================
@@ -366,8 +300,8 @@ double PURE_log (double dat)
 __attribute__((transaction_safe))
 float
 computeSpecificLocalLogLikelihood (adtree_t* adtreePtr,
-                                   vector_t* queryVectorPtr,
-                                   vector_t* parentQueryVectorPtr)
+                                   std::vector<query_t*>* queryVectorPtr,
+                                   std::vector<query_t*>* parentQueryVectorPtr)
 {
   //[wer] __attribute__((transaction_safe)) call
   long count = adtree_getCount(adtreePtr, queryVectorPtr);
@@ -433,13 +367,12 @@ createTaskList (void* argPtr)
     learner_task_t* tasks = learnerPtr->tasks;
 
     query_t queries[2];
-    vector_t* queryVectorPtr = PVECTOR_ALLOC(2);
+    std::vector<query_t*>* queryVectorPtr = make_vector_query();
     assert(queryVectorPtr);
-    status = vector_pushBack(queryVectorPtr, (void*)&queries[0]);
-    assert(status);
+    vector_query_push(queryVectorPtr, &queries[0]);
 
     query_t parentQuery;
-    vector_t* parentQueryVectorPtr = PVECTOR_ALLOC(1);
+    std::vector<query_t*>* parentQueryVectorPtr = make_vector_query();
     assert(parentQueryVectorPtr);
 
     long numVar = adtreePtr->numVar;
@@ -489,8 +422,7 @@ createTaskList (void* argPtr)
      * For each variable, find if the addition of any edge _to_ it is better
      */
 
-    status = PVECTOR_PUSHBACK(parentQueryVectorPtr, (void*)&parentQuery);
-    assert(status);
+    vector_query_push(parentQueryVectorPtr, &parentQuery);
 
     for (v = v_start; v < v_stop; v++) {
 
@@ -502,8 +434,7 @@ createTaskList (void* argPtr)
         long bestLocalIndex = v;
         float bestLocalLogLikelihood = localBaseLogLikelihoods[v];
 
-        status = PVECTOR_PUSHBACK(queryVectorPtr, (void*)&queries[1]);
-        assert(status);
+        vector_query_push(queryVectorPtr, &queries[1]);
 
         long vv;
         for (vv = 0; vv < numVar; vv++) {
@@ -561,7 +492,7 @@ createTaskList (void* argPtr)
 
         } /* foreach other variable */
 
-        PVECTOR_POPBACK(queryVectorPtr);
+        queryVectorPtr->pop_back();
 
         if (bestLocalIndex != v) {
             float logLikelihood = numRecord * (baseLogLikelihood +
@@ -581,8 +512,8 @@ createTaskList (void* argPtr)
 
     } /* for each variable */
 
-    PVECTOR_FREE(queryVectorPtr);
-    PVECTOR_FREE(parentQueryVectorPtr);
+    delete queryVectorPtr;
+    delete parentQueryVectorPtr;
 
 #ifdef TEST_LEARNER
     list_iter_t it;
@@ -634,18 +565,16 @@ void
 populateParentQueryVector (net_t* netPtr,
                            long id,
                            query_t* queries,
-                           vector_t* parentQueryVectorPtr)
+                           std::vector<query_t*>* parentQueryVectorPtr)
 {
-    vector_clear(parentQueryVectorPtr);
+    parentQueryVectorPtr->clear();
 
     list_t* parentIdListPtr = net_getParentIdListPtr(netPtr, id);
     list_iter_t it;
     list_iter_reset(&it, parentIdListPtr);
     while (list_iter_hasNext(&it)) {
         long parentId = (long)list_iter_next(&it);
-        bool status = vector_pushBack(parentQueryVectorPtr,
-                                        (void*)&queries[parentId]);
-        assert(status);
+        vector_query_push(parentQueryVectorPtr, &queries[parentId]);
     }
 }
 
@@ -660,9 +589,9 @@ void
 TMpopulateParentQueryVector (net_t* netPtr,
                              long id,
                              query_t* queries,
-                             vector_t* parentQueryVectorPtr)
+                             std::vector<query_t*>* parentQueryVectorPtr)
 {
-  vector_clear(parentQueryVectorPtr);
+    parentQueryVectorPtr->clear();
 
   list_t* parentIdListPtr = net_getParentIdListPtr(netPtr, id); //__attribute__((transaction_safe))
   list_iter_t it;
@@ -675,9 +604,7 @@ TMpopulateParentQueryVector (net_t* netPtr,
     long parentId = (long)it->nextPtr->dataPtr;
     it = it->nextPtr;
 
-    bool status = PVECTOR_PUSHBACK(parentQueryVectorPtr,
-                                     (void*)&queries[parentId]);
-    assert(status);
+    vector_query_push(parentQueryVectorPtr, &queries[parentId]);
   }
 }
 
@@ -690,19 +617,24 @@ TMpopulateParentQueryVector (net_t* netPtr,
 __attribute__((transaction_safe))
 void
 TMpopulateQueryVectors (net_t* netPtr,
-                      long id,
-                      query_t* queries,
-                      vector_t* queryVectorPtr,
-                      vector_t* parentQueryVectorPtr)
+                        long id,
+                        query_t* queries,
+                        std::vector<query_t*>* queryVectorPtr,
+                        std::vector<query_t*>* parentQueryVectorPtr)
 {
     TMpopulateParentQueryVector(netPtr, id, queries, parentQueryVectorPtr);
 
-    bool status;
-    status = PVECTOR_COPY(queryVectorPtr, parentQueryVectorPtr);
-    assert(status);
-    status = PVECTOR_PUSHBACK(queryVectorPtr, (void*)&queries[id]);
-    assert(status);
-    vector_sort(queryVectorPtr, &compareQuery);
+    // copy parentQueryVectorPtr to queryVectorPtr
+    // [TODO] if we passed references, we could use a copy constructor
+    queryVectorPtr->clear();
+    for (auto i : *parentQueryVectorPtr)
+        vector_query_push(queryVectorPtr, i);
+
+    // PVECTOR_COPY(queryVectorPtr, parentQueryVectorPtr);
+    vector_query_push(queryVectorPtr, &queries[id]);
+    compareQuery_t sorter;
+    std::sort(queryVectorPtr->begin(), queryVectorPtr->end(), sorter);
+    // vector_sort(queryVectorPtr, &compareQuery);
 }
 
 
@@ -717,8 +649,8 @@ computeLocalLogLikelihoodHelper (long i,
                                  long numParent,
                                  adtree_t* adtreePtr,
                                  query_t* queries,
-                                 vector_t* queryVectorPtr,
-                                 vector_t* parentQueryVectorPtr)
+                                 std::vector<query_t*>* queryVectorPtr,
+                                 std::vector<query_t*>* parentQueryVectorPtr)
 {
     if (i >= numParent) {
       //[wer] this function contains a log(), which was not __attribute__((transaction_safe))
@@ -729,7 +661,7 @@ computeLocalLogLikelihoodHelper (long i,
 
     float localLogLikelihood = 0.0;
 
-    query_t* parentQueryPtr = (query_t*)vector_at(parentQueryVectorPtr, i);
+    query_t* parentQueryPtr = parentQueryVectorPtr->at(i);
     long parentIndex = parentQueryPtr->index;
 
     queries[parentIndex].value = 0;
@@ -765,10 +697,10 @@ float
 computeLocalLogLikelihood (long id,
                            adtree_t* adtreePtr,
                            query_t* queries,
-                           vector_t* queryVectorPtr,
-                           vector_t* parentQueryVectorPtr)
+                           std::vector<query_t*>* queryVectorPtr,
+                           std::vector<query_t*>* parentQueryVectorPtr)
 {
-    long numParent = vector_getSize(parentQueryVectorPtr);
+    long numParent = parentQueryVectorPtr->size();
     float localLogLikelihood = 0.0;
 
     queries[id].value = 0;
@@ -805,15 +737,15 @@ TMfindBestInsertTask (learner_task_t * dest,  findBestTaskArg_t* argPtr)
     long       toId                     = argPtr->toId;
     learner_t* learnerPtr               = argPtr->learnerPtr;
     query_t*   queries                  = argPtr->queries;
-    vector_t*  queryVectorPtr           = argPtr->queryVectorPtr;
-    vector_t*  parentQueryVectorPtr     = argPtr->parentQueryVectorPtr;
+    std::vector<query_t*>*  queryVectorPtr           = argPtr->queryVectorPtr;
+    std::vector<query_t*>*  parentQueryVectorPtr     = argPtr->parentQueryVectorPtr;
     long       numTotalParent           = argPtr->numTotalParent;
     float      basePenalty              = argPtr->basePenalty;
     float      baseLogLikelihood        = argPtr->baseLogLikelihood;
     bitmap_t*  invalidBitmapPtr         = argPtr->bitmapPtr;
     queue_t*   workQueuePtr             = argPtr->workQueuePtr;
-    vector_t*  baseParentQueryVectorPtr = argPtr->aQueryVectorPtr;
-    vector_t*  baseQueryVectorPtr       = argPtr->bQueryVectorPtr;
+    std::vector<query_t*>*  baseParentQueryVectorPtr = argPtr->aQueryVectorPtr;
+    std::vector<query_t*>*  baseQueryVectorPtr       = argPtr->bQueryVectorPtr;
 
     bool status;
     adtree_t* adtreePtr               = learnerPtr->adtreePtr;
@@ -826,16 +758,21 @@ TMfindBestInsertTask (learner_task_t * dest,  findBestTaskArg_t* argPtr)
     /*
      * Create base query and parentQuery
      */
-    //[wer] all __attribute__((transaction_safe))
-    status = PVECTOR_COPY(baseParentQueryVectorPtr, parentQueryVectorPtr);
-    assert(status);
-    status = PVECTOR_COPY(baseQueryVectorPtr, baseParentQueryVectorPtr);
-    assert(status);
-    status = PVECTOR_PUSHBACK(baseQueryVectorPtr, (void*)&queries[toId]);
-    assert(status);
+    // copy parentQueryVectorPtr into baseParentQueryVectorPtr and baseQueryVectorPtr
+    // TODO: use copy constructors instead?
+    baseParentQueryVectorPtr->clear();
+    baseQueryVectorPtr->clear();
+    for (auto i : *parentQueryVectorPtr) {
+        vector_query_push(baseParentQueryVectorPtr, i);
+        vector_query_push(baseQueryVectorPtr, i);
+    }
+
+    vector_query_push(baseQueryVectorPtr, &queries[toId]);
 
     //[wer] was TM_PURE due to qsort(), now __attribute__((transaction_safe))
-    vector_sort(queryVectorPtr, &compareQuery);
+    compareQuery_t sorter;
+    std::sort(queryVectorPtr->begin(), queryVectorPtr->end(), sorter);
+    // vector_sort(queryVectorPtr, &compareQuery);
 
     /*
      * Search all possible valid operations for better local log likelihood
@@ -846,7 +783,7 @@ TMfindBestInsertTask (learner_task_t * dest,  findBestTaskArg_t* argPtr)
     float bestLocalLogLikelihood = oldLocalLogLikelihood;
 
     // [wer] __attribute__((transaction_safe)) now
-    status = TMNET_FINDDESCENDANTS(netPtr, toId, invalidBitmapPtr, workQueuePtr);
+    status = TMnet_findDescendants(netPtr, toId, invalidBitmapPtr, workQueuePtr);
 
     assert(status);
     long fromId = -1;
@@ -876,18 +813,23 @@ TMfindBestInsertTask (learner_task_t * dest,  findBestTaskArg_t* argPtr)
             }
 
             //[wer] __attribute__((transaction_safe))
-            status = PVECTOR_COPY(queryVectorPtr, baseQueryVectorPtr);
-            assert(status);
-            status = PVECTOR_PUSHBACK(queryVectorPtr, (void*)&queries[fromId]);
-            assert(status);
+            // TODO: use copy constructor?
+            queryVectorPtr->clear();
+            for (auto i : *baseQueryVectorPtr)
+                vector_query_push(queryVectorPtr, i);
+            vector_query_push(queryVectorPtr, &queries[fromId]);
             //[wer] was TM_PURE due to qsort(), fixed
-            vector_sort(queryVectorPtr, &compareQuery);
+            compareQuery_t sorter;
+            std::sort(queryVectorPtr->begin(), queryVectorPtr->end(), sorter);
+            // vector_sort(queryVectorPtr, &compareQuery);
 
-            status = PVECTOR_COPY(parentQueryVectorPtr, baseParentQueryVectorPtr);
-            assert(status);
-            status = PVECTOR_PUSHBACK(parentQueryVectorPtr, (void*)&queries[fromId]);
-            assert(status);
-            vector_sort(parentQueryVectorPtr, &compareQuery);
+            // TODO: use copy constructor?
+            parentQueryVectorPtr->clear();
+            for (auto i : *baseParentQueryVectorPtr)
+                vector_query_push(parentQueryVectorPtr, i);
+            vector_query_push(parentQueryVectorPtr, &queries[fromId]);
+            std::sort(parentQueryVectorPtr->begin(), parentQueryVectorPtr->end(), sorter);
+            // vector_sort(parentQueryVectorPtr, &compareQuery);
 
             //[wer] in computeLocal...(), there's a function log(), which not __attribute__((transaction_safe))
             float newLocalLogLikelihood = computeLocalLogLikelihood(toId,
@@ -943,20 +885,19 @@ TMfindBestRemoveTask (learner_task_t * dest,  findBestTaskArg_t* argPtr)
     long       toId                     = argPtr->toId;
     learner_t* learnerPtr               = argPtr->learnerPtr;
     query_t*   queries                  = argPtr->queries;
-    vector_t*  queryVectorPtr           = argPtr->queryVectorPtr;
-    vector_t*  parentQueryVectorPtr     = argPtr->parentQueryVectorPtr;
+    std::vector<query_t*>*  queryVectorPtr           = argPtr->queryVectorPtr;
+    std::vector<query_t*>*  parentQueryVectorPtr     = argPtr->parentQueryVectorPtr;
     long       numTotalParent           = argPtr->numTotalParent;
     float      basePenalty              = argPtr->basePenalty;
     float      baseLogLikelihood        = argPtr->baseLogLikelihood;
-    vector_t*  origParentQueryVectorPtr = argPtr->aQueryVectorPtr;
+    std::vector<query_t*>*  origParentQueryVectorPtr = argPtr->aQueryVectorPtr;
 
-    bool status;
     adtree_t* adtreePtr = learnerPtr->adtreePtr;
     net_t* netPtr = learnerPtr->netPtr;
     float* localBaseLogLikelihoods = learnerPtr->localBaseLogLikelihoods;
 
     TMpopulateParentQueryVector(netPtr, toId, queries, origParentQueryVectorPtr);
-    long numParent = PVECTOR_GETSIZE(origParentQueryVectorPtr);
+    long numParent = origParentQueryVectorPtr->size();
 
     /*
      * Search all possible valid operations for better local log likelihood
@@ -969,22 +910,20 @@ TMfindBestRemoveTask (learner_task_t * dest,  findBestTaskArg_t* argPtr)
     long i;
     for (i = 0; i < numParent; i++) {
 
-        query_t* queryPtr = (query_t*)PVECTOR_AT(origParentQueryVectorPtr, i);
+        query_t* queryPtr = origParentQueryVectorPtr->at(i);
         long fromId = queryPtr->index;
 
         /*
          * Create parent query (subset of parents since remove an edge)
          */
 
-        PVECTOR_CLEAR(parentQueryVectorPtr);
+        parentQueryVectorPtr->clear();
 
         long p;
         for (p = 0; p < numParent; p++) {
             if (p != fromId) {
-                query_t* queryPtr = (query_t*)PVECTOR_AT(origParentQueryVectorPtr, p);
-                status = PVECTOR_PUSHBACK(parentQueryVectorPtr,
-                                          (void*)&queries[queryPtr->index]);
-                assert(status);
+                query_t* queryPtr = origParentQueryVectorPtr->at(p);
+                vector_query_push(parentQueryVectorPtr, &queries[queryPtr->index]);
             }
         } /* create new parent query */
 
@@ -992,11 +931,14 @@ TMfindBestRemoveTask (learner_task_t * dest,  findBestTaskArg_t* argPtr)
          * Create query
          */
 
-        status = PVECTOR_COPY(queryVectorPtr, parentQueryVectorPtr);
-        assert(status);
-        status = PVECTOR_PUSHBACK(queryVectorPtr, (void*)&queries[toId]);
-        assert(status);
-        vector_sort(queryVectorPtr, &compareQuery);
+        // TODO: use copy constructor?
+        queryVectorPtr->clear();
+        for (auto i : *parentQueryVectorPtr)
+            vector_query_push(queryVectorPtr, i);
+        vector_query_push(queryVectorPtr, &queries[toId]);
+        compareQuery_t sorter;
+        std::sort(queryVectorPtr->begin(), queryVectorPtr->end(), sorter);
+        // vector_sort(queryVectorPtr, &compareQuery);
 
         /*
          * See if removing parent is better
@@ -1057,23 +999,22 @@ TMfindBestReverseTask (learner_task_t * dest,  findBestTaskArg_t* argPtr)
     long       toId                         = argPtr->toId;
     learner_t* learnerPtr                   = argPtr->learnerPtr;
     query_t*   queries                      = argPtr->queries;
-    vector_t*  queryVectorPtr               = argPtr->queryVectorPtr;
-    vector_t*  parentQueryVectorPtr         = argPtr->parentQueryVectorPtr;
+    std::vector<query_t*>*  queryVectorPtr               = argPtr->queryVectorPtr;
+    std::vector<query_t*>*  parentQueryVectorPtr         = argPtr->parentQueryVectorPtr;
     long       numTotalParent               = argPtr->numTotalParent;
     float      basePenalty                  = argPtr->basePenalty;
     float      baseLogLikelihood            = argPtr->baseLogLikelihood;
     bitmap_t*  visitedBitmapPtr             = argPtr->bitmapPtr;
     queue_t*   workQueuePtr                 = argPtr->workQueuePtr;
-    vector_t*  toOrigParentQueryVectorPtr   = argPtr->aQueryVectorPtr;
-    vector_t*  fromOrigParentQueryVectorPtr = argPtr->bQueryVectorPtr;
+    std::vector<query_t*>*  toOrigParentQueryVectorPtr   = argPtr->aQueryVectorPtr;
+    std::vector<query_t*>*  fromOrigParentQueryVectorPtr = argPtr->bQueryVectorPtr;
 
-    bool    status;
     adtree_t* adtreePtr               = learnerPtr->adtreePtr;
     net_t*    netPtr                  = learnerPtr->netPtr;
     float*    localBaseLogLikelihoods = learnerPtr->localBaseLogLikelihoods;
 
     TMpopulateParentQueryVector(netPtr, toId, queries, toOrigParentQueryVectorPtr);
-    long numParent = PVECTOR_GETSIZE(toOrigParentQueryVectorPtr);//__attribute__((transaction_safe))
+    long numParent = toOrigParentQueryVectorPtr->size();
 
     /*
      * Search all possible valid operations for better local log likelihood
@@ -1086,7 +1027,7 @@ TMfindBestReverseTask (learner_task_t * dest,  findBestTaskArg_t* argPtr)
 
     long i;
     for (i = 0; i < numParent; i++) {
-      query_t* queryPtr = (query_t*)PVECTOR_AT(toOrigParentQueryVectorPtr, i);
+        query_t* queryPtr = toOrigParentQueryVectorPtr->at(i);
       fromId = queryPtr->index;
 
       bestLocalLogLikelihood = oldLocalLogLikelihood +
@@ -1102,15 +1043,13 @@ TMfindBestReverseTask (learner_task_t * dest,  findBestTaskArg_t* argPtr)
        * Create parent query (subset of parents since remove an edge)
        */
 
-      PVECTOR_CLEAR(parentQueryVectorPtr);
+      parentQueryVectorPtr->clear();
 
       long p;
       for (p = 0; p < numParent; p++) {
         if (p != fromId) {
-          query_t* queryPtr = (query_t*)PVECTOR_AT(toOrigParentQueryVectorPtr, p);
-          status = PVECTOR_PUSHBACK(parentQueryVectorPtr,
-                                    (void*)&queries[queryPtr->index]);
-          assert(status);
+            query_t* queryPtr = toOrigParentQueryVectorPtr->at(p);
+            vector_query_push(parentQueryVectorPtr, &queries[queryPtr->index]);
         }
       } /* create new parent query */
 
@@ -1118,13 +1057,16 @@ TMfindBestReverseTask (learner_task_t * dest,  findBestTaskArg_t* argPtr)
          * Create query
          */
 
-      status = PVECTOR_COPY(queryVectorPtr, parentQueryVectorPtr);
-      assert(status);
-      status = PVECTOR_PUSHBACK(queryVectorPtr, (void*)&queries[toId]);
-      assert(status);
+      // TODO: use copy constructor?
+      queryVectorPtr->clear();
+      for (auto i : *parentQueryVectorPtr)
+          vector_query_push(queryVectorPtr, i);
+      vector_query_push(queryVectorPtr, &queries[toId]);
 
       //[wer]__attribute__((transaction_safe))
-      vector_sort(queryVectorPtr, &compareQuery);
+      compareQuery_t sorter;
+      std::sort(queryVectorPtr->begin(), queryVectorPtr->end(), sorter);
+      // vector_sort(queryVectorPtr, &compareQuery);
 
       /*
        * Get log likelihood for removing parent from toId
@@ -1141,17 +1083,21 @@ TMfindBestReverseTask (learner_task_t * dest,  findBestTaskArg_t* argPtr)
        * Get log likelihood for adding parent to fromId
        */
 
-      status = PVECTOR_COPY(parentQueryVectorPtr, fromOrigParentQueryVectorPtr);
-      assert(status);
-      status = PVECTOR_PUSHBACK(parentQueryVectorPtr, (void*)&queries[toId]);
-      assert(status);
-      vector_sort(parentQueryVectorPtr, &compareQuery);
+      // TODO: use copy ctor?
+      parentQueryVectorPtr->clear();
+      for (auto i : *fromOrigParentQueryVectorPtr)
+          vector_query_push(parentQueryVectorPtr, i);
+      vector_query_push(parentQueryVectorPtr, &queries[toId]);
+      std::sort(parentQueryVectorPtr->begin(), parentQueryVectorPtr->end(), sorter);
+      // vector_sort(parentQueryVectorPtr, &compareQuery);
 
-      status = PVECTOR_COPY(queryVectorPtr, parentQueryVectorPtr);
-      assert(status);
-      status = PVECTOR_PUSHBACK(queryVectorPtr, (void*)&queries[fromId]);
-      assert(status);
-      vector_sort(queryVectorPtr, &compareQuery);
+      // TODO: use copy ctor?
+      queryVectorPtr->clear();
+      for (auto i : *parentQueryVectorPtr)
+          vector_query_push(queryVectorPtr, i);
+      vector_query_push(queryVectorPtr, &queries[fromId]);
+      std::sort(queryVectorPtr->begin(), queryVectorPtr->end(), sorter);
+      // vector_sort(queryVectorPtr, &compareQuery);
 
       newLocalLogLikelihood += computeLocalLogLikelihood(fromId,
                                                          adtreePtr,
@@ -1175,13 +1121,13 @@ TMfindBestReverseTask (learner_task_t * dest,  findBestTaskArg_t* argPtr)
 
     if (bestFromId != toId) {
       bool isTaskValid = true;
-      TMNET_APPLYOPERATION(netPtr, OPERATION_REMOVE, bestFromId, toId);
-      if (TMNET_ISPATH(netPtr, bestFromId, toId, visitedBitmapPtr,
+      TMnet_applyOperation(netPtr, OPERATION_REMOVE, bestFromId, toId);
+      if (TMnet_isPath(netPtr, bestFromId, toId, visitedBitmapPtr,
                        workQueuePtr)) {
         isTaskValid = false;
       }
 
-      TMNET_APPLYOPERATION(netPtr, OPERATION_INSERT, bestFromId, toId);
+      TMnet_applyOperation(netPtr, OPERATION_INSERT, bestFromId, toId);
       if (!isTaskValid)
         bestFromId = toId;
     }
@@ -1248,13 +1194,13 @@ learnStructure (void* argPtr)
 
     float basePenalty = (float)(-0.5 * log((double)numRecord));
 
-    vector_t* queryVectorPtr = PVECTOR_ALLOC(1);
+    std::vector<query_t*>* queryVectorPtr = make_vector_query();
     assert(queryVectorPtr);
-    vector_t* parentQueryVectorPtr = PVECTOR_ALLOC(1);
+    std::vector<query_t*>* parentQueryVectorPtr = make_vector_query();
     assert(parentQueryVectorPtr);
-    vector_t* aQueryVectorPtr = PVECTOR_ALLOC(1);
+    std::vector<query_t*>* aQueryVectorPtr = make_vector_query();
     assert(aQueryVectorPtr);
-    vector_t* bQueryVectorPtr = PVECTOR_ALLOC(1);
+    std::vector<query_t*>* bQueryVectorPtr = make_vector_query();
     assert(bQueryVectorPtr);
 
     findBestTaskArg_t arg;
@@ -1293,8 +1239,8 @@ learnStructure (void* argPtr)
 
         switch (op) {
          case OPERATION_INSERT: {
-                if (TMNET_HASEDGE(netPtr, fromId, toId)
-                    || TMNET_ISPATH(netPtr,
+                if (TMnet_hasEdge(netPtr, fromId, toId)
+                    || TMnet_isPath(netPtr,
                                     toId,
                                     fromId,
                                     visitedBitmapPtr,
@@ -1312,8 +1258,8 @@ learnStructure (void* argPtr)
             }
          case OPERATION_REVERSE: {
                 /* Temporarily remove edge for check */
-                TMNET_APPLYOPERATION(netPtr, OPERATION_REMOVE, fromId, toId);
-                if (TMNET_ISPATH(netPtr,
+                TMnet_applyOperation(netPtr, OPERATION_REMOVE, fromId, toId);
+                if (TMnet_isPath(netPtr,
                                  fromId,
                                  toId,
                                  visitedBitmapPtr,
@@ -1321,7 +1267,7 @@ learnStructure (void* argPtr)
                 {
                     isTaskValid = false;
                 }
-                TMNET_APPLYOPERATION(netPtr, OPERATION_INSERT, fromId, toId);
+                TMnet_applyOperation(netPtr, OPERATION_INSERT, fromId, toId);
                 break;
             }
 
@@ -1341,7 +1287,7 @@ learnStructure (void* argPtr)
          */
 
         if (isTaskValid) {
-          TMNET_APPLYOPERATION(netPtr, op, fromId, toId);
+          TMnet_applyOperation(netPtr, op, fromId, toId);
         }
 
         }
@@ -1537,10 +1483,10 @@ learnStructure (void* argPtr)
 
     TMBITMAP_FREE(visitedBitmapPtr);
     TMQUEUE_FREE(workQueuePtr);
-    PVECTOR_FREE(bQueryVectorPtr);
-    PVECTOR_FREE(aQueryVectorPtr);
-    PVECTOR_FREE(queryVectorPtr);
-    PVECTOR_FREE(parentQueryVectorPtr);
+    delete bQueryVectorPtr;
+    delete aQueryVectorPtr;
+    delete queryVectorPtr;
+    delete parentQueryVectorPtr;
     free(queries);
 }
 
@@ -1580,9 +1526,9 @@ learner_score (learner_t* learnerPtr)
     adtree_t* adtreePtr = learnerPtr->adtreePtr;
     net_t* netPtr = learnerPtr->netPtr;
 
-    vector_t* queryVectorPtr = vector_alloc(1);
+    std::vector<query_t*>* queryVectorPtr = make_vector_query();
     assert(queryVectorPtr);
-    vector_t* parentQueryVectorPtr = vector_alloc(1);
+    std::vector<query_t*>* parentQueryVectorPtr = make_vector_query();
     assert(parentQueryVectorPtr);
 
     long numVar = adtreePtr->numVar;
@@ -1616,8 +1562,8 @@ learner_score (learner_t* learnerPtr)
         logLikelihood += localLogLikelihood;
     }
 
-    vector_free(queryVectorPtr);
-    vector_free(parentQueryVectorPtr);
+    delete queryVectorPtr;
+    delete parentQueryVectorPtr;
     free(queries);
 
     long numRecord = adtreePtr->numRecord;
@@ -1703,11 +1649,3 @@ main (int argc, char* argv[])
 }
 
 #endif /* TEST_LEARNER */
-
-
-/* =============================================================================
- *
- * End of learner.h
- *
- * =============================================================================
- */

@@ -1,73 +1,6 @@
-/* =============================================================================
- *
- * data.c
- *
- * =============================================================================
- *
- * Copyright (C) Stanford University, 2006.  All Rights Reserved.
- * Author: Chi Cao Minh
- *
- * =============================================================================
- *
- * For the license of bayes/sort.h and bayes/sort.c, please see the header
- * of the files.
- *
- * ------------------------------------------------------------------------
- *
- * For the license of kmeans, please see kmeans/LICENSE.kmeans
- *
- * ------------------------------------------------------------------------
- *
- * For the license of ssca2, please see ssca2/COPYRIGHT
- *
- * ------------------------------------------------------------------------
- *
- * For the license of lib/mt19937ar.c and lib/mt19937ar.h, please see the
- * header of the files.
- *
- * ------------------------------------------------------------------------
- *
- * For the license of lib/rbtree.h and lib/rbtree.c, please see
- * lib/LEGALNOTICE.rbtree and lib/LICENSE.rbtree
- *
- * ------------------------------------------------------------------------
- *
- * Unless otherwise noted, the following license applies to STAMP files:
- *
- * Copyright (c) 2007, Stanford University
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are
- * met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above copyright
- *       notice, this list of conditions and the following disclaimer in
- *       the documentation and/or other materials provided with the
- *       distribution.
- *
- *     * Neither the name of Stanford University nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY STANFORD UNIVERSITY ``AS IS'' AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL STANFORD UNIVERSITY BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
- * THE POSSIBILITY OF SUCH DAMAGE.
- *
- * =============================================================================
+/*
+ * PLEASE SEE LICENSE FILE FOR LICENSING AND COPYRIGHT INFORMATION
  */
-
 
 #include <assert.h>
 #include <stdlib.h>
@@ -76,7 +9,6 @@
 #include "data.h"
 #include "net.h"
 #include "sort.h"
-#include "vector.h"
 
 enum data_config {
     DATA_PRECISION = 100,
@@ -143,7 +75,7 @@ data_generate (data_t* dataPtr, long seed, long maxNumParent, long percentParent
      */
 
     long numVar = dataPtr->numVar;
-    net_t* netPtr = net_alloc(numVar);
+    net_t* netPtr = new net_t(numVar);
     assert(netPtr);
     net_generateRandomEdges(netPtr, maxNumParent, percentParent, randomPtr);
 
@@ -179,7 +111,7 @@ data_generate (data_t* dataPtr, long seed, long maxNumParent, long percentParent
     queue_t* workQueuePtr = queue_alloc(-1);
     assert(workQueuePtr);
 
-    vector_t* dependencyVectorPtr = vector_alloc(1);
+    std::vector<long>* dependencyVectorPtr = new std::vector<long>();
     assert(dependencyVectorPtr);
 
     bitmap_t* orderedBitmapPtr = (bitmap_t*)bitmap_alloc(numVar);
@@ -208,8 +140,7 @@ data_generate (data_t* dataPtr, long seed, long maxNumParent, long percentParent
                 long id = (long)queue_pop(workQueuePtr);
                 status = bitmap_set(doneBitmapPtr, id);
                 assert(status);
-                status = vector_pushBack(dependencyVectorPtr, (void*)id);
-                assert(status);
+                dependencyVectorPtr->push_back(id);
                 list_t* parentIdListPtr = net_getParentIdListPtr(netPtr, id);
                 list_iter_t it;
                 list_iter_reset(&it, parentIdListPtr);
@@ -223,11 +154,10 @@ data_generate (data_t* dataPtr, long seed, long maxNumParent, long percentParent
             /*
              * Create ordering
              */
-
-            long i;
-            long n = vector_getSize(dependencyVectorPtr);
-            for (i = 0; i < n; i++) {
-                long id = (long)vector_popBack(dependencyVectorPtr);
+            long n = dependencyVectorPtr->size();
+            for (long i = 0; i < n; i++) {
+                long id = dependencyVectorPtr->back();
+                dependencyVectorPtr->pop_back();
                 if (!bitmap_isSet(orderedBitmapPtr, id)) {
                     bitmap_set(orderedBitmapPtr, id);
                     order[numOrder++] = id;
@@ -273,7 +203,7 @@ data_generate (data_t* dataPtr, long seed, long maxNumParent, long percentParent
 
     bitmap_free(doneBitmapPtr);
     bitmap_free(orderedBitmapPtr);
-    vector_free(dependencyVectorPtr);
+    delete dependencyVectorPtr;
     queue_free(workQueuePtr);
     free(order);
     for (v = 0; v < numVar; v++) {
@@ -578,11 +508,3 @@ main ()
 
 
 #endif /* TEST_DATA */
-
-
-/* =============================================================================
- *
- * End of data.c
- *
- * =============================================================================
- */

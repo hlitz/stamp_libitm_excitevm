@@ -1,101 +1,34 @@
-/* =============================================================================
- *
- * net.h
- *
- * =============================================================================
- *
- * Copyright (C) Stanford University, 2006.  All Rights Reserved.
- * Author: Chi Cao Minh
- *
- * =============================================================================
- *
- * For the license of bayes/sort.h and bayes/sort.c, please see the header
- * of the files.
- *
- * ------------------------------------------------------------------------
- *
- * For the license of kmeans, please see kmeans/LICENSE.kmeans
- *
- * ------------------------------------------------------------------------
- *
- * For the license of ssca2, please see ssca2/COPYRIGHT
- *
- * ------------------------------------------------------------------------
- *
- * For the license of lib/mt19937ar.c and lib/mt19937ar.h, please see the
- * header of the files.
- *
- * ------------------------------------------------------------------------
- *
- * For the license of lib/rbtree.h and lib/rbtree.c, please see
- * lib/LEGALNOTICE.rbtree and lib/LICENSE.rbtree
- *
- * ------------------------------------------------------------------------
- *
- * Unless otherwise noted, the following license applies to STAMP files:
- *
- * Copyright (c) 2007, Stanford University
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are
- * met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above copyright
- *       notice, this list of conditions and the following disclaimer in
- *       the documentation and/or other materials provided with the
- *       distribution.
- *
- *     * Neither the name of Stanford University nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY STANFORD UNIVERSITY ``AS IS'' AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL STANFORD UNIVERSITY BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
- * THE POSSIBILITY OF SUCH DAMAGE.
- *
- * =============================================================================
+/*
+ * PLEASE SEE LICENSE FILE FOR LICENSING AND COPYRIGHT INFORMATION
  */
 
-
-#ifndef NET_H
-#define NET_H 1
-
+#pragma once
 
 #include "bitmap.h"
 #include "list.h"
 #include "operation.h"
 #include "queue.h"
+#include <vector>
 
-struct net_t;
+enum net_node_mark_t {
+    NET_NODE_MARK_INIT = 0,
+    NET_NODE_MARK_DONE = 1,
+    NET_NODE_MARK_TEST = 2
+};
 
+struct net_node_t {
+    long id;
+    list_t* parentIdListPtr;
+    list_t* childIdListPtr;
+    net_node_mark_t mark;
+};
 
-/* =============================================================================
- * net_alloc
- * =============================================================================
- */
-net_t*
-net_alloc (long numNode);
+struct net_t {
+    std::vector<net_node_t*>* nodeVectorPtr;
 
-
-/* =============================================================================
- * net_free
- * =============================================================================
- */
-void
-net_free (net_t* netPtr);
-
+    net_t(long numNode);
+    ~net_t();
+};
 
 /* =============================================================================
  * TMnet_applyOperation
@@ -103,8 +36,7 @@ net_free (net_t* netPtr);
  */
 __attribute__((transaction_safe))
 void
-TMnet_applyOperation (
-                      net_t* netPtr, operation_t op, long fromId, long toId);
+TMnet_applyOperation (net_t* netPtr, operation_t op, long fromId, long toId);
 
 
 /* =============================================================================
@@ -193,35 +125,3 @@ net_generateRandomEdges (net_t* netPtr,
                          long maxNumParent,
                          long percentParent,
                          std::mt19937* randomPtr);
-
-
-#define TMNET_APPLYOPERATION(net, op, from, to)     TMnet_applyOperation(net, \
-                                                                         op, \
-                                                                         from, \
-                                                                         to)
-#define TMNET_HASEDGE(net, from, to)                TMnet_hasEdge(net, \
-                                                                  from, \
-                                                                  to)
-#define TMNET_ISPATH(net, from, to, bmp, wq)        TMnet_isPath(net, \
-                                                                 from, \
-                                                                 to, \
-                                                                 bmp, \
-                                                                 wq)
-#define TMNET_FINDANCESTORS(net, id, bmp, wq)       TMnet_findAncestors(net, \
-                                                                        id, \
-                                                                        bmp, \
-                                                                        wq)
-#define TMNET_FINDDESCENDANTS(net, id, bmp, wq)     TMnet_findDescendants(net, \
-                                                                          id, \
-                                                                          bmp, \
-                                                                          wq)
-
-#endif /* NET_H */
-
-
-/* =============================================================================
- *
- * End of net.h
- *
- * =============================================================================
- */

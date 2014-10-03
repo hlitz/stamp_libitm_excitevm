@@ -1,81 +1,6 @@
-/* =============================================================================
- *
- * adtree.c
- *
- * =============================================================================
- *
- * Copyright (C) Stanford University, 2006.  All Rights Reserved.
- * Author: Chi Cao Minh
- *
- * =============================================================================
- *
- * Reference:
- *
- * A. Moore and M.-S. Lee. Cached sufficient statistics for efficient machine
- * learning with large datasets. Journal of Artificial Intelligence Research 8
- * (1998), pp 67-91.
- *
- * =============================================================================
- *
- * For the license of bayes/sort.h and bayes/sort.c, please see the header
- * of the files.
- *
- * ------------------------------------------------------------------------
- *
- * For the license of kmeans, please see kmeans/LICENSE.kmeans
- *
- * ------------------------------------------------------------------------
- *
- * For the license of ssca2, please see ssca2/COPYRIGHT
- *
- * ------------------------------------------------------------------------
- *
- * For the license of lib/mt19937ar.c and lib/mt19937ar.h, please see the
- * header of the files.
- *
- * ------------------------------------------------------------------------
- *
- * For the license of lib/rbtree.h and lib/rbtree.c, please see
- * lib/LEGALNOTICE.rbtree and lib/LICENSE.rbtree
- *
- * ------------------------------------------------------------------------
- *
- * Unless otherwise noted, the following license applies to STAMP files:
- *
- * Copyright (c) 2007, Stanford University
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are
- * met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above copyright
- *       notice, this list of conditions and the following disclaimer in
- *       the documentation and/or other materials provided with the
- *       distribution.
- *
- *     * Neither the name of Stanford University nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY STANFORD UNIVERSITY ``AS IS'' AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL STANFORD UNIVERSITY BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
- * THE POSSIBILITY OF SUCH DAMAGE.
- *
- * =============================================================================
+/*
+ * PLEASE SEE LICENSE FILE FOR LICENSING AND COPYRIGHT INFORMATION
  */
-
 
 #include <assert.h>
 #include <stdlib.h>
@@ -83,14 +8,8 @@
 #include "data.h"
 #include "query.h"
 #include "utility.h"
-#include "vector.h"
 #include "tm_transition.h"
-
-__attribute__((transaction_pure)) //TMprint()
-void TMprinti(int i)
-{
-    printf("%d", i);
-}
+#include "tm_hacks.h"
 
 /* =============================================================================
  * allocNode
@@ -103,7 +22,7 @@ allocNode (long index)
 
     nodePtr = (adtree_node_t*)malloc(sizeof(adtree_node_t));
     if (nodePtr) {
-        nodePtr->varyVectorPtr = vector_alloc(1);
+        nodePtr->varyVectorPtr = new std::vector<adtree_vary_t*>();
         if (nodePtr->varyVectorPtr == NULL) {
             free(nodePtr);
             return NULL;
@@ -124,7 +43,7 @@ allocNode (long index)
 static void
 freeNode (adtree_node_t* nodePtr)
 {
-    vector_free(nodePtr->varyVectorPtr);
+    delete nodePtr->varyVectorPtr;
     free(nodePtr);
 }
 
@@ -189,11 +108,11 @@ static void
 freeNodes (adtree_node_t* nodePtr)
 {
     if (nodePtr) {
-        vector_t* varyVectorPtr = nodePtr->varyVectorPtr;
+        std::vector<adtree_vary_t*>* varyVectorPtr = nodePtr->varyVectorPtr;
         long v;
-        long numVary = vector_getSize(varyVectorPtr);
+        long numVary = varyVectorPtr->size();
         for (v = 0; v < numVary; v++) {
-            adtree_vary_t* varyPtr = (adtree_vary_t*)vector_at(varyVectorPtr, v);
+            adtree_vary_t* varyPtr = varyVectorPtr->at(v);
             freeNodes(varyPtr->zeroNodePtr);
             freeNodes(varyPtr->oneNodePtr);
             freeVary(varyPtr);
@@ -290,7 +209,7 @@ makeNode (long parentIndex,
 
     nodePtr->count = numRecord;
 
-    vector_t* varyVectorPtr = nodePtr->varyVectorPtr;
+    std::vector<adtree_vary_t*>* varyVectorPtr = nodePtr->varyVectorPtr;
 
     long v;
     long numVar = dataPtr->numVar;
@@ -298,8 +217,7 @@ makeNode (long parentIndex,
         adtree_vary_t* varyPtr =
             makeVary(parentIndex, v, start, numRecord, dataPtr);
         assert(varyPtr);
-        bool status = vector_pushBack(varyVectorPtr, (void*)varyPtr);
-        assert(status);
+        varyVectorPtr->push_back(varyPtr);
     }
 
     return nodePtr;
@@ -331,7 +249,7 @@ long
 getCount (adtree_node_t* nodePtr,
           long i,
           long q,
-          vector_t* queryVectorPtr,
+          std::vector<query_t*>* queryVectorPtr,
           long lastQueryIndex,
           adtree_t* adtreePtr)
 {
@@ -346,47 +264,40 @@ getCount (adtree_node_t* nodePtr,
 
     long count = 0L;
 
-    query_t* queryPtr = (query_t*)vector_at(queryVectorPtr, q);
+    query_t* queryPtr = queryVectorPtr->at(q);
     if (!queryPtr) {
         return nodePtr->count;
     }
     long queryIndex = queryPtr->index;
     assert(queryIndex <= lastQueryIndex);
-    vector_t* varyVectorPtr = nodePtr->varyVectorPtr;
-    adtree_vary_t* varyPtr = (adtree_vary_t*)vector_at(varyVectorPtr,
-                                                       (queryIndex - nodeIndex - 1));
+    std::vector<adtree_vary_t*>* varyVectorPtr = nodePtr->varyVectorPtr;
+    adtree_vary_t* varyPtr = varyVectorPtr->at((queryIndex - nodeIndex - 1));
     assert(varyPtr);
 
     long queryValue = queryPtr->value;
-
     if (queryValue == varyPtr->mostCommonValue) {
-
         /*
          * We do not explicitly store the counts for the most common value.
          * We can calculate it by finding the count of the query without
          * the current (superCount) and subtracting the count for the
          * query with the current toggled (invertCount).
          */
-        long numQuery = vector_getSize(queryVectorPtr);
+        long numQuery = queryVectorPtr->size();
         //[wer] PVECTOR_ALLOC is transformed into TM_SAFE
-        vector_t* superQueryVectorPtr = PVECTOR_ALLOC(numQuery - 1);
-
+        std::vector<query_t*>* superQueryVectorPtr = make_vector_query(numQuery - 1);
         assert(superQueryVectorPtr);
 
-        long qq;
-        for (qq = 0; qq < numQuery; qq++) {
+        for (long qq = 0; qq < numQuery; qq++) {
             if (qq != q) {
-              //[wer] TM_SAFE call
-                bool status = vector_pushBack(superQueryVectorPtr,
-                                                vector_at(queryVectorPtr, qq));
-                assert(status);
+                //[wer] TM_SAFE call
+                auto res = queryVectorPtr->at(qq);
+                vector_query_push(superQueryVectorPtr, res);
             }
         }
-
         long superCount = adtree_getCount(adtreePtr, superQueryVectorPtr);
 
         //[wer]TM_SAFE
-        PVECTOR_FREE(superQueryVectorPtr);
+        delete superQueryVectorPtr;
 
         long invertCount;
         if (queryValue == 0) {
@@ -457,7 +368,7 @@ getCount (adtree_node_t* nodePtr,
 //[wer] called in learner.c inside a TM_SAFE function
 __attribute__((transaction_safe))
 long
-adtree_getCount (adtree_t* adtreePtr, vector_t* queryVectorPtr)
+adtree_getCount (adtree_t* adtreePtr, std::vector<query_t*>* queryVectorPtr)
 {
     adtree_node_t* rootNodePtr = adtreePtr->rootNodePtr;
     if (rootNodePtr == NULL) {
@@ -465,9 +376,9 @@ adtree_getCount (adtree_t* adtreePtr, vector_t* queryVectorPtr)
     }
 
     long lastQueryIndex = -1L;
-    long numQuery = vector_getSize(queryVectorPtr);
+    long numQuery = queryVectorPtr->size();
     if (numQuery > 0) {
-        query_t* lastQueryPtr = (query_t*)vector_at(queryVectorPtr, (numQuery - 1));
+        query_t* lastQueryPtr = queryVectorPtr->at((numQuery - 1));
         lastQueryIndex = lastQueryPtr->index;
     }
     //[wer] this function should be safe
@@ -521,7 +432,7 @@ printNode (adtree_node_t* nodePtr)
     if (nodePtr) {
         printf("[node] index=%li value=%li count=%li\n",
                nodePtr->index, nodePtr->value, nodePtr->count);
-        vector_t* varyVectorPtr = nodePtr->varyVectorPtr;
+        std::vector<adtree_vary_t*>* varyVectorPtr = nodePtr->varyVectorPtr;
         long v;
         long numVary = vector_getSize(varyVectorPtr);
         for (v = 0; v < numVary; v++) {
@@ -553,7 +464,7 @@ printAdtree (adtree_t* adtreePtr)
 
 
 static void
-printQuery (vector_t* queryVectorPtr)
+printQuery (std::vector<adtree_vary_t*>* queryVectorPtr)
 {
     printf("[");
     long q;
@@ -567,7 +478,7 @@ printQuery (vector_t* queryVectorPtr)
 
 
 static long
-countData (data_t* dataPtr, vector_t* queryVectorPtr)
+countData (data_t* dataPtr, std::vector<adtree_vary_t*>* queryVectorPtr)
 {
     long count = 0;
     long numQuery = vector_getSize(queryVectorPtr);
@@ -600,7 +511,7 @@ countData (data_t* dataPtr, vector_t* queryVectorPtr)
 static void
 testCount (adtree_t* adtreePtr,
            data_t* dataPtr,
-           vector_t* queryVectorPtr,
+           std::vector<adtree_vary_t*>* queryVectorPtr,
            long index,
            long numVar)
 {
@@ -640,7 +551,7 @@ static void
 testCounts (adtree_t* adtreePtr, data_t* dataPtr)
 {
     long numVar = dataPtr->numVar;
-    vector_t* queryVectorPtr = vector_alloc(numVar);
+    std::vector<adtree_vary_t*>* queryVectorPtr = vector_alloc(numVar);
     long v;
     for (v = -1; v < numVar; v++) {
         testCount(adtreePtr, dataPtr, queryVectorPtr, v, dataPtr->numVar);
@@ -716,11 +627,3 @@ main ()
 
 
 #endif /* TEST_ADTREE */
-
-
-/* =============================================================================
- *
- * End of adtree.c
- *
- * =============================================================================
- */
