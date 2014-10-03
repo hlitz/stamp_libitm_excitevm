@@ -9,8 +9,8 @@
 #include <stdlib.h>
 #include "coordinate.h"
 #include "element.h"
-#include "pair.h"
 #include "tm_transition.h"
+#include "tm_hacks.h"
 
 #if defined(TEST_ELEMENT) || defined(TEST_MESH)
 double global_angleConstraint = 20.0;
@@ -269,24 +269,6 @@ element_listCompare (const void* aPtr, const void* bPtr)
     return element_compare(aElementPtr, bElementPtr);
 }
 
-
-/* =============================================================================
- * element_mapCompare
- *
- * For use in MAP_T
- * =============================================================================
- */
-__attribute__((transaction_safe))
-long
-element_mapCompare (const pair_t* aPtr, const pair_t* bPtr)
-{
-    element_t* aElementPtr = (element_t*)(aPtr->firstPtr);
-    element_t* bElementPtr = (element_t*)(bPtr->firstPtr);
-
-    return element_compare(aElementPtr, bElementPtr);
-}
-
-
 __attribute__((transaction_safe))
 element_t::element_t(coordinate_t* _coordinates, long _numCoordinate)
 {
@@ -298,7 +280,7 @@ element_t::element_t(coordinate_t* _coordinates, long _numCoordinate)
     checkAngles(this);
     calculateCircumCircle(this);
     initEdges(this, numCoordinate);
-    neighborListPtr = TMLIST_ALLOC(element_listCompare);
+    neighborListPtr = new std::set<element_t*, element_listCompare_t>();
     assert(neighborListPtr);
     isGarbage = false;
     isReferenced = false;
@@ -307,7 +289,7 @@ element_t::element_t(coordinate_t* _coordinates, long _numCoordinate)
 __attribute__((transaction_safe))
 element_t::~element_t()
 {
-    TMLIST_FREE(neighborListPtr);
+    delete neighborListPtr;
 }
 
 __attribute__((transaction_safe))
@@ -366,24 +348,6 @@ element_listCompareEdge (const void* aPtr, const void* bPtr)
     return compareEdge(aEdgePtr, bEdgePtr);
 }
 
-
-/* =============================================================================
- * element_mapCompareEdge
- *
-  * For use in MAP_T
- * =============================================================================
- */
-__attribute__((transaction_safe))
-long
-element_mapCompareEdge (const pair_t* aPtr, const pair_t* bPtr)
-{
-    edge_t* aEdgePtr = (edge_t*)(aPtr->firstPtr);
-    edge_t* bEdgePtr = (edge_t*)(bPtr->firstPtr);
-
-    return compareEdge(aEdgePtr, bEdgePtr);
-}
-
-
 /* =============================================================================
  * element_heapCompare
  *
@@ -413,6 +377,22 @@ element_heapCompare (const void* aPtr, const void* bPtr)
     return 0; /* do not care */
 }
 
+bool element_heapCompare_t::operator()(const element_t* a, const element_t* b)
+{
+   if (a->encroachedEdgePtr) {
+        if (b->encroachedEdgePtr) {
+            return false; /* do not care */
+        } else {
+            return reverse; // gt, so flip
+        }
+    }
+
+    if (b->encroachedEdgePtr) {
+        return !reverse; // lt, so don't flip
+    }
+
+    return false; /* do not care */
+}
 
 __attribute__((transaction_safe))
 bool element_t::isInCircumCircle(coordinate_t* coordinatePtr)
@@ -490,11 +470,11 @@ void element_t::setIsGarbage(bool status)
 __attribute__((transaction_safe))
 void element_t::addNeighbor(element_t* neighborPtr)
 {
-    TMLIST_INSERT(neighborListPtr, (void*)neighborPtr);
+    custom_set_insertion(neighborListPtr, neighborPtr);
 }
 
 __attribute__((transaction_safe))
-list_t* element_t::getNeighborListPtr()
+std::set<element_t*, element_listCompare_t>* element_t::getNeighborListPtr()
 {
     return neighborListPtr;
 }
@@ -624,6 +604,11 @@ void element_t::printAngles()
 bool element_mapCompareEdge_t::operator()(const edge_t* left, const edge_t* right)
 {
     return compareEdge(left, right) < 0;
+}
+
+bool element_listCompare_t::operator()(const element_t* aPtr, const element_t* bPtr)
+{
+    return element_listCompare(aPtr, bPtr) < 0;
 }
 
 #ifdef TEST_ELEMENT

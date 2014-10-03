@@ -10,7 +10,6 @@
 #include "heap.h"
 #include "mesh.h"
 #include "coordinate.h"
-#include "list.h"
 #include "queue.h"
 
 struct region_t {
@@ -18,7 +17,6 @@ struct region_t {
     queue_t*     expandQueuePtr;
     std::set<element_t*, element_listCompare_t>* beforeListPtr; /* before retriangulation; list to avoid duplicates */
 
-    // TODO: this one next!!!
     std::set<edge_t*, element_listCompareEdge_t>*      borderListPtr; /* edges adjacent to region; list to avoid duplicates */
     std::vector<element_t*>* badVectorPtr;
 

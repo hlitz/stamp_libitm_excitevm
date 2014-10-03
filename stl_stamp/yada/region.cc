@@ -8,7 +8,6 @@
 #include "element.h"
 #include "mesh.h"
 #include "tm_transition.h"
-#include "map.h"
 #include "tm_hacks.h"
 
 /* =============================================================================
@@ -203,16 +202,12 @@ TMgrowRegion (element_t* centerElementPtr,
 
         element_t* currentElementPtr = (element_t*)TMQUEUE_POP(expandQueuePtr);
 
-        beforeListPtr->insert(currentElementPtr); /* no duplicates */
+        custom_set_insertion(beforeListPtr, currentElementPtr); /* no duplicates */
         // __attribute__((transaction_safe))
-        list_t* neighborListPtr = currentElementPtr->getNeighborListPtr();
+        auto neighborListPtr = currentElementPtr->getNeighborListPtr();
 
-        list_iter_t it;
-        it = &(neighborListPtr->head);
-
-        while (it->nextPtr != NULL) {
-          element_t* neighborElementPtr = (element_t*)it->nextPtr->dataPtr;
-          it = it->nextPtr;
+        for (auto it : *neighborListPtr) {
+            element_t* neighborElementPtr = it;
 
             // [TODO] This is extremely bad programming.  We shouldn't need this!
             neighborElementPtr->isEltGarbage(); /* so we can detect conflicts */
@@ -238,7 +233,7 @@ TMgrowRegion (element_t* centerElementPtr,
                       *success = false;
                       return NULL;
                     }
-                    borderListPtr->insert(borderEdgePtr); /* no duplicates */
+                    custom_set_insertion(borderListPtr, borderEdgePtr); /* no duplicates */
                     if (edgeMapPtr->find(borderEdgePtr) == edgeMapPtr->end()) {
                         custom_map_insertion(edgeMapPtr, borderEdgePtr, neighborElementPtr);
                     }

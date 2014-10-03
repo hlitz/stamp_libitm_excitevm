@@ -5,11 +5,17 @@
 #pragma once
 
 #include <utility>
+#include <set>
 #include "coordinate.h"
-#include "list.h"
-#include "pair.h"
 
 typedef std::pair<coordinate_t*, coordinate_t*> edge_t;
+
+struct element_t;
+struct element_listCompare_t
+{
+    __attribute__((transaction_safe))
+    bool operator()(const element_t* aPtr, const element_t* bPtr);
+};
 
 struct element_t {
     coordinate_t coordinates[3];
@@ -23,7 +29,7 @@ struct element_t {
     double radii[3];           /* half of edge length */
     edge_t* encroachedEdgePtr; /* opposite obtuse angle */
     bool isSkinny;
-    list_t* neighborListPtr;
+    std::set<element_t*, element_listCompare_t>* neighborListPtr;
     bool isGarbage;
     bool isReferenced;
 
@@ -75,7 +81,7 @@ struct element_t {
   void addNeighbor(element_t* neighborPtr);
 
   __attribute__((transaction_safe))
-  list_t* getNeighborListPtr();
+  std::set<element_t*, element_listCompare_t>* getNeighborListPtr();
 
   /*
    * element_getNewPoint:  Either the element is encroached or is skinny, so get the new point to add
@@ -102,13 +108,7 @@ __attribute__((transaction_safe))
 long element_listCompare(const void* aPtr, const void* bPtr);
 
 __attribute__((transaction_safe))
-long element_mapCompare(const pair_t* aPtr, const pair_t* bPtr);
-
-__attribute__((transaction_safe))
 long element_listCompareEdge(const void* aPtr, const void* bPtr);
-
-__attribute__((transaction_safe))
-long element_mapCompareEdge(const pair_t* aPtr, const pair_t* bPtr);
 
 __attribute__((transaction_safe))
 long element_heapCompare(const void* aPtr, const void* bPtr);
@@ -117,14 +117,6 @@ __attribute__((transaction_safe))
 edge_t* element_getCommonEdge(element_t* aElementPtr, element_t* bElementPtr);
 
 void element_printEdge(edge_t* edgePtr);
-
-struct element_listCompare_t
-{
-  bool operator()(const element_t* aPtr, const element_t* bPtr)
-  {
-    return element_listCompare(aPtr, bPtr) < 0;
-  }
-};
 
 struct element_listCompareEdge_t
 {
@@ -146,4 +138,13 @@ struct element_mapCompare_t
   {
     return element_compare(aPtr, bPtr) < 0;
   }
+};
+
+struct element_heapCompare_t
+{
+    bool reverse;
+    element_heapCompare_t(const bool& p = false) { reverse = p; }
+
+    __attribute__((transaction_safe))
+    bool operator()(const element_t* aPtr, const element_t* bPtr);
 };

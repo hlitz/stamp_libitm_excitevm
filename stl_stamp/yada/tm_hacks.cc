@@ -6,3 +6,15 @@ bool custom_map_insertion(std::map<edge_t*, element_t*, element_mapCompareEdge_t
 {
     return map->insert(std::make_pair(edge, element)).second;
 }
+
+bool custom_set_insertion(std::set<element_t*, element_listCompare_t>* set,
+                          element_t* element)
+{
+    return set->insert(element).second;
+}
+
+bool custom_set_insertion(std::set<edge_t*, element_listCompareEdge_t>* set,
+                          edge_t* edge)
+{
+    return set->insert(edge).second;
+}

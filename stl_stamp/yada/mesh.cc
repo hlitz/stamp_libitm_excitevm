@@ -11,7 +11,6 @@
 #include "mesh.h"
 #include "utility.h"
 #include "tm_transition.h"
-#include "map.h"
 #include "tm_hacks.h"
 
 mesh_t::mesh_t()
@@ -20,14 +19,14 @@ mesh_t::mesh_t()
     initBadQueuePtr = queue_alloc(-1);
     assert(initBadQueuePtr);
     size = 0;
-    boundarySetPtr = SET_ALLOC(NULL, &element_listCompareEdge);
+    boundarySetPtr = new std::set<edge_t*, element_listCompareEdge_t>();
     assert(boundarySetPtr);
 }
 
 mesh_t::~mesh_t()
 {
     queue_free(initBadQueuePtr);
-    SET_FREE(boundarySetPtr);
+    delete boundarySetPtr;
 }
 
 __attribute__((transaction_safe))
@@ -78,7 +77,7 @@ void mesh_t::insert(element_t* elementPtr,
 
     edge_t* encroachedPtr = elementPtr->getEncroachedPtr();
     if (encroachedPtr) {
-        if (!TMSET_CONTAINS(boundarySetPtr, encroachedPtr)) {
+        if (boundarySetPtr->find(encroachedPtr) == boundarySetPtr->end()) {
             elementPtr->clearEncroached();
         }
     }
@@ -100,23 +99,16 @@ void mesh_t::remove(element_t* elementPtr)
     /*
      * Remove from neighbors
      */
-    list_iter_t it;
     //list_t* neighborListPtr = element_getNeighborListPtr(elementPtr);
-    list_t* neighborListPtr = elementPtr->neighborListPtr;
-    //TMLIST_ITER_RESET(&it, neighborListPtr);
-    it = &(neighborListPtr->head);
+    auto neighborListPtr = elementPtr->neighborListPtr;
+    for (auto iter : *neighborListPtr) {
 
-    while (it->nextPtr != NULL) {
-    //while (TMLIST_ITER_HASNEXT(&it)) {
-      //element_t* neighborPtr =
-      //      (element_t*)TMLIST_ITER_NEXT(&it, neighborListPtr);
-      it = it->nextPtr;
-      element_t * neighborPtr = (element_t*)it->dataPtr;
+        element_t * neighborPtr = iter;
 
       //list_t* neighborNeighborListPtr = element_getNeighborListPtr(neighborPtr);
-      list_t* neighborNeighborListPtr = neighborPtr->neighborListPtr;
-        bool status = TMLIST_REMOVE(neighborNeighborListPtr, elementPtr);
-        assert(status);
+      auto neighborNeighborListPtr = neighborPtr->neighborListPtr;
+      bool status = neighborNeighborListPtr->erase(elementPtr) == 1;
+      assert(status);
     }
 
     //TMELEMENT_SETISGARBAGE(elementPtr, true);
@@ -131,13 +123,13 @@ void mesh_t::remove(element_t* elementPtr)
 __attribute__((transaction_safe))
 bool mesh_t::insertBoundary(edge_t* boundaryPtr)
 {
-    return TMSET_INSERT(boundarySetPtr, boundaryPtr);
+    return custom_set_insertion(boundarySetPtr, boundaryPtr);
 }
 
 __attribute__((transaction_safe))
 bool mesh_t::removeBoundary(edge_t* boundaryPtr)
 {
-    return TMSET_REMOVE(boundarySetPtr, boundaryPtr);
+    return boundarySetPtr->erase(boundaryPtr) == 1;
 }
 
 /* =============================================================================
@@ -155,7 +147,7 @@ createElement (mesh_t* meshPtr,
 
     if (numCoordinate == 2) {
         edge_t* boundaryPtr = elementPtr->getEdge(0);
-        bool status = SET_INSERT(meshPtr->boundarySetPtr, boundaryPtr);
+        bool status = meshPtr->boundarySetPtr->insert(boundaryPtr).second;
         assert(status);
     }
 
@@ -334,8 +326,6 @@ bool mesh_t::check(long expectedNumElement)
     while (!queue_isEmpty(searchQueuePtr)) {
 
         element_t* currentElementPtr;
-        list_iter_t it;
-        list_t* neighborListPtr;
         bool isSuccess;
 
         currentElementPtr = (element_t*)queue_pop(searchQueuePtr);
@@ -347,12 +337,11 @@ bool mesh_t::check(long expectedNumElement)
         if (!currentElementPtr->eltCheckAngles()) {
             numBadTriangle++;
         }
-        neighborListPtr = currentElementPtr->getNeighborListPtr();
+        auto neighborListPtr = currentElementPtr->getNeighborListPtr();
 
-        list_iter_reset(&it, neighborListPtr);
-        while (list_iter_hasNext(&it)) {
-            element_t* neighborElementPtr =
-                (element_t*)list_iter_next(&it);
+        for (auto it : *neighborListPtr) {
+            element_t* neighborElementPtr = it;
+
             /*
              * Continue breadth-first search
              */

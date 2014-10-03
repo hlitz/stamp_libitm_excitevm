@@ -7,15 +7,15 @@
 #include <random>
 #include <vector>
 #include <map>
+#include <set>
 #include "element.h"
 #include "queue.h"
-#include "set.h"
 
 struct mesh_t {
     element_t* rootElementPtr;
     queue_t* initBadQueuePtr;
     long size;
-    SET_T* boundarySetPtr;
+    std::set<edge_t*, element_listCompareEdge_t>* boundarySetPtr;
 
     mesh_t();
     ~mesh_t();

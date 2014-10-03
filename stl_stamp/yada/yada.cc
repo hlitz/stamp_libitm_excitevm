@@ -7,7 +7,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "region.h"
-#include "list.h"
 #include "mesh.h"
 #include "heap.h"
 #include "thread.h"

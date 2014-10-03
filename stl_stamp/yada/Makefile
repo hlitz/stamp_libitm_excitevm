@@ -23,13 +23,9 @@ PROG := yada
 
 SRCS += coordinate.cc element.cc mesh.cc region.cc yada.cc tm_hacks.cc
 
-LIBSRCS += heap.cc list.cc queue.cc rbtree.cc thread.cc
+LIBSRCS += heap.cc queue.cc thread.cc
 
 OBJS := ${SRCS:.cc=.o} ${LIBSRCS:%.cc=lib_%.o}
-
-CXXFLAGS += -DLIST_NO_DUPLICATES
-CXXFLAGS += -DMAP_USE_AVLTREE
-CXXFLAGS += -DSET_USE_RBTREE
 
 LDFLAGS += -lm
 
@@ -42,7 +38,7 @@ test_coordinate:
 
 .PHONY: test_element
 test_element: CXXFLAGS += -DTEST_ELEMENT
-test_element: LIB_SRCS := $(LIB)/{heap,list,pair,avltree}.cc
+test_element: LIB_SRCS := $(LIB)/{heap,list,avltree}.cc
 test_element:
 	$(CC) $(CXXFLAGS) element.cc coordinate.cc $(LIB_SRCS) -lm -o $@
 
