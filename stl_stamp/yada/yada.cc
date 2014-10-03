@@ -6,11 +6,13 @@
 #include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <queue>
 #include "region.h"
 #include "mesh.h"
-#include "heap.h"
 #include "thread.h"
 #include "timer.h"
+#include "tm_transition.h"
+#include "tm_hacks.h"
 
 #define PARAM_DEFAULT_INPUTPREFIX ("inputs/ttimeu1000000.2")
 #define PARAM_DEFAULT_NUMTHREAD   (1L)
@@ -21,7 +23,7 @@ const char*    global_inputPrefix     = PARAM_DEFAULT_INPUTPREFIX;
 long     global_numThread       = PARAM_DEFAULT_NUMTHREAD;
 double   global_angleConstraint = PARAM_DEFAULT_ANGLE;
 mesh_t*  global_meshPtr;
-heap_t*  global_workHeapPtr;
+std::multiset<element_t*, element_heapCompare_t>* global_workHeapPtr;
 long     global_totalNumAdded = 0;
 long     global_numProcess    = 0;
 
@@ -88,7 +90,7 @@ parseArgs (long argc, char* const argv[])
  * =============================================================================
  */
 static long
-initializeWork (heap_t* workHeapPtr, mesh_t* meshPtr)
+initializeWork (std::multiset<element_t*, element_heapCompare_t>* workHeapPtr, mesh_t* meshPtr)
 {
     std::mt19937* randomPtr = new std::mt19937();
     randomPtr->seed(0);
@@ -103,7 +105,7 @@ initializeWork (heap_t* workHeapPtr, mesh_t* meshPtr)
             break;
         }
         numBad++;
-        bool status = heap_insert(workHeapPtr, (void*)elementPtr);
+        bool status = custom_set_insertion(workHeapPtr, elementPtr);
         assert(status);
         elementPtr->setIsReferenced(true);
     }
@@ -118,7 +120,7 @@ initializeWork (heap_t* workHeapPtr, mesh_t* meshPtr)
 static void
 process (void*)
 {
-    heap_t* workHeapPtr = global_workHeapPtr;
+    auto workHeapPtr = global_workHeapPtr;
     mesh_t* meshPtr = global_meshPtr;
     region_t* regionPtr;
     long totalNumAdded = 0;
@@ -132,7 +134,13 @@ process (void*)
         element_t* elementPtr;
 
         __transaction_atomic {
-          elementPtr = (element_t*)TMHEAP_REMOVE(workHeapPtr);
+            if (workHeapPtr->empty()) {
+                elementPtr = NULL;
+                break;
+            }
+            auto b = workHeapPtr->begin();
+            elementPtr = *b;
+            workHeapPtr->erase(b);
         }
 
         if (elementPtr == NULL) {
@@ -179,7 +187,7 @@ process (void*)
         totalNumAdded += numAdded;
 
         __transaction_atomic {
-          regionPtr->transferBad(workHeapPtr);
+            regionPtr->transferBad(workHeapPtr);
         }
 
         numProcess++;
@@ -214,7 +222,7 @@ int main (int argc, char** argv)
     printf("Reading input... ");
     long initNumElement = global_meshPtr->read(global_inputPrefix);
     puts("done.");
-    global_workHeapPtr = heap_alloc(1, &element_heapCompare);
+    global_workHeapPtr = new std::multiset<element_t*, element_heapCompare_t>();
     assert(global_workHeapPtr);
     long initNumBadElement = initializeWork(global_workHeapPtr, global_meshPtr);
 

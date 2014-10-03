@@ -147,7 +147,7 @@ createElement (mesh_t* meshPtr,
 
     if (numCoordinate == 2) {
         edge_t* boundaryPtr = elementPtr->getEdge(0);
-        bool status = meshPtr->boundarySetPtr->insert(boundaryPtr).second;
+        bool status = custom_set_insertion(meshPtr->boundarySetPtr, boundaryPtr);
         assert(status);
     }
 

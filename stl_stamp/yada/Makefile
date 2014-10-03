@@ -23,7 +23,7 @@ PROG := yada
 
 SRCS += coordinate.cc element.cc mesh.cc region.cc yada.cc tm_hacks.cc
 
-LIBSRCS += heap.cc queue.cc thread.cc
+LIBSRCS += queue.cc thread.cc
 
 OBJS := ${SRCS:.cc=.o} ${LIBSRCS:%.cc=lib_%.o}
 

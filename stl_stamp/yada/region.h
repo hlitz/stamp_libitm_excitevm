@@ -7,7 +7,6 @@
 #include <vector>
 #include <set>
 #include "element.h"
-#include "heap.h"
 #include "mesh.h"
 #include "coordinate.h"
 #include "queue.h"
@@ -41,5 +40,5 @@ struct region_t {
     void clearBad();
 
     __attribute__((transaction_safe))
-    void transferBad(heap_t* workHeapPtr);
+    void transferBad(std::multiset<element_t*, element_heapCompare_t>* workHeapPtr);
 };

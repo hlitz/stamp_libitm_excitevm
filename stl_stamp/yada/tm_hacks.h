@@ -21,3 +21,7 @@ bool custom_set_insertion(std::set<element_t*, element_listCompare_t>* set,
 __attribute__((transaction_safe))
 bool custom_set_insertion(std::set<edge_t*, element_listCompareEdge_t>* set,
                           edge_t* edge);
+
+__attribute__((transaction_safe))
+bool custom_set_insertion(std::multiset<element_t*, element_heapCompare_t>* set,
+                          element_t* element);

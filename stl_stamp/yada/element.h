@@ -142,9 +142,6 @@ struct element_mapCompare_t
 
 struct element_heapCompare_t
 {
-    bool reverse;
-    element_heapCompare_t(const bool& p = false) { reverse = p; }
-
     __attribute__((transaction_safe))
     bool operator()(const element_t* aPtr, const element_t* bPtr);
 };

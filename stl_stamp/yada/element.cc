@@ -348,47 +348,18 @@ element_listCompareEdge (const void* aPtr, const void* bPtr)
     return compareEdge(aEdgePtr, bEdgePtr);
 }
 
-/* =============================================================================
- * element_heapCompare
- *
- * For use in heap_t. Consider using minAngle instead of "do not care".
- * =============================================================================
- */
-//[wer] should be a __attribute__((transaction_safe)) comparator
-__attribute__((transaction_safe))
-long
-element_heapCompare (const void* aPtr, const void* bPtr)
-{
-    element_t* aElementPtr = (element_t*)aPtr;
-    element_t* bElementPtr = (element_t*)bPtr;
-
-    if (aElementPtr->encroachedEdgePtr) {
-        if (bElementPtr->encroachedEdgePtr) {
-            return 0; /* do not care */
-        } else {
-            return 1;
-        }
-    }
-
-    if (bElementPtr->encroachedEdgePtr) {
-        return -1;
-    }
-
-    return 0; /* do not care */
-}
-
 bool element_heapCompare_t::operator()(const element_t* a, const element_t* b)
 {
    if (a->encroachedEdgePtr) {
         if (b->encroachedEdgePtr) {
             return false; /* do not care */
         } else {
-            return reverse; // gt, so flip
+            return false; // gt, so flip
         }
     }
 
     if (b->encroachedEdgePtr) {
-        return !reverse; // lt, so don't flip
+        return true; // lt, so don't flip
     }
 
     return false; /* do not care */

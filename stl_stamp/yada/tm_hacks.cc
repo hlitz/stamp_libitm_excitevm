@@ -18,3 +18,11 @@ bool custom_set_insertion(std::set<edge_t*, element_listCompareEdge_t>* set,
 {
     return set->insert(edge).second;
 }
+
+bool custom_set_insertion(std::multiset<element_t*, element_heapCompare_t>* set,
+                          element_t* element)
+{
+    set->insert(element);
+    return true;
+}
+

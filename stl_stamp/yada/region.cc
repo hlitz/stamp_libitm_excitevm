@@ -303,7 +303,7 @@ void region_t::clearBad()
 }
 
 __attribute__((transaction_safe))
-void region_t::transferBad(heap_t* workHeapPtr)
+void region_t::transferBad(std::multiset<element_t*, element_heapCompare_t>* workHeap)
 {
     long numBad = badVectorPtr->size();
 
@@ -312,7 +312,7 @@ void region_t::transferBad(heap_t* workHeapPtr)
         if (badElementPtr->isEltGarbage()) {
             delete badElementPtr;
         } else {
-            bool status = TMHEAP_INSERT(workHeapPtr, (void*)badElementPtr);
+            bool status = custom_set_insertion(workHeap, badElementPtr);
             assert(status);
         }
     }
