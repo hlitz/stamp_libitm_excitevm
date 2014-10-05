@@ -569,11 +569,9 @@ populateParentQueryVector (net_t* netPtr,
 {
     parentQueryVectorPtr->clear();
 
-    list_t* parentIdListPtr = net_getParentIdListPtr(netPtr, id);
-    list_iter_t it;
-    list_iter_reset(&it, parentIdListPtr);
-    while (list_iter_hasNext(&it)) {
-        long parentId = (long)list_iter_next(&it);
+    std::set<long>* parentIdListPtr = net_getParentIdListPtr(netPtr, id);
+    for (auto it : *parentIdListPtr) {
+        long parentId = it;
         vector_query_push(parentQueryVectorPtr, &queries[parentId]);
     }
 }
@@ -593,19 +591,12 @@ TMpopulateParentQueryVector (net_t* netPtr,
 {
     parentQueryVectorPtr->clear();
 
-  list_t* parentIdListPtr = net_getParentIdListPtr(netPtr, id); //__attribute__((transaction_safe))
-  list_iter_t it;
-  //TMLIST_ITER_RESET(&it, parentIdListPtr);
-  it = &(parentIdListPtr->head);
-
-  //while (TMLIST_ITER_HASNEXT(&it)) {
-  while (it->nextPtr != NULL) {
-    //long parentId = (long)TMLIST_ITER_NEXT(&it, parentIdListPtr);
-    long parentId = (long)it->nextPtr->dataPtr;
-    it = it->nextPtr;
-
-    vector_query_push(parentQueryVectorPtr, &queries[parentId]);
-  }
+    std::set<long>* parentIdListPtr = net_getParentIdListPtr(netPtr, id);
+    for (auto it : *parentIdListPtr) {
+        //long parentId = (long)TMLIST_ITER_NEXT(&it, parentIdListPtr);
+        long parentId = it;
+        vector_query_push(parentQueryVectorPtr, &queries[parentId]);
+    }
 }
 
 
@@ -788,23 +779,14 @@ TMfindBestInsertTask (learner_task_t * dest,  findBestTaskArg_t* argPtr)
     assert(status);
     long fromId = -1;
     // __attribute__((transaction_safe))
-    list_t* parentIdListPtr = net_getParentIdListPtr(netPtr, toId);
+    std::set<long>* parentIdListPtr = net_getParentIdListPtr(netPtr, toId);
     long maxNumEdgeLearned = global_maxNumEdgeLearned;
 
-    if ((maxNumEdgeLearned < 0) ||
-        (TMLIST_GETSIZE(parentIdListPtr) <= maxNumEdgeLearned))
-    {
-        list_iter_t it;
-        // TMLIST_ITER_RESET(&it, parentIdListPtr);
-        it = &(parentIdListPtr->head);
-
-        //while (TMLIST_ITER_HASNEXT(&it)) {
-        while (it->nextPtr != NULL) {
+    if ((maxNumEdgeLearned < 0) || (parentIdListPtr->size() <= maxNumEdgeLearned)) {
+        for (auto it : *parentIdListPtr) {
           //long parentId = (long)TMLIST_ITER_NEXT(&it, parentIdListPtr);
-          long parentId = (long)it->nextPtr->dataPtr;
-          it = it->nextPtr;
-
-          bitmap_set(invalidBitmapPtr, parentId); /* invalid since already have edge */
+            long parentId = it;
+            bitmap_set(invalidBitmapPtr, parentId); /* invalid since already have edge */
         }
 
         while ((fromId = bitmap_findClear(invalidBitmapPtr, (fromId + 1))) >= 0) {
@@ -858,7 +840,7 @@ TMfindBestInsertTask (learner_task_t * dest,  findBestTaskArg_t* argPtr)
 
     if (bestFromId != toId) {
         long numRecord = adtreePtr->numRecord;
-        long numParent = TMLIST_GETSIZE(parentIdListPtr) + 1;
+        long numParent = parentIdListPtr->size() + 1;
         float penalty =
             (numTotalParent + numParent * global_insertPenalty) * basePenalty;
         float logLikelihood = numRecord * (baseLogLikelihood +
@@ -1545,15 +1527,15 @@ learner_score (learner_t* learnerPtr)
 
     for (v = 0; v < numVar; v++) {
 
-        list_t* parentIdListPtr = net_getParentIdListPtr(netPtr, v);
-        numTotalParent += list_getSize(parentIdListPtr);
+        std::set<long>* parentIdListPtr = net_getParentIdListPtr(netPtr, v);
+        numTotalParent += parentIdListPtr->size();
 
 
         TMpopulateQueryVectors(netPtr,
-                             v,
-                             queries,
-                             queryVectorPtr,
-                             parentQueryVectorPtr);
+                               v,
+                               queries,
+                               queryVectorPtr,
+                               parentQueryVectorPtr);
         float localLogLikelihood = computeLocalLogLikelihood(v,
                                                              adtreePtr,
                                                              queries,

@@ -12,6 +12,7 @@
 #include "data.h"
 #include "net.h"
 #include "query.h"
+#include "list.h"
 
 struct learner_task_t;
 

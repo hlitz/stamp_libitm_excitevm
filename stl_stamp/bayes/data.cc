@@ -88,8 +88,8 @@ data_generate (data_t* dataPtr, long seed, long maxNumParent, long percentParent
     assert(thresholdsTable);
     long v;
     for (v = 0; v < numVar; v++) {
-        list_t* parentIdListPtr = net_getParentIdListPtr(netPtr, v);
-        long numThreshold = 1 << list_getSize(parentIdListPtr);
+        std::set<long>* parentIdListPtr = net_getParentIdListPtr(netPtr, v);
+        long numThreshold = 1 << parentIdListPtr->size();
         long* thresholds = (long*)malloc(numThreshold * sizeof(long));
         assert(thresholds);
         long t;
@@ -123,8 +123,8 @@ data_generate (data_t* dataPtr, long seed, long maxNumParent, long percentParent
     bitmap_clearAll(doneBitmapPtr);
     v = -1;
     while ((v = bitmap_findClear(doneBitmapPtr, (v + 1))) >= 0) {
-        list_t* childIdListPtr = net_getChildIdListPtr(netPtr, v);
-        long numChild = list_getSize(childIdListPtr);
+        std::set<long>* childIdListPtr = net_getChildIdListPtr(netPtr, v);
+        long numChild = childIdListPtr->size();
         if (numChild == 0) {
 
             bool status;
@@ -141,11 +141,9 @@ data_generate (data_t* dataPtr, long seed, long maxNumParent, long percentParent
                 status = bitmap_set(doneBitmapPtr, id);
                 assert(status);
                 dependencyVectorPtr->push_back(id);
-                list_t* parentIdListPtr = net_getParentIdListPtr(netPtr, id);
-                list_iter_t it;
-                list_iter_reset(&it, parentIdListPtr);
-                while (list_iter_hasNext(&it)) {
-                    long parentId = (long)list_iter_next(&it);
+                std::set<long>* parentIdListPtr = net_getParentIdListPtr(netPtr, id);
+                for (auto it : *parentIdListPtr) {
+                    long parentId = it;
                     status = queue_push(workQueuePtr, (void*)parentId);
                     assert(status);
                 }
@@ -179,12 +177,10 @@ data_generate (data_t* dataPtr, long seed, long maxNumParent, long percentParent
         long o;
         for (o = 0; o < numOrder; o++) {
             long v = order[o];
-            list_t* parentIdListPtr = net_getParentIdListPtr(netPtr, v);
+            std::set<long>* parentIdListPtr = net_getParentIdListPtr(netPtr, v);
             long index = 0;
-            list_iter_t it;
-            list_iter_reset(&it, parentIdListPtr);
-            while (list_iter_hasNext(&it)) {
-              long parentId = (long)list_iter_next(&it);
+            for (auto it : *parentIdListPtr) {
+                long parentId = it;
                 long value = record[parentId];
                 assert(value != DATA_INIT);
                 index = (index << 1) + value;

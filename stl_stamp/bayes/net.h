@@ -5,10 +5,10 @@
 #pragma once
 
 #include "bitmap.h"
-#include "list.h"
 #include "operation.h"
 #include "queue.h"
 #include <vector>
+#include <set>
 
 enum net_node_mark_t {
     NET_NODE_MARK_INIT = 0,
@@ -18,8 +18,8 @@ enum net_node_mark_t {
 
 struct net_node_t {
     long id;
-    list_t* parentIdListPtr;
-    list_t* childIdListPtr;
+    std::set<long>* parentIdListPtr;
+    std::set<long>* childIdListPtr;
     net_node_mark_t mark;
 };
 
@@ -76,7 +76,7 @@ net_isCycle (net_t* netPtr);
  * =============================================================================
  */
 __attribute__((transaction_safe))
-list_t*
+std::set<long>*
 net_getParentIdListPtr (net_t* netPtr, long id);
 
 
@@ -84,7 +84,7 @@ net_getParentIdListPtr (net_t* netPtr, long id);
  * net_getChildIdListPtr
  * =============================================================================
  */
-list_t*
+std::set<long>*
 net_getChildIdListPtr (net_t* netPtr, long id);
 
 
