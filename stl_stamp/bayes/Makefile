@@ -21,7 +21,7 @@ LDFLAGS       += -lstdc++
 #
 PROG := bayes
 SRCS += adtree.cc bayes.cc data.cc learner.cc net.cc sort.cc tm_hacks.cc
-LIBSRCS += bitmap.cc list.cc queue.cc thread.cc
+LIBSRCS += bitmap.cc queue.cc thread.cc
 OBJS    := ${SRCS:.cc=.o} ${LIBSRCS:%.cc=lib_%.o}
 
 CXXFLAGS  += -DLIST_NO_DUPLICATES

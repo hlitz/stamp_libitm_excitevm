@@ -69,7 +69,6 @@
 #include "adtree.h"
 #include "data.h"
 #include "learner.h"
-#include "list.h"
 #include "net.h"
 #include "operation.h"
 #include "query.h"
@@ -147,7 +146,7 @@ TMpopulateQueryVectors (net_t* netPtr,
 
 __attribute__((transaction_safe))
 learner_task_t*
-TMpopTask (list_t* taskListPtr);
+TMpopTask (std::set<learner_task_t*, compareTask_t>* taskListPtr);
 
 /* =============================================================================
  * compareTask
@@ -173,6 +172,10 @@ compareTask (const void* aPtr, const void* bPtr)
     }
 }
 
+bool compareTask_t::operator()(learner_task_t* l, learner_task_t* r)
+{
+    return -1 == compareTask(l, r);
+}
 
 /* =============================================================================
  * compareQuery
@@ -218,7 +221,7 @@ learner_alloc (data_t* dataPtr, adtree_t* adtreePtr)
         learnerPtr->tasks =
             (learner_task_t*)malloc(dataPtr->numVar * sizeof(learner_task_t));
         assert(learnerPtr->tasks);
-        learnerPtr->taskListPtr = list_alloc(&compareTask);
+        learnerPtr->taskListPtr = new std::set<learner_task_t*, compareTask_t>();
         assert(learnerPtr->taskListPtr);
         learnerPtr->numTotalParent = 0;
     }
@@ -234,7 +237,7 @@ learner_alloc (data_t* dataPtr, adtree_t* adtreePtr)
 void
 learner_free (learner_t* learnerPtr)
 {
-    list_free(learnerPtr->taskListPtr);
+    delete learnerPtr->taskListPtr;
     free(learnerPtr->tasks);
     free(learnerPtr->localBaseLogLikelihoods);
     delete learnerPtr->netPtr;
@@ -358,7 +361,7 @@ createTaskList (void* argPtr)
     long numThread = thread_getNumThread();
 
     learner_t* learnerPtr = (learner_t*)argPtr;
-    list_t* taskListPtr = learnerPtr->taskListPtr;
+    auto taskListPtr = learnerPtr->taskListPtr;
 
     bool status;
 
@@ -505,7 +508,7 @@ createTaskList (void* argPtr)
             taskPtr->toId = v;
             taskPtr->score = score;
             __transaction_atomic {
-              status = TMLIST_INSERT(taskListPtr, (void*)taskPtr);
+              status = taskListPtr->insert(taskPtr).second;
             }
             assert(status);
         }
@@ -535,23 +538,14 @@ createTaskList (void* argPtr)
  */
 __attribute__((transaction_safe))
 learner_task_t*
-TMpopTask (list_t* taskListPtr)
+TMpopTask (std::set<learner_task_t*, compareTask_t>* taskListPtr)
 {
     learner_task_t* taskPtr = NULL;
-
-    list_iter_t it;
-    //TMLIST_ITER_RESET(&it, taskListPtr);
-    it = &(taskListPtr->head);
-
-    //if (TMLIST_ITER_HASNEXT(&it)) {
-    if (it->nextPtr != NULL) {
-      //taskPtr = (learner_task_t*)TMLIST_ITER_NEXT(&it, taskListPtr);
-      taskPtr = (learner_task_t*)it->nextPtr->dataPtr;
-
-      bool status = TMLIST_REMOVE(taskListPtr, (void*)taskPtr);
-      assert(status);
+    if (taskListPtr->size() > 0) {
+        auto i = taskListPtr->begin();
+        taskPtr = *i;
+        taskListPtr->erase(i);
     }
-
     return taskPtr;
 }
 
@@ -1156,7 +1150,7 @@ learnStructure (void* argPtr)
     adtree_t* adtreePtr = learnerPtr->adtreePtr;
     long numRecord = adtreePtr->numRecord;
     float* localBaseLogLikelihoods = learnerPtr->localBaseLogLikelihoods;
-    list_t* taskListPtr = learnerPtr->taskListPtr;
+    auto taskListPtr = learnerPtr->taskListPtr;
 
     float operationQualityFactor = global_operationQualityFactor;
 
@@ -1451,7 +1445,7 @@ learnStructure (void* argPtr)
             learner_task_t* tasks = learnerPtr->tasks;
             tasks[toId] = bestTask;
             __transaction_atomic {
-              TMLIST_INSERT(taskListPtr, (void*)&tasks[toId]);
+                taskListPtr->insert(&tasks[toId]);
             }
 
 #ifdef TEST_LEARNER

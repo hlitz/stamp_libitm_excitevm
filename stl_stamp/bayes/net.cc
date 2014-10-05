@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include "bitmap.h"
 #include "learner.h"
-#include "list.h"
 #include "net.h"
 #include "operation.h"
 #include "queue.h"

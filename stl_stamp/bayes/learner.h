@@ -12,12 +12,18 @@
 #include "data.h"
 #include "net.h"
 #include "query.h"
-#include "list.h"
+#include <set>
 
 struct learner_task_t;
 
 /* ??? Cacheline size is fixed. */
 #define CACHE_LINE_SIZE (64)
+
+struct compareTask_t
+{
+    __attribute__((transaction_safe))
+    bool operator()(learner_task_t* left, learner_task_t* right);
+};
 
 struct learner_t {
     adtree_t* adtreePtr;
@@ -28,8 +34,8 @@ struct learner_t {
     char pad2[CACHE_LINE_SIZE - sizeof(float)];
     learner_task_t* tasks;
     char pad3[CACHE_LINE_SIZE - sizeof(learner_task_t*)];
-    list_t* taskListPtr;
-    char pad4[CACHE_LINE_SIZE - sizeof(list_t*)];
+    std::set<learner_task_t*, compareTask_t>* taskListPtr;
+    char pad4[CACHE_LINE_SIZE - sizeof(taskListPtr)];
     long numTotalParent;
     char pad5[CACHE_LINE_SIZE - sizeof(long)];
 };
