@@ -95,8 +95,8 @@ struct findBestTaskArg_t {
     long numTotalParent;
     float basePenalty;
     float baseLogLikelihood;
-    bitmap_t* bitmapPtr;
-    queue_t* workQueuePtr;
+    std::vector<bool>* bitmapPtr;
+    std::queue<long>* workQueuePtr;
     std::vector<query_t*>* aQueryVectorPtr;
     std::vector<query_t*>* bQueryVectorPtr;
 };
@@ -727,8 +727,8 @@ TMfindBestInsertTask (learner_task_t * dest,  findBestTaskArg_t* argPtr)
     long       numTotalParent           = argPtr->numTotalParent;
     float      basePenalty              = argPtr->basePenalty;
     float      baseLogLikelihood        = argPtr->baseLogLikelihood;
-    bitmap_t*  invalidBitmapPtr         = argPtr->bitmapPtr;
-    queue_t*   workQueuePtr             = argPtr->workQueuePtr;
+    std::vector<bool>*  invalidBitmapPtr         = argPtr->bitmapPtr;
+    std::queue<long>*   workQueuePtr             = argPtr->workQueuePtr;
     std::vector<query_t*>*  baseParentQueryVectorPtr = argPtr->aQueryVectorPtr;
     std::vector<query_t*>*  baseQueryVectorPtr       = argPtr->bQueryVectorPtr;
 
@@ -776,14 +776,24 @@ TMfindBestInsertTask (learner_task_t * dest,  findBestTaskArg_t* argPtr)
     std::set<long>* parentIdListPtr = net_getParentIdListPtr(netPtr, toId);
     long maxNumEdgeLearned = global_maxNumEdgeLearned;
 
+    // NB: bitmap_findClear is no longer available to us, so let's roll a
+    // quick lambda to do the work
+    auto findClear = [invalidBitmapPtr](long startIdx){
+        long idx = -1;
+        for (long a = startIdx; a < (long)invalidBitmapPtr->size(); ++a)
+            if (!invalidBitmapPtr->at(a))
+                return a;
+        return idx;
+    };
+
     if ((maxNumEdgeLearned < 0) || (parentIdListPtr->size() <= maxNumEdgeLearned)) {
         for (auto it : *parentIdListPtr) {
           //long parentId = (long)TMLIST_ITER_NEXT(&it, parentIdListPtr);
             long parentId = it;
-            bitmap_set(invalidBitmapPtr, parentId); /* invalid since already have edge */
+            invalidBitmapPtr->at(parentId) = true; /* invalid since already have edge */
         }
 
-        while ((fromId = bitmap_findClear(invalidBitmapPtr, (fromId + 1))) >= 0) {
+        while ((fromId = findClear((fromId + 1))) >= 0) {
             if (fromId == toId) {
                 continue;
             }
@@ -980,8 +990,8 @@ TMfindBestReverseTask (learner_task_t * dest,  findBestTaskArg_t* argPtr)
     long       numTotalParent               = argPtr->numTotalParent;
     float      basePenalty                  = argPtr->basePenalty;
     float      baseLogLikelihood            = argPtr->baseLogLikelihood;
-    bitmap_t*  visitedBitmapPtr             = argPtr->bitmapPtr;
-    queue_t*   workQueuePtr                 = argPtr->workQueuePtr;
+    std::vector<bool>*  visitedBitmapPtr             = argPtr->bitmapPtr;
+    std::queue<long>*   workQueuePtr                 = argPtr->workQueuePtr;
     std::vector<query_t*>*  toOrigParentQueryVectorPtr   = argPtr->aQueryVectorPtr;
     std::vector<query_t*>*  fromOrigParentQueryVectorPtr = argPtr->bQueryVectorPtr;
 
@@ -1154,9 +1164,9 @@ learnStructure (void* argPtr)
 
     float operationQualityFactor = global_operationQualityFactor;
 
-    bitmap_t* visitedBitmapPtr = TMBITMAP_ALLOC(learnerPtr->adtreePtr->numVar);
+    std::vector<bool>* visitedBitmapPtr = new std::vector<bool>(learnerPtr->adtreePtr->numVar);
     assert(visitedBitmapPtr);
-    queue_t* workQueuePtr = TMQUEUE_ALLOC(-1);
+    std::queue<long>* workQueuePtr = new std::queue<long>();
     assert(workQueuePtr);
 
     long numVar = adtreePtr->numVar;
@@ -1457,8 +1467,8 @@ learnStructure (void* argPtr)
 
     } /* while (tasks) */
 
-    TMBITMAP_FREE(visitedBitmapPtr);
-    TMQUEUE_FREE(workQueuePtr);
+    delete visitedBitmapPtr;
+    delete workQueuePtr;
     delete bQueryVectorPtr;
     delete aQueryVectorPtr;
     delete queryVectorPtr;

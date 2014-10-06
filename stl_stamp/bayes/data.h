@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "bitmap.h"
+#include <vector>
 #include "net.h"
 
 struct data_t {

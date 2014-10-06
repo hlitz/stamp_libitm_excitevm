@@ -4,11 +4,11 @@
 
 #pragma once
 
-#include "bitmap.h"
-#include "operation.h"
-#include "queue.h"
 #include <vector>
 #include <set>
+#include <queue>
+#include <random>
+#include "operation.h"
 
 enum net_node_mark_t {
     NET_NODE_MARK_INIT = 0,
@@ -55,12 +55,11 @@ TMnet_hasEdge (  net_t* netPtr, long fromId, long toId);
  */
 __attribute__((transaction_safe))
 bool
-TMnet_isPath (
-              net_t* netPtr,
+TMnet_isPath (net_t* netPtr,
               long fromId,
               long toId,
-              bitmap_t* visitedBitmapPtr,
-              queue_t* workQueuePtr);
+              std::vector<bool>* visitedBitmapPtr,
+              std::queue<long>* workQueuePtr);
 
 
 /* =============================================================================
@@ -98,8 +97,8 @@ __attribute__((transaction_safe))
 bool
 TMnet_findAncestors (net_t* netPtr,
                      long id,
-                     bitmap_t* ancestorBitmapPtr,
-                     queue_t* workQueuePtr);
+                     std::vector<bool>* ancestorBitmapPtr,
+                     std::queue<long>* workQueuePtr);
 
 
 /* =============================================================================
@@ -112,8 +111,8 @@ __attribute__((transaction_safe))
 bool
 TMnet_findDescendants (net_t* netPtr,
                        long id,
-                       bitmap_t* descendantBitmapPtr,
-                       queue_t* workQueuePtr);
+                       std::vector<bool>* descendantBitmapPtr,
+                       std::queue<long>* workQueuePtr);
 
 
 /* =============================================================================

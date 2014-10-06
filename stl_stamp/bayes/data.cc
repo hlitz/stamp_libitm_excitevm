@@ -5,7 +5,6 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
-#include "bitmap.h"
 #include "data.h"
 #include "net.h"
 #include "sort.h"
@@ -108,44 +107,56 @@ data_generate (data_t* dataPtr, long seed, long maxNumParent, long percentParent
     assert(order);
     long numOrder = 0;
 
-    queue_t* workQueuePtr = queue_alloc(-1);
+    std::queue<long>* workQueuePtr = new std::queue<long>();
     assert(workQueuePtr);
 
     std::vector<long>* dependencyVectorPtr = new std::vector<long>();
     assert(dependencyVectorPtr);
 
-    bitmap_t* orderedBitmapPtr = (bitmap_t*)bitmap_alloc(numVar);
-    assert(orderedBitmapPtr);
-    bitmap_clearAll(orderedBitmapPtr);
+    std::vector<bool>* orderedBitmapPtr = new std::vector<bool>(numVar);
 
-    bitmap_t* doneBitmapPtr = (bitmap_t*)bitmap_alloc(numVar);
+    assert(orderedBitmapPtr);
+    for (auto i = 0; i < numVar; ++i)
+        orderedBitmapPtr->at(i) = false;
+
+    std::vector<bool>* doneBitmapPtr = new std::vector<bool>(numVar);
+
     assert(doneBitmapPtr);
-    bitmap_clearAll(doneBitmapPtr);
+    for (auto i = 0; i < numVar; ++i)
+        doneBitmapPtr->at(i) = false;
+
     v = -1;
-    while ((v = bitmap_findClear(doneBitmapPtr, (v + 1))) >= 0) {
+    // NB: bitmap_findClear is no longer available to us, so let's roll a
+    // quick lambda to do the work
+    auto findClear = [doneBitmapPtr](long startIdx){
+        long idx = -1;
+        for (long a = startIdx; a < (long)doneBitmapPtr->size(); ++a)
+            if (!doneBitmapPtr->at(a))
+                return a;
+        return idx;
+    };
+
+    while ((v = findClear((v + 1))) >= 0) {
         std::set<long>* childIdListPtr = net_getChildIdListPtr(netPtr, v);
         long numChild = childIdListPtr->size();
         if (numChild == 0) {
-
-            bool status;
 
             /*
              * Use breadth-first search to find net connected to this leaf
              */
 
-            queue_clear(workQueuePtr);
-            status = queue_push(workQueuePtr, (void*)v);
-            assert(status);
-            while (!queue_isEmpty(workQueuePtr)) {
-                long id = (long)queue_pop(workQueuePtr);
-                status = bitmap_set(doneBitmapPtr, id);
-                assert(status);
+            while (!workQueuePtr->empty())
+                workQueuePtr->pop();
+            workQueuePtr->push(v);
+            while (!workQueuePtr->empty()) {
+                long id = workQueuePtr->front();
+                workQueuePtr->pop();
+                doneBitmapPtr->at(id) = true;
                 dependencyVectorPtr->push_back(id);
                 std::set<long>* parentIdListPtr = net_getParentIdListPtr(netPtr, id);
                 for (auto it : *parentIdListPtr) {
                     long parentId = it;
-                    status = queue_push(workQueuePtr, (void*)parentId);
-                    assert(status);
+                    workQueuePtr->push(parentId);
                 }
             }
 
@@ -156,8 +167,8 @@ data_generate (data_t* dataPtr, long seed, long maxNumParent, long percentParent
             for (long i = 0; i < n; i++) {
                 long id = dependencyVectorPtr->back();
                 dependencyVectorPtr->pop_back();
-                if (!bitmap_isSet(orderedBitmapPtr, id)) {
-                    bitmap_set(orderedBitmapPtr, id);
+                if (!orderedBitmapPtr->at(id)) {
+                    orderedBitmapPtr->at(id) = true;
                     order[numOrder++] = id;
                 }
             }
@@ -197,10 +208,10 @@ data_generate (data_t* dataPtr, long seed, long maxNumParent, long percentParent
      * Clean up
      */
 
-    bitmap_free(doneBitmapPtr);
-    bitmap_free(orderedBitmapPtr);
+    delete doneBitmapPtr;
+    delete orderedBitmapPtr;
     delete dependencyVectorPtr;
-    queue_free(workQueuePtr);
+    delete workQueuePtr;
     free(order);
     for (v = 0; v < numVar; v++) {
         free(thresholdsTable[v]);
