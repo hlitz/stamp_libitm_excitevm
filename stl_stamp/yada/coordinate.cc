@@ -29,22 +29,6 @@ coordinate_compare (const coordinate_t* aPtr, const coordinate_t* bPtr)
 }
 
 #define ABS(a) (((a) > 0) ? (a) : -(a))
-/*
- * a transaction_safe version of sqrt, Newton's method
- */
-__attribute__ ((transaction_safe))
-double sqrt_safe ( double x )
-{
-  if (x == 0)
-    return 0;
-  double a = 10;
-  double t = x / 100000;
-  while (ABS(a * a - x) >= t) {
-    a = a - (a * a - x) / (2 * a);
-  }
-  return a;
-}
-
 
 __attribute__ ((transaction_pure))
 double sqrt_pure ( double x )
@@ -60,7 +44,7 @@ double coordinate_t::distance(coordinate_t* aPtr)
 
     //[wer] need to be safe!
     //return sqrt((delta_x * delta_x) + (delta_y * delta_y));
-    return sqrt_safe((delta_x * delta_x) + (delta_y * delta_y));
+    return sqrt_pure((delta_x * delta_x) + (delta_y * delta_y));
 }
 #define PI 3.141592653
 
@@ -72,15 +56,6 @@ double my_exp(double x, int y)
     for (i = 0; i < y; i++)
         ret *= x;
     return ret;
-}
-
-__attribute__ ((transaction_safe))
-double acos_safe( double x)
-{
-    return PI / 2 - x - my_exp(x, 3) / 6
-        - 3 * my_exp(x, 5) / 40
-        - 5 * my_exp(x, 7) / 112
-        - 35 * my_exp (x, 9) / 1152;
 }
 
 __attribute__ ((transaction_pure))
@@ -125,7 +100,7 @@ double coordinate_t::angle(coordinate_t* bPtr, coordinate_t* cPtr)
     cosine = numerator / denominator;
     //[wer210][replace it with SAFE]
     //radian = acos(cosine);
-    radian = acos_safe(cosine);
+    radian = acos_pure(cosine);
 
     return (180.0 * radian / M_PI);
 }
