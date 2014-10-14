@@ -9,11 +9,11 @@
 #include <map>
 #include <set>
 #include "element.h"
-#include "queue.h"
+#include <queue>
 
 struct mesh_t {
     element_t* rootElementPtr;
-    queue_t* initBadQueuePtr;
+    std::queue<element_t*>* initBadQueuePtr;
     long size;
     std::set<edge_t*, element_listCompareEdge_t>* boundarySetPtr;
 

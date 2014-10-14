@@ -16,7 +16,7 @@
 mesh_t::mesh_t()
 {
     rootElementPtr = NULL;
-    initBadQueuePtr = queue_alloc(-1);
+    initBadQueuePtr = new std::queue<element_t*>();
     assert(initBadQueuePtr);
     size = 0;
     boundarySetPtr = new std::set<edge_t*, element_listCompareEdge_t>();
@@ -25,7 +25,7 @@ mesh_t::mesh_t()
 
 mesh_t::~mesh_t()
 {
-    queue_free(initBadQueuePtr);
+    delete initBadQueuePtr;
     delete boundarySetPtr;
 }
 
@@ -154,8 +154,7 @@ createElement (mesh_t* meshPtr,
     meshPtr->insert(elementPtr, edgeMapPtr);
 
     if (elementPtr->isBad()) {
-        bool status = queue_push(meshPtr->initBadQueuePtr, (void*)elementPtr);
-        assert(status);
+        meshPtr->initBadQueuePtr->push(elementPtr);
     }
  }
 
@@ -289,12 +288,39 @@ long mesh_t::read(const char* fileNamePrefix)
  */
 element_t* mesh_t::getBad()
 {
-    return (element_t*)queue_pop(initBadQueuePtr);
+    if (initBadQueuePtr->empty())
+        return NULL;
+    auto res = initBadQueuePtr->front();
+    initBadQueuePtr->pop();
+    return res;
 }
 
 void mesh_t::shuffleBad(std::mt19937* randomPtr)
 {
-    queue_shuffle(initBadQueuePtr, randomPtr);
+    // get the size of the queue
+    long numElement = initBadQueuePtr->size();
+
+    // move queue elements into a vector
+    std::vector<element_t*> ev;
+    while (!initBadQueuePtr->empty()) {
+        ev.push_back(initBadQueuePtr->front());
+        initBadQueuePtr->pop();
+    }
+    assert(initBadQueuePtr->empty());
+
+    // shuffle the vector
+    for (long i = 0; i < numElement; i++) {
+        long r1 = randomPtr->operator()() % numElement;
+        long r2 = randomPtr->operator()() % numElement;
+        element_t* tmp = ev[r1];
+        ev[r1] = ev[r2];
+        ev[r2] = tmp;
+    }
+
+    // move data back into the queue
+    for (auto i : ev) {
+        initBadQueuePtr->push(i);
+    }
 }
 
 
@@ -304,7 +330,7 @@ void mesh_t::shuffleBad(std::mt19937* randomPtr)
  */
 bool mesh_t::check(long expectedNumElement)
 {
-    queue_t* searchQueuePtr;
+    std::queue<element_t*>* searchQueuePtr;
     std::map<element_t*, int, element_mapCompare_t>* visitedMapPtr;
     long numBadTriangle = 0;
     long numFalseNeighbor = 0;
@@ -313,7 +339,7 @@ bool mesh_t::check(long expectedNumElement)
     puts("Checking final mesh:");
     fflush(stdout);
 
-    searchQueuePtr = queue_alloc(-1);
+    searchQueuePtr = new std::queue<element_t*>();
     assert(searchQueuePtr);
     visitedMapPtr = new std::map<element_t*, int, element_mapCompare_t>();
     assert(visitedMapPtr);
@@ -322,13 +348,19 @@ bool mesh_t::check(long expectedNumElement)
      * Do breadth-first search starting from rootElementPtr
      */
     assert(rootElementPtr);
-    queue_push(searchQueuePtr, (void*)rootElementPtr);
-    while (!queue_isEmpty(searchQueuePtr)) {
+    searchQueuePtr->push(rootElementPtr);
+    while (!searchQueuePtr->empty()) {
 
         element_t* currentElementPtr;
         bool isSuccess;
 
-        currentElementPtr = (element_t*)queue_pop(searchQueuePtr);
+        if (searchQueuePtr->empty()) {
+            currentElementPtr = NULL;
+        }
+        else {
+            currentElementPtr = searchQueuePtr->front();
+            searchQueuePtr->pop();
+        }
         if (visitedMapPtr->find(currentElementPtr) != visitedMapPtr->end()) {
             continue;
         }
@@ -346,10 +378,7 @@ bool mesh_t::check(long expectedNumElement)
              * Continue breadth-first search
              */
             if (visitedMapPtr->find(neighborElementPtr) == visitedMapPtr->end()) {
-                bool isSuccess;
-                isSuccess = queue_push(searchQueuePtr,
-                                       (void*)neighborElementPtr);
-                assert(isSuccess);
+                searchQueuePtr->push(neighborElementPtr);
             }
         } /* for each neighbor */
 
@@ -360,7 +389,7 @@ bool mesh_t::check(long expectedNumElement)
     printf("Number of elements      = %li\n", numElement);
     printf("Number of bad triangles = %li\n", numBadTriangle);
 
-    queue_free(searchQueuePtr);
+    delete searchQueuePtr;
     delete visitedMapPtr;
 
     return ((numBadTriangle > 0 ||
