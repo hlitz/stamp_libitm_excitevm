@@ -13,10 +13,44 @@
 #include "tm_transition.h"
 #include "types.h"
 
-// [mfs] This is a hack
-extern
-__attribute__((transaction_pure))
-int strncmp (__const char *__s1, __const char *__s2, size_t __n) throw();
+// DANGER: the original STAMP relied on the use of 'pure' strcmp and strncmp
+// to achieve good performance in genome.  This is unsafe, but 'works' for
+// eager TM and HTM.  It's not valid for lazy TM.  We'd rather have one code
+// base, but if you really want to see how eager TM benefits from pure
+// strcmp, change this #define
+#if 0
+  __attribute__((transaction_pure))
+  int tm_strncmp(const char *s1, const char *s2, size_t n) {
+    return strncmp(s1, s2, n);
+  }
+
+  __attribute__((transaction_pure))
+  int tm_strcmp(const char *s1, const char *s2) {
+      return strcmp(s1, s2);
+  }
+
+#else
+
+  // From http://opensource.apple.com/source/Libc/Libc-262/ppc/gen/strncmp.c
+  __attribute__((transaction_safe))
+  int tm_strncmp(const char *s1, const char *s2, size_t n) {
+      for ( ; n > 0; s1++, s2++, --n)
+          if (*s1 != *s2)
+              return ((*(unsigned char *)s1 < *(unsigned char *)s2) ? -1 : +1);
+          else if (*s1 == '\0')
+              return 0;
+      return 0;
+  }
+
+  // From http://opensource.apple.com/source/Libc/Libc-262/ppc/gen/strcmp.c
+  __attribute__((transaction_safe))
+  int tm_strcmp(const char *s1, const char *s2) {
+      for ( ; *s1 == *s2; s1++, s2++)
+          if (*s1 == '\0')
+              return 0;
+      return ((*(unsigned char *)s1 < *(unsigned char *)s2) ? -1 : +1);
+  }
+#endif
 
 struct endInfoEntry_t {
     bool isEnd;
@@ -67,39 +101,6 @@ size_t sequencer_hash::operator()(const char* keyPtr) const noexcept
     return (unsigned long)hash;
 }
 
-
-//[wer] we need a safe version of strcmp
-/*
- *  Compare S1 and S2, returning less than, equal to or
- *  greater than zero if S1 is lexicographically less than,
- *  equal to or greater than S2.
- */
-__attribute__((transaction_safe))
-inline long tm_safe_strcmp(const void* p1, const void* p2)
-{
-
-  register const unsigned char *s1 = (const unsigned char *) p1;
-  register const unsigned char *s2 = (const unsigned char *) p2;
-
-  unsigned char c1, c2;
-  do {
-      c1 = (unsigned char) *s1++;
-      c2 = (unsigned char) *s2++;
-
-      if (c1 == '\0')
-        return c1 - c2;
-  }while (c1 == c2);
-
-  return c1 - c2;
-}
-
-__attribute__((transaction_pure))
-inline static long tm_strcmp(void* a, void* b)
-{
-  return  strcmp((char*)a, (char*)b);
-}
-
-
 /* =============================================================================
  * compareSegment
  * -- For hashtable
@@ -108,7 +109,7 @@ inline static long tm_strcmp(void* a, void* b)
 __attribute__((transaction_safe))
 bool sequencer_compare::operator()(const char* a, char* b) const
 {
-    return 0 == tm_safe_strcmp(a, b); //[wer210] use safe version is TOO slow for write-through alg.
+    return 0 == tm_strcmp(a, b); //[wer210] use safe version is TOO slow for write-through alg.
 }
 
 /* =============================================================================
@@ -380,7 +381,7 @@ void sequencer_run(void* argPtr)
                   /* Check if matches */
                   if (startConstructEntryPtr->isStart &&
                       (endConstructEntryPtr->startPtr != startConstructEntryPtr) &&
-                      (strncmp(startSegment,
+                      (tm_strncmp(startSegment,
                                &endSegment[segmentLength - substringLength],
                                substringLength) == 0))
                   {
