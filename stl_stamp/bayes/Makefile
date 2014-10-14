@@ -24,7 +24,6 @@ SRCS += adtree.cc bayes.cc data.cc learner.cc net.cc sort.cc tm_hacks.cc
 LIBSRCS += thread.cc
 OBJS    := ${SRCS:.cc=.o} ${LIBSRCS:%.cc=lib_%.o}
 
-CXXFLAGS  += -DLIST_NO_DUPLICATES
 CXXFLAGS  += -DLEARNER_TRY_REMOVE
 CXXFLAGS  += -DLEARNER_TRY_REVERSE
 
