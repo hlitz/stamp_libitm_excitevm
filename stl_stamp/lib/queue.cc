@@ -73,13 +73,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include "queue.h"
+#include <queue>
 #include "tm_transition.h"
 
 struct queue_t {
-    long pop; /* points before element to pop */
-    long push;
-    long capacity;
-    void** elements;
+    std::queue<void*>* eltqueue;
 };
 
 enum config {
@@ -96,17 +94,8 @@ queue_t*
 queue_alloc (  long initCapacity)
 {
     queue_t* queuePtr = (queue_t*)malloc(sizeof(queue_t));
-
     if (queuePtr) {
-        long capacity = ((initCapacity < 2) ? 2 : initCapacity);
-        queuePtr->elements = (void**)malloc(capacity * sizeof(void*));
-        if (queuePtr->elements == NULL) {
-            free(queuePtr);
-            return NULL;
-        }
-        queuePtr->pop      = capacity - 1;
-        queuePtr->push     = 0;
-        queuePtr->capacity = capacity;
+        queuePtr->eltqueue = new std::queue<void*>();
     }
 
     return queuePtr;
@@ -121,7 +110,7 @@ __attribute__((transaction_safe))
 void
 queue_free (queue_t* queuePtr)
 {
-    free(queuePtr->elements);
+    delete queuePtr->eltqueue;
     free(queuePtr);
 }
 
@@ -134,11 +123,7 @@ __attribute__((transaction_safe))
 bool
 queue_isEmpty (queue_t* queuePtr)
 {
-    long pop      = queuePtr->pop;
-    long push     = queuePtr->push;
-    long capacity = queuePtr->capacity;
-
-    return (((pop + 1) % capacity == push) ? true : false);
+    return queuePtr->eltqueue->empty();
 }
 
 /* =============================================================================
@@ -149,8 +134,9 @@ __attribute__((transaction_safe))
 void
 queue_clear (queue_t* queuePtr)
 {
-    queuePtr->pop  = queuePtr->capacity - 1;
-    queuePtr->push = 0;
+    while (!queuePtr->eltqueue->empty()) {
+        queuePtr->eltqueue->pop();
+    }
 }
 
 
@@ -162,28 +148,29 @@ __attribute__((transaction_safe)) // [wer] queue_shuffle has to be TM_PURE, use 
 void
 queue_shuffle (queue_t* queuePtr, std::mt19937* randomPtr)
 {
-    long pop      = queuePtr->pop;
-    long push     = queuePtr->push;
-    long capacity = queuePtr->capacity;
+    // get the size of the queue
+    long numElement = queuePtr->eltqueue->size();
 
-    long numElement;
-    if (pop < push) {
-        numElement = push - (pop + 1);
-    } else {
-        numElement = capacity - (pop - push + 1);
+    // move queue elements into a vector
+    std::vector<void*> ev;
+    while (!queuePtr->eltqueue->empty()) {
+        ev.push_back(queuePtr->eltqueue->front());
+        queuePtr->eltqueue->pop();
     }
+    assert(queuePtr->eltqueue->empty());
 
-    void** elements = queuePtr->elements;
-    long i;
-    long base = pop + 1;
-    for (i = 0; i < numElement; i++) {
+    // shuffle the vector
+    for (long i = 0; i < numElement; i++) {
         long r1 = randomPtr->operator()() % numElement;
         long r2 = randomPtr->operator()() % numElement;
-        long i1 = (base + r1) % capacity;
-        long i2 = (base + r2) % capacity;
-        void* tmp = elements[i1];
-        elements[i1] = elements[i2];
-        elements[i2] = tmp;
+        void* tmp = ev[r1];
+        ev[r1] = ev[r2];
+        ev[r2] = tmp;
+    }
+
+    // move data back into the queue
+    for (auto i : ev) {
+        queuePtr->eltqueue->push(i);
     }
 }
 
@@ -196,51 +183,7 @@ __attribute__((transaction_safe))
 bool
 queue_push (queue_t* queuePtr, void* dataPtr)
 {
-    long pop      = queuePtr->pop;
-    long push     = queuePtr->push;
-    long capacity = queuePtr->capacity;
-
-    assert(pop != push);
-
-    /* Need to resize */
-    long newPush = (push + 1) % capacity;
-    if (newPush == pop) {
-
-        long newCapacity = capacity * QUEUE_GROWTH_FACTOR;
-        void** newElements = (void**)malloc(newCapacity * sizeof(void*));
-        if (newElements == NULL) {
-            return false;
-        }
-
-        long dst = 0;
-        void** elements = queuePtr->elements;
-        if (pop < push) {
-            long src;
-            for (src = (pop + 1); src < push; src++, dst++) {
-                newElements[dst] = elements[src];
-            }
-        } else {
-            long src;
-            for (src = (pop + 1); src < capacity; src++, dst++) {
-                newElements[dst] = elements[src];
-            }
-            for (src = 0; src < push; src++, dst++) {
-                newElements[dst] = elements[src];
-            }
-        }
-
-        free(elements);
-        queuePtr->elements = newElements;
-        queuePtr->pop      = newCapacity - 1;
-        queuePtr->capacity = newCapacity;
-        push = dst;
-        newPush = push + 1; /* no need modulo */
-
-    }
-
-    queuePtr->elements[push] = dataPtr;
-    queuePtr->push = newPush;
-
+    queuePtr->eltqueue->push(dataPtr);
     return true;
 }
 
@@ -253,19 +196,11 @@ __attribute__((transaction_safe))
 void*
 queue_pop (queue_t* queuePtr)
 {
-    long pop      = queuePtr->pop;
-    long push     = queuePtr->push;
-    long capacity = queuePtr->capacity;
-
-    long newPop = (pop + 1) % capacity;
-    if (newPop == push) {
+    if (queuePtr->eltqueue->empty())
         return NULL;
-    }
-
-    void* dataPtr = queuePtr->elements[newPop];
-    queuePtr->pop = newPop;
-
-    return dataPtr;
+    void* o = queuePtr->eltqueue->front();
+    queuePtr->eltqueue->pop();
+    return o;
 }
 
 
