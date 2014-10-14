@@ -164,7 +164,7 @@ long stream_t::generate(dictionary_t* dictionaryPtr,
 __attribute__((transaction_safe))
 char* stream_t::getPacket()
 {
-    return (char*)TMQUEUE_POP(packetQueuePtr);
+    return (char*)queue_pop(packetQueuePtr);
 }
 
 
