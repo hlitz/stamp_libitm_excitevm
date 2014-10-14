@@ -258,39 +258,8 @@ double my_exp(double x, int y)
     return ret;
 }
 
-// Taylor series to calculate __attribute__((transaction_safe)) logarithm
-__attribute__((transaction_safe))
-double TM_log (double x)
-{
-  assert (x > 0);
-  double ret = 0.0;
-  int i;
-
-  if (ABS(x - 1) <= 0.000001)
-    return ret;
-  else if (ABS(x) > 1) {
-    double y = x / (x - 1);
-    // more iteration, more precise
-    for (i = 1; i < 20; i++) {
-      ret += 1 / (i * my_exp (y, i));
-    }
-    return ret;
-  }
-  else{
-    double y = x - 1;
-    // more iteration, more precise
-    for (i = 1; i < 20; i++) {
-      if (i % 2 == 1)
-        ret += my_exp (y, i) / i;
-      else
-        ret -= my_exp (y, i) / i;
-    }
-    return ret;
-  }
-}
-
 __attribute__((transaction_pure)) //TM_PURE logarithm
-double PURE_log (double dat)
+double log_pure (double dat)
 {
   return (double)log(dat);
 }
@@ -318,10 +287,8 @@ computeSpecificLocalLogLikelihood (adtree_t* adtreePtr,
   assert(parentCount >= count);
   assert(parentCount > 0);
 
-  //[wer210] replaced with __attribute__((transaction_safe)) log()
   double temp = (double)count/ (double)parentCount;
-  //double t = (double)PURE_log(temp);
-  double t = (double)TM_log(temp);
+  double t = (double)log_pure(temp);
   return (float)(probability * t);
 }
 
