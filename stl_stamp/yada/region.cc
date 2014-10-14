@@ -35,7 +35,7 @@ TMgrowRegion (element_t* centerElementPtr,
 
 region_t::region_t()
 {
-    expandQueuePtr = TMQUEUE_ALLOC(-1);
+    expandQueuePtr = new std::queue<element_t*>();
     assert(expandQueuePtr);
 
     //[wer210] note the following compare functions should be TM_SAFE...
@@ -54,7 +54,7 @@ region_t::~region_t()
     delete badVectorPtr;
     delete borderListPtr;
     delete beforeListPtr;
-    TMQUEUE_FREE(expandQueuePtr);
+    delete expandQueuePtr;
 }
 
 __attribute__((transaction_safe))
@@ -184,11 +184,12 @@ TMgrowRegion (element_t* centerElementPtr,
 
     auto beforeListPtr = regionPtr->beforeListPtr;
     auto borderListPtr = regionPtr->borderListPtr;
-    queue_t* expandQueuePtr = regionPtr->expandQueuePtr;
+    std::queue<element_t*>* expandQueuePtr = regionPtr->expandQueuePtr;
 
     beforeListPtr->clear();
     borderListPtr->clear();
-    TMQUEUE_CLEAR(expandQueuePtr);
+    while (!expandQueuePtr->empty())
+        expandQueuePtr->pop();
 
     //[wer210]
     //coordinate_t centerCoordinate = element_getNewPoint(centerElementPtr);
@@ -197,10 +198,11 @@ TMgrowRegion (element_t* centerElementPtr,
 
     coordinate_t* centerCoordinatePtr = &centerCoordinate;
 
-    TMQUEUE_PUSH(expandQueuePtr, (void*)centerElementPtr);
-    while (!TMQUEUE_ISEMPTY(expandQueuePtr)) {
+    expandQueuePtr->push(centerElementPtr);
+    while (!expandQueuePtr->empty()) {
 
-        element_t* currentElementPtr = (element_t*)TMQUEUE_POP(expandQueuePtr);
+        element_t* currentElementPtr = expandQueuePtr->front();
+        expandQueuePtr->pop();
 
         custom_set_insertion(beforeListPtr, currentElementPtr); /* no duplicates */
         // __attribute__((transaction_safe))
@@ -220,13 +222,11 @@ TMgrowRegion (element_t* centerElementPtr,
                         return neighborElementPtr;
                     } else {
                         /* Continue breadth-first search */
-                        bool isSuccess;
-                        isSuccess = TMQUEUE_PUSH(expandQueuePtr,(void*)neighborElementPtr);
-                        assert(isSuccess);
+                        expandQueuePtr->push(neighborElementPtr);
                     }
                 } else {
                     /* This element borders region; save info for retriangulation */
-                edge_t* borderEdgePtr =
+                    edge_t* borderEdgePtr =
                         element_getCommonEdge(neighborElementPtr, currentElementPtr);
                     if (!borderEdgePtr) {
                       //_ITM_abortTransaction(2); // TM_restart

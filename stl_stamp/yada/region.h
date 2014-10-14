@@ -9,11 +9,11 @@
 #include "element.h"
 #include "mesh.h"
 #include "coordinate.h"
-#include "queue.h"
+#include <queue>
 
 struct region_t {
     coordinate_t centerCoordinate;
-    queue_t*     expandQueuePtr;
+    std::queue<element_t*>*     expandQueuePtr;
     std::set<element_t*, element_listCompare_t>* beforeListPtr; /* before retriangulation; list to avoid duplicates */
 
     std::set<edge_t*, element_listCompareEdge_t>*      borderListPtr; /* edges adjacent to region; list to avoid duplicates */
