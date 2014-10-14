@@ -5,7 +5,7 @@
 #pragma once
 
 #include <random>
-#include "queue.h"
+#include <queue>
 #include <vector>
 #include <map>
 #include "dictionary.h"
@@ -14,7 +14,7 @@ struct stream_t {
     long percentAttack;
     std::mt19937* randomPtr;
     std::vector<char*>* allocVectorPtr;
-    queue_t* packetQueuePtr;
+    std::queue<packet_t*>* packetQueuePtr;
     std::map<long, char*>* attackMapPtr;
 
     stream_t(long percentAttack);

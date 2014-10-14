@@ -19,7 +19,7 @@ stream_t::stream_t(long _percentAttack)
     assert(randomPtr);
     allocVectorPtr = new std::vector<char*>();
     assert(allocVectorPtr);
-    packetQueuePtr = queue_alloc(-1);
+    packetQueuePtr = new std::queue<packet_t*>();
     assert(packetQueuePtr);
     attackMapPtr = new std::map<long, char*>();
     assert(attackMapPtr);
@@ -36,7 +36,7 @@ stream_t::~stream_t()
     }
 
     delete attackMapPtr;
-    queue_free(packetQueuePtr);
+    delete packetQueuePtr;
     delete allocVectorPtr;
     delete randomPtr;
 }
@@ -52,7 +52,7 @@ static void splitIntoPackets(char* str,
                              long flowId,
                              std::mt19937* randomPtr,
                              std::vector<char*>* allocVectorPtr,
-                             queue_t* packetQueuePtr)
+                             std::queue<packet_t*>* packetQueuePtr)
 {
     long numByte = strlen(str);
     long numPacket = randomPtr->operator()() % numByte + 1;
@@ -61,7 +61,6 @@ static void splitIntoPackets(char* str,
 
     long p;
     for (p = 0; p < (numPacket - 1); p++) {
-        bool status;
         char* bytes = (char*)malloc(PACKET_HEADER_LENGTH + numDataByte);
         assert(bytes);
         allocVectorPtr->push_back(bytes);
@@ -71,11 +70,9 @@ static void splitIntoPackets(char* str,
         packetPtr->numFragment = numPacket;
         packetPtr->length      = numDataByte;
         memcpy(packetPtr->data, (str + p * numDataByte), numDataByte);
-        status = queue_push(packetQueuePtr, (void*)packetPtr);
-        assert(status);
+        packetQueuePtr->push(packetPtr);
     }
 
-    bool status;
     long lastNumDataByte = numDataByte + numByte % numPacket;
     char* bytes = (char*)malloc(PACKET_HEADER_LENGTH + lastNumDataByte);
     assert(bytes);
@@ -86,8 +83,7 @@ static void splitIntoPackets(char* str,
     packetPtr->numFragment = numPacket;
     packetPtr->length      = lastNumDataByte;
     memcpy(packetPtr->data, (str + p * numDataByte), lastNumDataByte);
-    status = queue_push(packetQueuePtr, (void*)packetPtr);
-    assert(status);
+    packetQueuePtr->push(packetPtr);
 }
 
 
@@ -108,7 +104,8 @@ long stream_t::generate(dictionary_t* dictionaryPtr,
     detectorPtr->addPreprocessor(&preprocessor_toLower);
 
     randomPtr->seed(seed);
-    queue_clear(packetQueuePtr);
+    while (!packetQueuePtr->empty())
+        packetQueuePtr->pop();
 
     long range = '~' - ' ' + 1;
     assert(range > 0);
@@ -147,7 +144,33 @@ long stream_t::generate(dictionary_t* dictionaryPtr,
         splitIntoPackets(str, f, randomPtr, allocVectorPtr, packetQueuePtr);
     }
 
-    queue_shuffle(packetQueuePtr, randomPtr);
+    // shuffle the queue:
+    {
+        // get the size of the queue
+        long numElement = packetQueuePtr->size();
+
+        // move queue elements into a vector
+        std::vector<packet_t*> ev;
+        while (!packetQueuePtr->empty()) {
+            ev.push_back(packetQueuePtr->front());
+            packetQueuePtr->pop();
+        }
+        assert(packetQueuePtr->empty());
+
+        // shuffle the vector
+        for (long i = 0; i < numElement; i++) {
+            long r1 = randomPtr->operator()() % numElement;
+            long r2 = randomPtr->operator()() % numElement;
+            packet_t* tmp = ev[r1];
+            ev[r1] = ev[r2];
+            ev[r2] = tmp;
+        }
+
+        // move data back into the queue
+        for (auto i : ev) {
+            packetQueuePtr->push(i);
+        }
+    }
 
     delete detectorPtr;
 
@@ -164,7 +187,11 @@ long stream_t::generate(dictionary_t* dictionaryPtr,
 __attribute__((transaction_safe))
 char* stream_t::getPacket()
 {
-    return (char*)queue_pop(packetQueuePtr);
+    if (packetQueuePtr->empty())
+        return NULL;
+    char* res = (char*)packetQueuePtr->front();
+    packetQueuePtr->pop();
+    return res;
 }
 
 
