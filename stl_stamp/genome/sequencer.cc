@@ -5,7 +5,6 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
-#include "hash.h"
 #include "segments.h"
 #include "sequencer.h"
 #include "table.h"

@@ -72,7 +72,6 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <pthread.h>
-#include "tm.h"
 #include "thread.h"
 
 static __thread long      global_threadId;

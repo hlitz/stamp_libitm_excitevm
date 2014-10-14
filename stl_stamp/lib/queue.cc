@@ -72,7 +72,6 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
-#include "tm.h"
 #include "queue.h"
 #include "tm_transition.h"
 
@@ -92,7 +91,7 @@ enum config {
  * TMqueue_alloc
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 queue_t*
 queue_alloc (  long initCapacity)
 {
@@ -118,7 +117,7 @@ queue_alloc (  long initCapacity)
  * queue_free
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 void
 queue_free (queue_t* queuePtr)
 {
@@ -131,7 +130,7 @@ queue_free (queue_t* queuePtr)
  * queue_isEmpty
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 queue_isEmpty (queue_t* queuePtr)
 {
@@ -146,7 +145,7 @@ queue_isEmpty (queue_t* queuePtr)
  * queue_clear
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 void
 queue_clear (queue_t* queuePtr)
 {
@@ -159,7 +158,7 @@ queue_clear (queue_t* queuePtr)
  * queue_shuffle
  * =============================================================================
  */
-TM_SAFE // [wer] queue_shuffle has to be TM_PURE, use random()
+__attribute__((transaction_safe)) // [wer] queue_shuffle has to be TM_PURE, use random()
 void
 queue_shuffle (queue_t* queuePtr, std::mt19937* randomPtr)
 {
@@ -193,7 +192,7 @@ queue_shuffle (queue_t* queuePtr, std::mt19937* randomPtr)
  * queue_push
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 bool
 queue_push (queue_t* queuePtr, void* dataPtr)
 {
@@ -250,7 +249,7 @@ queue_push (queue_t* queuePtr, void* dataPtr)
  * queue_pop
  * =============================================================================
  */
-TM_SAFE
+__attribute__((transaction_safe))
 void*
 queue_pop (queue_t* queuePtr)
 {
