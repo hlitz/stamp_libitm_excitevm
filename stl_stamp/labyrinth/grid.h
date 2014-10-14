@@ -49,5 +49,4 @@ struct grid_t {
     void print();
 };
 
-__attribute__((transaction_pure)) // TODO: fixme
 void grid_copy(grid_t* dstGridPtr, grid_t* srcGridPtr);

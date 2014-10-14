@@ -46,7 +46,6 @@ grid_t::~grid_t()
  * grid_copy
  * =============================================================================
  */
-__attribute__((transaction_pure)) // TODO: FIXME
 void grid_copy (grid_t* dstGridPtr, grid_t* srcGridPtr)
 {
     assert(srcGridPtr->width  == dstGridPtr->width);
