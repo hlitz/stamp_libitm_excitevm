@@ -109,9 +109,13 @@ addReservation (  MAP_T* tablePtr, long id, long num, long price);
  * =============================================================================
  */
 static MAP_T*
-tableAlloc ()
+tableAlloc (long numRelation)
 {
+  #ifdef MAP_USE_RBTREE
     return MAP_ALLOC(NULL, NULL);
+    #else
+    return hashtable_alloc(numRelation/2, NULL, NULL, 2, 2);
+#endif
 }
 
 
@@ -120,17 +124,17 @@ tableAlloc ()
  * =============================================================================
  */
 manager_t*
-manager_alloc ()
+manager_alloc (long numRelation)
 {
     manager_t* managerPtr;
 
-    managerPtr = (manager_t*)malloc(sizeof(manager_t));
+    managerPtr = (manager_t*)SEQ_MALLOC(sizeof(manager_t));
     assert(managerPtr != NULL);
 
-    managerPtr->carTablePtr = tableAlloc();
-    managerPtr->roomTablePtr = tableAlloc();
-    managerPtr->flightTablePtr = tableAlloc();
-    managerPtr->customerTablePtr = tableAlloc();
+    managerPtr->carTablePtr = tableAlloc(numRelation);
+    managerPtr->roomTablePtr = tableAlloc(numRelation);
+    managerPtr->flightTablePtr = tableAlloc(numRelation);
+    managerPtr->customerTablePtr = tableAlloc(numRelation);
     assert(managerPtr->carTablePtr != NULL);
     assert(managerPtr->roomTablePtr != NULL);
     assert(managerPtr->flightTablePtr != NULL);
@@ -204,28 +208,28 @@ addReservation (MAP_T* tablePtr, long id, long num, long price)
         assert(reservationPtr != NULL);
         TMMAP_INSERT(tablePtr, id, reservationPtr);
     } else {
-      /* Update existing reservation */
+        /* Update existing reservation */
       //[wer210] there was aborts inside RESERVATION_ADD_TO_TOTAL, passing an extra parameter.
       if (!RESERVATION_ADD_TO_TOTAL(reservationPtr, num, &success)) {
         //return FALSE;
         if (success)
           return TRUE;
         else return FALSE;
-      }
+        }
 
       if ((long)TM_SHARED_READ(reservationPtr->numTotal) == 0) {
-        bool_t status = TMMAP_REMOVE(tablePtr, id);
-        if (status == FALSE) {
+            bool_t status = TMMAP_REMOVE(tablePtr, id);
+            if (status == FALSE) {
           //_ITM_abortTransaction(2);
-          return FALSE;
+            return FALSE;
         }
 
         RESERVATION_FREE(reservationPtr);
-      } else {
+    } else {
         //[wer210] there was aborts inside RESERVATIOn_UPDATE_PRICE, and return was not used
         if (!RESERVATION_UPDATE_PRICE(reservationPtr, price))
-          return FALSE;
-      }
+            return FALSE;
+        }
     }
 
     return TRUE;
@@ -363,20 +367,20 @@ manager_addCustomer (  manager_t* managerPtr, long customerId)
     }
 
     customerPtr = CUSTOMER_ALLOC(customerId);
+
+    customerPtr = CUSTOMER_ALLOC(customerId);
     assert(customerPtr != NULL);
 
     status = TMMAP_INSERT(managerPtr->customerTablePtr, customerId, customerPtr);
     if (status == FALSE) {
       //_ITM_abortTransaction(2);
-      return FALSE;
+        return FALSE;
     }
 
     return TRUE;
 }
 
-
-
-/* =============================================================================
+/*
  * manager_deleteCustomer
  * -- Delete this customer and associated reservations
  * -- If customer does not exist, returns success
@@ -411,19 +415,19 @@ manager_deleteCustomer (  manager_t* managerPtr, long customerId)
       reservation_info_t* reservationInfoPtr =
         (reservation_info_t*)TMLIST_ITER_NEXT(&it);
       reservation_t* reservationPtr =
-        (reservation_t*)TMMAP_FIND(reservationTables[reservationInfoPtr->type],
-                                   reservationInfoPtr->id);
-      if (reservationPtr == NULL) {
+            (reservation_t*)TMMAP_FIND(reservationTables[reservationInfoPtr->type],
+                                     reservationInfoPtr->id);
+        if (reservationPtr == NULL) {
         //_ITM_abortTransaction(2);
         return FALSE;
-      }
+        }
 
-      status = RESERVATION_CANCEL(reservationPtr);
-      if (status == FALSE) {
+        status = RESERVATION_CANCEL(reservationPtr);
+        if (status == FALSE) {
         //_ITM_abortTransaction(2);
         return FALSE;
-      }
-      RESERVATION_INFO_FREE(reservationInfoPtr);
+        }
+        RESERVATION_INFO_FREE(reservationInfoPtr);
     }
 
     status = TMMAP_REMOVE(managerPtr->customerTablePtr, customerId);
@@ -627,12 +631,12 @@ reserve (MAP_T* tablePtr, MAP_T* customerTablePtr,
     if (!CUSTOMER_ADD_RESERVATION_INFO(customerPtr, type, id,
                                        (long)reservationPtr->price))
     {
-      /* Undo previous successful reservation */
-      bool_t status = RESERVATION_CANCEL(reservationPtr);
-      if (status == FALSE) {
+        /* Undo previous successful reservation */
+        bool_t status = RESERVATION_CANCEL(reservationPtr);
+        if (status == FALSE) {
         //_ITM_abortTransaction(2);
         return FALSE;
-      }
+    }
       //return FALSE;
     }
     return TRUE;
@@ -722,13 +726,14 @@ cancel (MAP_T* tablePtr, MAP_T* customerTablePtr,
 
     if (!CUSTOMER_REMOVE_RESERVATION_INFO(customerPtr, type, id)) {
         /* Undo previous successful cancellation */
-      bool_t status = RESERVATION_MAKE(reservationPtr);
-      if (status == FALSE) {
+        bool_t status = RESERVATION_MAKE(reservationPtr);
+        if (status == FALSE) {
         //_ITM_abortTransaction(2);
         return FALSE;
-      }
-      return FALSE;
+        }
+        return FALSE;
     }
+
     return TRUE;
 }
 

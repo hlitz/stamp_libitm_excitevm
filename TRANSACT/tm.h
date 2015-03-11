@@ -2,6 +2,7 @@
 #define TM_H 1
 
 #include <stdlib.h>                   /* Defines size_t. */
+#include "sitevm/sitevm.h"
 
 #define TM_PURE                       __attribute__((transaction_pure))
 #define TM_SAFE                       __attribute__((transaction_safe))
@@ -17,6 +18,26 @@
 #define TM_LOCAL_WRITE(var, val)      var = val
 #define TM_LOCAL_WRITE_P(var, val)    var = val
 #define TM_LOCAL_WRITE_F(var, val)    var = val
+
+#define SEQ_MALLOC(s) sitevm::smalloc(s)
+#define TM_MALLOC(s) sitevm::smalloc(s)
+#define SEQ_FREE(p) sitevm::sfree(p)
+#define TM_FREE(p) sitevm::sfree(p)
+
+//#define SEQ_MALLOC(s) malloc(s)
+//#define TM_MALLOC(s) malloc(s)
+//#define SEQ_FREE(p) free(p)
+//#define TM_FREE(p) free(p)
+
+//#define malloc(s) sitevm::smalloc(s)
+
+//#define free(p) sitevm::sfree(p)
+
+
+
+#define TM_THREAD_ENTER() sitevm::sitevm_enter()
+#define TM_STARTUP(x) sitevm::sitevm_init()
+#define TM_SHUTDOWN() sitevm::sitevm_shutdown()
 
 /* Indirect function call management */
 /* In STAMP applications, it is safe to use transaction_pure */

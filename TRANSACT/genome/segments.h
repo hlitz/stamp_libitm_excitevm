@@ -97,7 +97,7 @@ typedef struct segments {
  * =============================================================================
  */
 segments_t*
-segments_alloc (long length, long minNum);
+segments_alloc (long length, long minNum)  __attribute__ ((__target__ ("no-mmx,no-sse,no-sse2,no-sse3,no-sse4,no-sse4.2,no-sse4.1")));
 
 
 /* =============================================================================

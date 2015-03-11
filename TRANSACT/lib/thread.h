@@ -84,6 +84,16 @@
 extern "C" {
 #endif
 
+typedef struct barrier {
+  pthread_cond_t complete;
+  pthread_mutex_t mutex;
+    int count;
+  //How many have crossed in this countset
+  int crossing;
+  //Which countset (we flip this every time the barrier is opened)
+  int countset;
+} thread_spinbarrier_t;
+
 
 #define THREAD_T                            pthread_t
 #define THREAD_ATTR_T                       pthread_attr_t
@@ -141,9 +151,9 @@ extern "C" {
 /* Spin barrier is useful with simulation. It avoids to go to kernel space. */
 #ifdef BARRIER_SPINNING
 #  define THREAD_BARRIER_T                  thread_spinbarrier_t
-#  define THREAD_BARRIER_ALLOC(N)           thread_spinbarrier_alloc(N)
-#  define THREAD_BARRIER_INIT(bar, N)       thread_spinbarrier_init(bar)
-#  define THREAD_BARRIER(bar, tid)          thread_spinbarrier(bar, tid)
+#  define THREAD_BARRIER_ALLOC(N)           thread_spinbarrier_alloc() //N
+#  define THREAD_BARRIER_INIT(bar, N)       thread_spinbarrier_init(bar, N)
+#  define THREAD_BARRIER(bar, tid)          thread_spinbarrier(bar) //,tid
 #  define THREAD_BARRIER_FREE(bar)          thread_spinbarrier_free(bar)
 #endif
 
@@ -155,6 +165,10 @@ typedef struct thread_barrier {
     long numThread;
 } thread_barrier_t;
 
+  thread_spinbarrier_t *thread_spinbarrier_alloc() ;
+  void thread_spinbarrier_free(thread_spinbarrier_t *b);
+  void thread_spinbarrier_init(thread_spinbarrier_t *b, int n);
+  void thread_spinbarrier(thread_spinbarrier_t *b);
 
 /* =============================================================================
  * thread_startup

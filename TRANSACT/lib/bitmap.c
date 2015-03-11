@@ -310,7 +310,12 @@ void
 bitmap_copy (bitmap_t* dstPtr, bitmap_t* srcPtr)
 {
     assert(dstPtr->numBit == srcPtr->numBit);
-    memcpy(dstPtr->bits, srcPtr->bits, (dstPtr->numWord * sizeof(ulong_t)));
+    //memcpy(dstPtr->bits, srcPtr->bits, (dstPtr->numWord * sizeof(ulong_t)));
+    int i;
+    for (i = 0; i < dstPtr->numWord; i++) {
+      dstPtr->bits[i] = srcPtr->bits[i];
+    }
+  
 }
 
 

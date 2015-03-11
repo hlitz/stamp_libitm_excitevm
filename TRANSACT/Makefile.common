@@ -1,18 +1,24 @@
 # obj folder
 TMBUILD ?= obj
 
+#LIBITM_HOME=/home/jinglei/Projects/gcc/x86_64-unknown-linux-gnu/libitm
+LIBITM_HOME=/home/hlitz/sourcecode/tm-persistence/min-gcc/x86_64-unknown-linux-gnu/libitm
+
+
 # ======== Defines ========
-CC	:= gcc
+CC	:= g++
 #CPPFLAGS += -DNDEBUG
 CPPFLAGS += -I../lib -I../
-CPPFLAGS += 
+CFLAGS   += -std=c++11 -pthread -I./
 CFLAGS   += -Wall -Wextra -g
-CFLAGS   += -fgnu-tm
-CFLAGS   += -O2
+CFLAGS   += -fgnu-tm -mno-red-zone 
+CFLAGS   += -O2 -DBARRIER_SPINNING
 
 LD	:= gcc
+LDFLAGS  += -rdynamic -L$(SITEVM_HOME)/bin -ltbb -lsitevm -ldune -lstdc++
 LDFLAGS  += -lpthread
-LDFLAGS  += -litm
+#LDFLAGS  += -litm
+
 LIBDEPS  += 
 
 # ======== Rules ========
@@ -32,7 +38,7 @@ clean:
 	$(RM) $(_OBJS) $(_PROG)
 
 $(_PROG): $(_OBJS) $(LIBDEPS)
-	$(LD) $^ $(LDFLAGS) -o $(_PROG)
+	$(LD) $^ $(LIBITM_HOME)/libitm.a $(LDFLAGS) -o $(_PROG)
 
 $(OBJDIR)/%.o: %.c *.h ../lib/*.h
 	@mkdir -p $(@D)

@@ -88,12 +88,12 @@ table_alloc (long numBucket, long (*compare)(const void*, const void*))
     table_t* tablePtr;
     long i;
 
-    tablePtr = (table_t*)malloc(sizeof(table_t));
+    tablePtr = (table_t*)SEQ_MALLOC(sizeof(table_t));
     if (tablePtr == NULL) {
         return NULL;
     }
 
-    tablePtr->buckets = (list_t**)malloc(numBucket * sizeof(list_t*));
+    tablePtr->buckets = (list_t**)SEQ_MALLOC(numBucket * sizeof(list_t*));
     if (tablePtr->buckets == NULL) {
         return NULL;
     }
@@ -162,8 +162,8 @@ table_free (table_t* tablePtr)
         list_free(tablePtr->buckets[i]);
     }
 
-    free(tablePtr->buckets);
-    free(tablePtr);
+    SEQ_FREE(tablePtr->buckets);
+    SEQ_FREE(tablePtr);
 }
 
 

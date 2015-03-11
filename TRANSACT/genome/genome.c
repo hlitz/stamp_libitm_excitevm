@@ -181,6 +181,9 @@ parseArgs (long argc, char* const argv[])
  */
 int main (int argc, char** argv)
 {
+
+  TM_STARTUP();
+  TM_THREAD_ENTER();
     int result = 0;
     TIMER_T start;
     TIMER_T stop;
@@ -197,19 +200,23 @@ int main (int argc, char** argv)
     long numThread = global_params[PARAM_THREAD];
 
     thread_startup(numThread);
-
+    printf("rand alloc\n");
     random_t* randomPtr = random_alloc();
     assert(randomPtr != NULL);
     random_seed(randomPtr, 0);
 
+    printf("g alloc\n");
     gene_t* genePtr = gene_alloc(geneLength);
     assert( genePtr != NULL);
     gene_create(genePtr, randomPtr);
     char* gene = genePtr->contents;
+    printf("seg alloc %lx\n", minNumSegment);
 
     segments_t* segmentsPtr = segments_alloc(segmentLength, minNumSegment);
     assert(segmentsPtr != NULL);
     segments_create(segmentsPtr, genePtr, randomPtr);
+    printf("ptr alloc\n");
+
     sequencer_t* sequencerPtr = sequencer_alloc(geneLength, segmentLength, segmentsPtr);
     assert(sequencerPtr != NULL);
 
@@ -260,7 +267,6 @@ int main (int argc, char** argv)
     fflush(stdout);
 
     thread_shutdown();
-
     return result;
 }
 

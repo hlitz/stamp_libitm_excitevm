@@ -79,6 +79,7 @@
 #include "sort.h"
 #include "types.h"
 #include "vector.h"
+#include "sitevm/sitevm.h"
 
 enum data_config {
     DATA_PRECISION = 100,
@@ -95,12 +96,12 @@ data_alloc (long numVar, long numRecord, random_t* randomPtr)
 {
     data_t* dataPtr;
 
-    dataPtr = (data_t*)malloc(sizeof(data_t));
+    dataPtr = (data_t*)TM_MALLOC(sizeof(data_t));
     if (dataPtr) {
         long numDatum = numVar * numRecord;
-        dataPtr->records = (char*)malloc(numDatum * sizeof(char));
+        dataPtr->records = (char*)TM_MALLOC(numDatum * sizeof(char));
         if (dataPtr->records == NULL) {
-            free(dataPtr);
+            TM_FREE(dataPtr);
             return NULL;
         }
         memset(dataPtr->records, DATA_INIT, (numDatum * sizeof(char)));
@@ -120,8 +121,8 @@ data_alloc (long numVar, long numRecord, random_t* randomPtr)
 void
 data_free (data_t* dataPtr)
 {
-    free(dataPtr->records);
-    free(dataPtr);
+    TM_FREE(dataPtr->records);
+    TM_FREE(dataPtr);
 }
 
 
@@ -154,13 +155,13 @@ data_generate (data_t* dataPtr, long seed, long maxNumParent, long percentParent
      * value instances
      */
 
-    long** thresholdsTable = (long**)malloc(numVar * sizeof(long*));
+    long** thresholdsTable = (long**)TM_MALLOC(numVar * sizeof(long*));
     assert(thresholdsTable);
     long v;
     for (v = 0; v < numVar; v++) {
         list_t* parentIdListPtr = net_getParentIdListPtr(netPtr, v);
         long numThreshold = 1 << list_getSize(parentIdListPtr);
-        long* thresholds = (long*)malloc(numThreshold * sizeof(long));
+        long* thresholds = (long*)TM_MALLOC(numThreshold * sizeof(long));
         assert(thresholds);
         long t;
         for (t = 0; t < numThreshold; t++) {
@@ -174,7 +175,7 @@ data_generate (data_t* dataPtr, long seed, long maxNumParent, long percentParent
      * Create variable dependency ordering for record generation
      */
 
-    long* order = (long*)malloc(numVar * sizeof(long));
+    long* order = (long*)TM_MALLOC(numVar * sizeof(long));
     assert(order);
     long numOrder = 0;
 
@@ -277,11 +278,11 @@ data_generate (data_t* dataPtr, long seed, long maxNumParent, long percentParent
     bitmap_free(orderedBitmapPtr);
     vector_free(dependencyVectorPtr);
     queue_free(workQueuePtr);
-    free(order);
+    TM_FREE(order);
     for (v = 0; v < numVar; v++) {
-        free(thresholdsTable[v]);
+        TM_FREE(thresholdsTable[v]);
     }
-    free(thresholdsTable);
+    TM_FREE(thresholdsTable);
 
     return netPtr;
 }
@@ -314,8 +315,8 @@ data_copy (data_t* dstPtr, data_t* srcPtr)
     long numDstDatum = dstPtr->numVar * dstPtr->numRecord;
     long numSrcDatum = srcPtr->numVar * srcPtr->numRecord;
     if (numDstDatum != numSrcDatum) {
-        free(dstPtr->records);
-        dstPtr->records = (char*)calloc(numSrcDatum, sizeof(char));
+        SEQ_FREE(dstPtr->records);
+        dstPtr->records = (char*)sitevm::scalloc(numSrcDatum, sizeof(char));
         if (dstPtr->records == NULL) {
             return FALSE;
         }

@@ -82,6 +82,9 @@
 
 int main (int argc, char** argv)
 {
+  TM_STARTUP();
+  TM_THREAD_ENTER();
+
     /*
      * Tuple for Scalable Data Generation
      * stores startVertex, endVertex, long weight and other info

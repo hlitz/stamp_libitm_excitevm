@@ -140,6 +140,8 @@ usage (char* argv0)
  */
 int main (int argc, char** argv)
 {
+  TM_STARTUP();
+  TM_THREAD_ENTER();
     int     max_nclusters = 15;
     int     min_nclusters = 15;
     char*   filename = "../data/kmeans/inputs/random-n65536-d32-c16.txt";

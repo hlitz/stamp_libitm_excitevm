@@ -85,7 +85,7 @@ pair_alloc (void* firstPtr, void* secondPtr)
 {
     pair_t* pairPtr;
 
-    pairPtr = (pair_t*)malloc(sizeof(pair_t));
+    pairPtr = (pair_t*)TM_MALLOC(sizeof(pair_t));
     if (pairPtr != NULL) {
         pairPtr->firstPtr = firstPtr;
         pairPtr->secondPtr = secondPtr;
@@ -103,7 +103,7 @@ TM_SAFE
 void
 pair_free (pair_t* pairPtr)
 {
-    free(pairPtr);
+    TM_FREE(pairPtr);
 }
 
 

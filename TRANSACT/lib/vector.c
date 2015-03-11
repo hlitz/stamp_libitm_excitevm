@@ -270,8 +270,14 @@ vector_copy (vector_t* dstVectorPtr, vector_t* srcVectorPtr)
         dstVectorPtr->capacity = srcCapacity;
     }
 
-    memcpy(dstVectorPtr->elements, srcVectorPtr->elements,
-           (srcSize * sizeof(void*)));
+    //    memcpy(dstVectorPtr->elements, srcVectorPtr->elements,
+    //       (srcSize * sizeof(void*)));
+    int i;
+    for (i = 0; i < srcSize; i++) {
+      dstVectorPtr->elements[i] = srcVectorPtr->elements[i];
+    }
+  
+    
     dstVectorPtr->size = srcSize;
 
     return TRUE;

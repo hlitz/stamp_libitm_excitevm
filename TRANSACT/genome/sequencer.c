@@ -148,7 +148,7 @@ hashSegment (const void* keyPtr)
   //[wer] I replaced hash_sdbm with the above sdbm function, which is TM_SAFE
   ulong_t hash = 0;
     long c;
-    char* str = keyPtr;
+    char* str = (char*)keyPtr;
 
     /* Note: Do not change this hashing scheme */
    while ((c = *str++) != '\0') {
@@ -221,7 +221,7 @@ sequencer_alloc (long geneLength, long segmentLength, segments_t* segmentsPtr)
     long maxNumUniqueSegment = geneLength - segmentLength + 1;
     long i;
 
-    sequencerPtr = (sequencer_t*)malloc(sizeof(sequencer_t));
+    sequencerPtr = (sequencer_t*)SEQ_MALLOC(sizeof(sequencer_t));
     if (sequencerPtr == NULL) {
         return NULL;
     }
@@ -234,14 +234,14 @@ sequencer_alloc (long geneLength, long segmentLength, segments_t* segmentsPtr)
 
     /* For finding a matching entry */
     sequencerPtr->endInfoEntries =
-        (endInfoEntry_t*)malloc(maxNumUniqueSegment * sizeof(endInfoEntry_t));
+        (endInfoEntry_t*)SEQ_MALLOC(maxNumUniqueSegment * sizeof(endInfoEntry_t));
     for (i = 0; i < maxNumUniqueSegment; i++) {
         endInfoEntry_t* endInfoEntryPtr = &sequencerPtr->endInfoEntries[i];
         endInfoEntryPtr->isEnd = TRUE;
         endInfoEntryPtr->jumpToNext = 1;
     }
     sequencerPtr->startHashToConstructEntryTables =
-        (table_t**)malloc(segmentLength * sizeof(table_t*));
+        (table_t**)SEQ_MALLOC(segmentLength * sizeof(table_t*));
     if (sequencerPtr->startHashToConstructEntryTables == NULL) {
         return NULL;
     }
@@ -256,7 +256,7 @@ sequencer_alloc (long geneLength, long segmentLength, segments_t* segmentsPtr)
 
     /* For constructing sequence */
     sequencerPtr->constructEntries =
-        (constructEntry_t*)malloc(maxNumUniqueSegment * sizeof(constructEntry_t));
+        (constructEntry_t*)SEQ_MALLOC(maxNumUniqueSegment * sizeof(constructEntry_t));
     if (sequencerPtr->constructEntries == NULL) {
         return NULL;
     }
@@ -289,6 +289,7 @@ sequencer_alloc (long geneLength, long segmentLength, segments_t* segmentsPtr)
 void
 sequencer_run (void* argPtr)
 {
+  TM_THREAD_ENTER();
     long threadId = thread_getId();
 
     sequencer_t* sequencerPtr = (sequencer_t*)argPtr;
@@ -346,7 +347,6 @@ sequencer_run (void* argPtr)
         }
       }
     }
-
     thread_barrier_wait();
 
     /*
@@ -545,6 +545,8 @@ sequencer_run (void* argPtr)
                                 (long)TM_SHARED_READ(startConstructEntryPtr->length) -
                                 substringLength;
                     TM_SHARED_WRITE(endConstructEntry_startPtr->length, newLength);
+                    newLength = 0;
+                    TM_SHARED_WRITE(startConstructEntryPtr->length, newLength); //dummy write
                   } /* if (matched) */
 
                 } // TM_END
@@ -600,7 +602,6 @@ sequencer_run (void* argPtr)
 
     } /* for (substringLength > 0) */
 
-
     thread_barrier_wait();
 
     /*
@@ -617,7 +618,7 @@ sequencer_run (void* argPtr)
             }
         }
 
-        sequencerPtr->sequence = (char*)malloc((totalLength+1) * sizeof(char));
+        sequencerPtr->sequence = (char*)SEQ_MALLOC((totalLength+1) * sizeof(char));
         char* sequence = sequencerPtr->sequence;
         assert(sequence);
 
@@ -664,18 +665,18 @@ sequencer_free (sequencer_t* sequencerPtr)
     long i;
 
     table_free(sequencerPtr->hashToConstructEntryTable);
-    free(sequencerPtr->constructEntries);
+    SEQ_FREE(sequencerPtr->constructEntries);
     for (i = 1; i < sequencerPtr->segmentLength; i++) {
         table_free(sequencerPtr->startHashToConstructEntryTables[i]);
     }
-    free(sequencerPtr->startHashToConstructEntryTables);
-    free(sequencerPtr->endInfoEntries);
+    SEQ_FREE(sequencerPtr->startHashToConstructEntryTables);
+    SEQ_FREE(sequencerPtr->endInfoEntries);
     /* TODO: fix mixed sequential/parallel allocation */
     TMhashtable_free(sequencerPtr->uniqueSegmentsPtr);
     if (sequencerPtr->sequence != NULL) {
-        free(sequencerPtr->sequence);
+        SEQ_FREE(sequencerPtr->sequence);
     }
-    free(sequencerPtr);
+    SEQ_FREE(sequencerPtr);
 }
 
 
@@ -897,7 +898,7 @@ static segments_t*
 createSegments (char* segments[])
 {
     long i = 0;
-    segments_t* segmentsPtr = (segments_t*)malloc(sizeof(segments));
+    segments_t* segmentsPtr = (segments_t*)SEQ_MALLOC(sizeof(segments));
 
     segmentsPtr->length = strlen(segments[0]);
     segmentsPtr->contentsPtr = vector_alloc(1);

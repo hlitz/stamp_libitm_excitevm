@@ -98,13 +98,13 @@ TM_SAFE
 queue_t*
 queue_alloc (  long initCapacity)
 {
-    queue_t* queuePtr = (queue_t*)malloc(sizeof(queue_t));
+    queue_t* queuePtr = (queue_t*)SEQ_MALLOC(sizeof(queue_t));
 
     if (queuePtr) {
         long capacity = ((initCapacity < 2) ? 2 : initCapacity);
-        queuePtr->elements = (void**)malloc(capacity * sizeof(void*));
+        queuePtr->elements = (void**)SEQ_MALLOC(capacity * sizeof(void*));
         if (queuePtr->elements == NULL) {
-            free(queuePtr);
+            SEQ_FREE(queuePtr);
             return NULL;
         }
         queuePtr->pop      = capacity - 1;
@@ -124,8 +124,8 @@ TM_SAFE
 void
 queue_free (queue_t* queuePtr)
 {
-    free(queuePtr->elements);
-    free(queuePtr);
+    SEQ_FREE(queuePtr->elements);
+    SEQ_FREE(queuePtr);
 }
 
 
@@ -204,13 +204,13 @@ queue_push (queue_t* queuePtr, void* dataPtr)
     long capacity = queuePtr->capacity;
 
     assert(pop != push);
-
+    assert(capacity);
     /* Need to resize */
     long newPush = (push + 1) % capacity;
     if (newPush == pop) {
 
         long newCapacity = capacity * QUEUE_GROWTH_FACTOR;
-        void** newElements = (void**)malloc(newCapacity * sizeof(void*));
+        void** newElements = (void**)SEQ_MALLOC(newCapacity * sizeof(void*));
         if (newElements == NULL) {
             return FALSE;
         }
@@ -232,7 +232,7 @@ queue_push (queue_t* queuePtr, void* dataPtr)
             }
         }
 
-        free(elements);
+        SEQ_FREE(elements);
         queuePtr->elements = newElements;
         queuePtr->pop      = newCapacity - 1;
         queuePtr->capacity = newCapacity;

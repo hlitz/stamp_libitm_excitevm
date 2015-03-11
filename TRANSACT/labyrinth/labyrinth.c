@@ -189,6 +189,8 @@ parseArgs (long argc, char* const argv[])
  */
 int main (int argc, char** argv)
 {
+  TM_STARTUP();
+  TM_THREAD_ENTER();
 
     /*
      * Initialization

@@ -102,7 +102,7 @@ customer_alloc (  long id)
 {
     customer_t* customerPtr;
 
-    customerPtr = (customer_t*)malloc(sizeof(customer_t));
+    customerPtr = (customer_t*)SEQ_MALLOC(sizeof(customer_t));
     assert(customerPtr != NULL);
 
     customerPtr->id = id;
@@ -125,7 +125,7 @@ customer_free (  customer_t* customerPtr)
     list_t* reservationInfoListPtr =
         (list_t*)TM_SHARED_READ_P(customerPtr->reservationInfoListPtr);
     TMLIST_FREE(reservationInfoListPtr);
-    free(customerPtr);
+    TM_FREE(customerPtr);
 }
 
 
@@ -139,6 +139,7 @@ customer_addReservationInfo (customer_t* customerPtr,
                              reservation_type_t type, long id, long price)
 {
     reservation_info_t* reservationInfoPtr;
+
     reservationInfoPtr = RESERVATION_INFO_ALLOC(type, id, price);
     assert(reservationInfoPtr != NULL);
 

@@ -135,17 +135,17 @@ allocNode (long id)
 {
     net_node_t* nodePtr;
 
-    nodePtr = (net_node_t*)malloc(sizeof(net_node_t));
+    nodePtr = (net_node_t*)TM_MALLOC(sizeof(net_node_t));
     if (nodePtr) {
         nodePtr->parentIdListPtr = list_alloc(&compareId);
         if (nodePtr->parentIdListPtr == NULL) {
-            free(nodePtr);
+            TM_FREE(nodePtr);
             return NULL;
         }
         nodePtr->childIdListPtr = list_alloc(&compareId);
         if (nodePtr->childIdListPtr == NULL) {
             list_free(nodePtr->parentIdListPtr);
-            free(nodePtr);
+            TM_FREE(nodePtr);
             return NULL;
         }
         nodePtr->id = id;
@@ -164,7 +164,7 @@ freeNode (net_node_t* nodePtr)
 {
     list_free(nodePtr->childIdListPtr);
     list_free(nodePtr->parentIdListPtr);
-    free(nodePtr);
+    TM_FREE(nodePtr);
 }
 
 
@@ -177,11 +177,11 @@ net_alloc (long numNode)
 {
     net_t* netPtr;
 
-    netPtr = (net_t*)malloc(sizeof(net_t));
+    netPtr = (net_t*)TM_MALLOC(sizeof(net_t));
     if (netPtr) {
         vector_t* nodeVectorPtr = vector_alloc(numNode);
         if (nodeVectorPtr == NULL) {
-            free(netPtr);
+            TM_FREE(netPtr);
             return NULL;
         }
         long i;
@@ -194,7 +194,7 @@ net_alloc (long numNode)
                     freeNode(nodePtr);
                 }
                 vector_free(nodeVectorPtr);
-                free(netPtr);
+                TM_FREE(netPtr);
                 return NULL;
             }
             bool_t status = vector_pushBack(nodeVectorPtr, (void*)nodePtr);
@@ -222,7 +222,7 @@ net_free (net_t* netPtr)
         freeNode(nodePtr);
     }
     vector_free(netPtr->nodeVectorPtr);
-    free(netPtr);
+    TM_FREE(netPtr);
 }
 
 /* =============================================================================

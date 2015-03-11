@@ -181,7 +181,7 @@ TMallocBuckets (
     list_t** buckets;
 
     /* Allocate bucket: extra bucket is dummy for easier iterator code */
-    buckets = (list_t**)malloc((numBucket + 1) * sizeof(list_t*));
+    buckets = (list_t**)TM_MALLOC((numBucket + 1) * sizeof(list_t*));
     if (buckets == NULL) {
         return NULL;
     }
@@ -219,14 +219,14 @@ TMhashtable_alloc (long initNumBucket,
 {
     hashtable_t* hashtablePtr;
 
-    hashtablePtr = (hashtable_t*)malloc(sizeof(hashtable_t));
+    hashtablePtr = (hashtable_t*)TM_MALLOC(sizeof(hashtable_t));
     if (hashtablePtr == NULL) {
         return NULL;
     }
 
     hashtablePtr->buckets = TMallocBuckets(  initNumBucket, comparePairs);
     if (hashtablePtr->buckets == NULL) {
-        free(hashtablePtr);
+        TM_FREE(hashtablePtr);
         return NULL;
     }
 
@@ -260,7 +260,7 @@ TMfreeBuckets (  list_t** buckets, long numBucket)
         TMLIST_FREE(buckets[i]);
     }
 
-    free(buckets);
+    TM_FREE(buckets);
 }
 
 
@@ -274,7 +274,7 @@ void
 TMhashtable_free (  hashtable_t* hashtablePtr)
 {
     TMfreeBuckets(  hashtablePtr->buckets, hashtablePtr->numBucket);
-    free(hashtablePtr);
+    TM_FREE(hashtablePtr);
 }
 
 

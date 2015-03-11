@@ -99,7 +99,7 @@ decoder_free (decoder_t* decoderPtr);
  * =============================================================================
  */
 TM_SAFE
-error_t
+intruder_error_t
 TMdecoder_process (  decoder_t* decoderPtr, char* bytes, long numByte);
 
 

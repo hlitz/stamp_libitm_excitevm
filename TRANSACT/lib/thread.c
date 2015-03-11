@@ -74,6 +74,7 @@
 #include "tm.h"
 #include "thread.h"
 #include "types.h"
+#include "sitevm/sitevm.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -98,6 +99,8 @@ static volatile bool_t   global_doShutdown      = FALSE;
 static void
 threadWait (void* argPtr)
 {
+  TM_THREAD_ENTER();
+
     long threadId = *(long*)argPtr;
 
     THREAD_LOCAL_SET(global_threadId, (long)threadId);
@@ -107,7 +110,10 @@ threadWait (void* argPtr)
         if (global_doShutdown) {
             break;
         }
+
+	
         global_funcPtr(global_argPtr);
+	
         THREAD_BARRIER(global_barrierPtr, threadId); /* wait for end parallel */
         if (threadId == 0) {
             break;
@@ -127,6 +133,10 @@ thread_startup (long numThread)
 {
     long i;
 
+    //   TM_STARTUP();
+    //TM_THREAD_ENTER();
+
+    
     global_numThread = numThread;
     global_doShutdown = FALSE;
 
@@ -175,6 +185,7 @@ thread_startup (long numThread)
 void
 thread_start (void (*funcPtr)(void*), void* argPtr)
 {
+  printf("thread start\n");
     global_funcPtr = funcPtr;
     global_argPtr = argPtr;
 
@@ -191,6 +202,7 @@ thread_start (void (*funcPtr)(void*), void* argPtr)
 void
 thread_shutdown ()
 {
+  printf("thread shutdown\n");
     /* Make secondary threads exit wait() */
     global_doShutdown = TRUE;
     THREAD_BARRIER(global_barrierPtr, 0);
@@ -212,7 +224,82 @@ thread_shutdown ()
     global_threads = NULL;
 
     global_numThread = 1;
+    TM_SHUTDOWN();
+
 }
+
+  /*=== 
+   * spin barrier
+   */
+void thread_spinlock_acquire(/*uint64_t**/pthread_mutex_t* lock){
+  //printf("lock acquhre\n");
+  while (__sync_lock_test_and_set((uint64_t*)lock, 1) != 0)
+    {
+      uint64_t val;
+      do {
+	//	_mm_pause();
+	val = __sync_val_compare_and_swap((uint64_t*)lock, 1, 1);
+      } while (val == 1);
+    }
+}
+
+
+void thread_spinlock_release(/*uint64_t**/ pthread_mutex_t* lock){
+  //printf("lock release\n");
+  __sync_lock_release((uint64_t*)lock);
+}
+
+
+
+thread_spinbarrier_t *thread_spinbarrier_alloc() {
+    return (thread_spinbarrier_t *)malloc(sizeof(thread_spinbarrier_t));
+}
+
+void thread_spinbarrier_free(thread_spinbarrier_t *b) {
+    free(b);
+}
+
+void thread_spinbarrier_init(thread_spinbarrier_t *b, int n) {
+    pthread_cond_init(&b->complete, NULL);
+    pthread_mutex_init(&b->mutex, NULL);
+    b->count = n;
+    b->crossing = 0;
+    b->countset = 0;
+}
+
+void thread_spinbarrier(thread_spinbarrier_t *b) {
+  thread_spinlock_acquire(&b->mutex);
+  //    pthread_mutex_lock(&b->mutex);
+/* One more thread through */
+    b->crossing++;
+    /* If not all here, wait */
+    int old_countset = b->countset;
+    if (b->crossing < b->count){
+      while (b->countset == old_countset) {
+	thread_spinlock_release(&b->mutex);
+	//pthread_mutex_unlock(&b->mutex);
+	thread_spinlock_acquire(&b->mutex);
+	//pthread_mutex_lock(&b->mutex);
+      }
+    } else {
+      //We are the last thread, flip to the next countset
+      b->countset = !b->countset;
+      b->crossing = 0;
+    }
+    thread_spinlock_release(&b->mutex);
+    //    pthread_mutex_unlock(&b->mutex);
+
+    //   if (b->crossing < b->count) {
+    //    pthread_cond_wait(&b->complete, &b->mutex);
+    //} else {
+        /* Reset for next time */
+    //   b->crossing = 0;
+        //pthread_cond_broadcast(&b->complete);
+	//}
+    
+    //pthread_mutex_unlock(&b->mutex);
+}
+  //END spin barrier
 
 
 /* =============================================================================
@@ -353,6 +440,7 @@ thread_getNumThread()
 void
 thread_barrier_wait()
 {
+  sitevm::sitevm_sync();
     THREAD_BARRIER(global_barrierPtr, threadId);
 }
 

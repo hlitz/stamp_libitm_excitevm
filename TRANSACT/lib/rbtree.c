@@ -1051,7 +1051,7 @@ TM_SAFE
 rbtree_t*
 rbtree_alloc (long (*compare)(const void*, const void*))
 {
-    rbtree_t* n = (rbtree_t* )malloc(sizeof(*n));
+    rbtree_t* n = (rbtree_t* )SEQ_MALLOC(sizeof(*n));
     if (n) {
         n->compare = (compare ? compare : &compareKeysDefault);
         n->root = NULL;
@@ -1067,7 +1067,7 @@ rbtree_alloc (long (*compare)(const void*, const void*))
 void
 releaseNode (node_t* n)
 {
-  free(n);
+  SEQ_FREE(n);
 }
 
 
@@ -1096,7 +1096,7 @@ void
 rbtree_free (rbtree_t* r)
 {
     freeTreeNode(r->root);
-    free(r);
+    SEQ_FREE(r);
 }
 
 
@@ -1109,7 +1109,7 @@ rbtree_free (rbtree_t* r)
 node_t*
 getNode ()
 {
-    node_t* n = (node_t*)malloc(sizeof(*n));
+    node_t* n = (node_t*)SEQ_MALLOC(sizeof(*n));
     return n;
 }
 
@@ -1120,7 +1120,7 @@ getNode ()
  * =============================================================================
  */
 TM_SAFE
-bool_t
+long
 rbtree_insert (rbtree_t* r, void* key, void* val)
 {
     node_t* node = getNode();
@@ -1138,7 +1138,7 @@ rbtree_insert (rbtree_t* r, void* key, void* val)
  * =============================================================================
  */
 TM_SAFE
-bool_t
+long
 rbtree_delete (rbtree_t* r, void* key)
 {
     node_t* node = NULL;
@@ -1159,7 +1159,7 @@ rbtree_delete (rbtree_t* r, void* key)
  * =============================================================================
  */
 TM_SAFE
-bool_t
+long
 rbtree_update (rbtree_t* r, void* key, void* val)
 {
     node_t* nn = getNode();

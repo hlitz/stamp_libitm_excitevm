@@ -162,7 +162,7 @@ TM_SAFE
 list_node_t*
 allocNode (void* dataPtr)
 {
-    list_node_t* nodePtr = (list_node_t*)malloc(sizeof(list_node_t));
+    list_node_t* nodePtr = (list_node_t*)SEQ_MALLOC(sizeof(list_node_t));
     if (nodePtr == NULL) {
         return NULL;
     }
@@ -184,7 +184,7 @@ TM_SAFE
 list_t*
 list_alloc (TM_SAFE long (*compare)(const void*, const void*))
 {
-    list_t* listPtr = (list_t*)malloc(sizeof(list_t));
+    list_t* listPtr = (list_t*)SEQ_MALLOC(sizeof(list_t));
     if (listPtr == NULL) {
         return NULL;
     }
@@ -211,7 +211,7 @@ TM_SAFE
 void
 freeNode (list_node_t* nodePtr)
 {
-    free(nodePtr);
+    SEQ_FREE(nodePtr);
 }
 
 
@@ -240,7 +240,7 @@ list_free (  list_t* listPtr)
 {
     list_node_t* nextPtr = (list_node_t*)listPtr->head.nextPtr;
     freeList(nextPtr);
-    free(listPtr);
+    SEQ_FREE(listPtr);
 }
 
 
@@ -280,12 +280,15 @@ findPrevious (list_t* listPtr, void* dataPtr)
 {
     list_node_t* prevPtr = &(listPtr->head);
     list_node_t* nodePtr = prevPtr->nextPtr;
-
+    unsigned long checker = 0;
     for (; nodePtr != NULL; nodePtr = nodePtr->nextPtr) {
         if (listPtr->compare(nodePtr->dataPtr, dataPtr) >= 0) {
             return prevPtr;
         }
         prevPtr = nodePtr;
+	checker++;
+	if(checker>10000000)
+	  assert(0);//printf("checker in list fin);
     }
 
     return prevPtr;
@@ -315,6 +318,12 @@ list_find (list_t* listPtr, void* dataPtr)
 }
 
 
+TM_PURE
+void dump_stack(){
+  printf("stack trace 1: %lx %lx %lx %lx %lx \n", (uint64_t)__builtin_return_address(0), (uint64_t)__builtin_return_address(1), (uint64_t)__builtin_return_address(2), (uint64_t)__builtin_return_address(3), (uint64_t)__builtin_return_address(4));
+
+}
+
 /* =============================================================================
  * list_insert
  * -- Return TRUE on success, else FALSE
@@ -335,13 +344,15 @@ list_insert (list_t* listPtr, void* dataPtr)
 #ifdef LIST_NO_DUPLICATES
     if ((currPtr != NULL) &&
         listPtr->compare(currPtr->dataPtr, dataPtr) == 0) {
+      //dump_stack();
+      assert(0);
         return FALSE;
     }
 #endif
 
     nodePtr = allocNode(dataPtr);
     if (nodePtr == NULL) {
-        return FALSE;
+      return FALSE;
     }
 
     // shared_writes

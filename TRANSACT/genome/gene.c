@@ -91,12 +91,12 @@ gene_alloc (long length)
 
     assert(length > 1);
 
-    genePtr = (gene_t*)malloc(sizeof(gene_t));
+    genePtr = (gene_t*)SEQ_MALLOC(sizeof(gene_t));
     if (genePtr == NULL) {
         return NULL;
     }
 
-    genePtr->contents = (char*)malloc((length + 1) * sizeof(char));
+    genePtr->contents = (char*)SEQ_MALLOC((length + 1) * sizeof(char));
     if (genePtr->contents == NULL) {
         return NULL;
     }
@@ -151,8 +151,8 @@ void
 gene_free (gene_t* genePtr)
 {
   bitmap_free(genePtr->startBitmapPtr);
-  free(genePtr->contents);
-  free(genePtr);
+  SEQ_FREE(genePtr->contents);
+  SEQ_FREE(genePtr);
 }
 
 

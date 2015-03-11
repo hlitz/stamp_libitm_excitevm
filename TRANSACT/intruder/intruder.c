@@ -215,7 +215,7 @@ processPackets (void* argPtr)
         packet_t* packetPtr = (packet_t*)bytes;
         long flowId = packetPtr->flowId;
 
-        error_t error;
+        intruder_error_t error;
         __transaction_atomic {
           error = TMDECODER_PROCESS(decoderPtr,
                                     bytes,
@@ -238,8 +238,8 @@ processPackets (void* argPtr)
         }
         //TMprint("3.\n");
         if (data) {
-            error_t error = PDETECTOR_PROCESS(detectorPtr, data);
-            free(data);
+            intruder_error_t error = PDETECTOR_PROCESS(detectorPtr, data);
+            TM_FREE(data);
             if (error) {
                 bool_t status = PVECTOR_PUSHBACK(errorVectorPtr,
                                                  (void*)decodedFlowId);
@@ -262,6 +262,8 @@ int main (int argc, char** argv)
     /*
      * Initialization
      */
+  TM_STARTUP();
+  TM_THREAD_ENTER();
     global_param_init();
     parseArgs(argc, (char** const)argv);
     long numThread = global_params[PARAM_THREAD];

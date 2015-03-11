@@ -233,9 +233,13 @@ int main (int argc, char** argv)
     /*
      * Initialization
      */
-
+  
+  TM_STARTUP();
+  TM_THREAD_ENTER();
     parseArgs(argc, (char** const)argv);
     long numThread     = global_params[PARAM_THREAD];
+    thread_startup(numThread);
+
     long numVar        = global_params[PARAM_VAR];
     long numRecord     = global_params[PARAM_RECORD];
     long randomSeed    = global_params[PARAM_SEED];
@@ -244,7 +248,6 @@ int main (int argc, char** argv)
     global_insertPenalty = global_params[PARAM_INSERT];
     global_maxNumEdgeLearned = global_params[PARAM_EDGE];
 
-    thread_startup(numThread);
 
     printf("Random seed                = %li\n", randomSeed);
     printf("Number of vars             = %li\n", numVar);
@@ -263,7 +266,9 @@ int main (int argc, char** argv)
     printf("Generating data... ");
     fflush(stdout);
 
-    random_t* randomPtr = random_alloc();
+    random_t* randomPtr; 
+   
+    randomPtr= random_alloc();
     assert(randomPtr);
     random_seed(randomPtr, randomSeed);
 
@@ -311,6 +316,7 @@ int main (int argc, char** argv)
     learner_t* learnerPtr = learner_alloc(dataPtr, adtreePtr);
     assert(learnerPtr);
     data_free(dataPtr); /* save memory */
+
 
     printf("Learning structure...");
     fflush(stdout);

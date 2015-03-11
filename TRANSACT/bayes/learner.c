@@ -274,19 +274,20 @@ learner_alloc (data_t* dataPtr, adtree_t* adtreePtr)
 {
     learner_t* learnerPtr;
 
-    learnerPtr = (learner_t*)malloc(sizeof(learner_t));
+    learnerPtr = (learner_t*)TM_MALLOC(sizeof(learner_t));
     if (learnerPtr) {
         learnerPtr->adtreePtr = adtreePtr;
         learnerPtr->netPtr = net_alloc(dataPtr->numVar);
         assert(learnerPtr->netPtr);
         learnerPtr->localBaseLogLikelihoods =
-            (float*)malloc(dataPtr->numVar * sizeof(float));
+            (float*)TM_MALLOC(dataPtr->numVar * sizeof(float));
         assert(learnerPtr->localBaseLogLikelihoods);
         learnerPtr->baseLogLikelihood = 0.0F;
         learnerPtr->tasks =
-            (learner_task_t*)malloc(dataPtr->numVar * sizeof(learner_task_t));
+            (learner_task_t*)TM_MALLOC(dataPtr->numVar * sizeof(learner_task_t));
         assert(learnerPtr->tasks);
         learnerPtr->taskListPtr = list_alloc(&compareTask);
+	printf("learn ptr %p\n", learnerPtr->taskListPtr);
         assert(learnerPtr->taskListPtr);
         learnerPtr->numTotalParent = 0;
     }
@@ -303,10 +304,10 @@ void
 learner_free (learner_t* learnerPtr)
 {
     list_free(learnerPtr->taskListPtr);
-    free(learnerPtr->tasks);
-    free(learnerPtr->localBaseLogLikelihoods);
+    TM_FREE(learnerPtr->tasks);
+    TM_FREE(learnerPtr->localBaseLogLikelihoods);
     net_free(learnerPtr->netPtr);
-    free(learnerPtr);
+    TM_FREE(learnerPtr);
 }
 /* =============================================================================
  * Logarithm(s)
@@ -364,7 +365,7 @@ double PURE_log (double dat)
  * -- Query vectors should not contain wildcards
  * =============================================================================
  */
-TM_SAFE
+TM_PURE //TM_SAFE
 float
 computeSpecificLocalLogLikelihood (adtree_t* adtreePtr,
                                    vector_t* queryVectorPtr,
@@ -421,6 +422,10 @@ createPartition (long min, long max, long id, long n,
 void
 createTaskList (void* argPtr)
 {
+
+  printf("Enter create task\n");
+
+
     long myId = thread_getId();
     long numThread = thread_getNumThread();
 
@@ -563,12 +568,14 @@ createTaskList (void* argPtr)
         } /* foreach other variable */
 
         PVECTOR_POPBACK(queryVectorPtr);
-
+	
         if (bestLocalIndex != v) {
+	  
             float logLikelihood = numRecord * (baseLogLikelihood +
                                                 + bestLocalLogLikelihood
                                                 - localBaseLogLikelihoods[v]);
-            float score = penalty + logLikelihood;
+
+	    float score = penalty + logLikelihood;
             learner_task_t* taskPtr = &tasks[v];
             taskPtr->op = OPERATION_INSERT;
             taskPtr->fromId = bestLocalIndex;
@@ -594,7 +601,6 @@ createTaskList (void* argPtr)
                taskPtr->op, taskPtr->fromId, taskPtr->toId, taskPtr->score);
     }
 #endif /* TEST_LEARNER */
-
 }
 
 
@@ -1227,6 +1233,8 @@ TMfindBestReverseTask (learner_task_t * dest,  findBestTaskArg_t* argPtr)
 void
 learnStructure (void* argPtr)
 {
+  printf("Enter learn structure\n");
+
     learner_t* learnerPtr = (learner_t*)argPtr;
     net_t* netPtr = learnerPtr->netPtr;
     adtree_t* adtreePtr = learnerPtr->adtreePtr;
@@ -1236,13 +1244,14 @@ learnStructure (void* argPtr)
 
     float operationQualityFactor = global_operationQualityFactor;
 
+
     bitmap_t* visitedBitmapPtr = TMBITMAP_ALLOC(learnerPtr->adtreePtr->numVar);
     assert(visitedBitmapPtr);
     queue_t* workQueuePtr = TMQUEUE_ALLOC(-1);
     assert(workQueuePtr);
 
     long numVar = adtreePtr->numVar;
-    query_t* queries = (query_t*)malloc(numVar * sizeof(query_t));
+    query_t* queries = (query_t*)TM_MALLOC(numVar * sizeof(query_t));
     assert(queries);
     long v;
     for (v = 0; v < numVar; v++) {
@@ -1554,7 +1563,7 @@ learnStructure (void* argPtr)
     PVECTOR_FREE(aQueryVectorPtr);
     PVECTOR_FREE(queryVectorPtr);
     PVECTOR_FREE(parentQueryVectorPtr);
-    free(queries);
+    TM_FREE(queries);
 }
 
 
@@ -1599,7 +1608,7 @@ learner_score (learner_t* learnerPtr)
     assert(parentQueryVectorPtr);
 
     long numVar = adtreePtr->numVar;
-    query_t* queries = (query_t*)malloc(numVar * sizeof(query_t));
+    query_t* queries = (query_t*)TM_MALLOC(numVar * sizeof(query_t));
     assert(queries);
     long v;
     for (v = 0; v < numVar; v++) {
@@ -1631,7 +1640,7 @@ learner_score (learner_t* learnerPtr)
 
     vector_free(queryVectorPtr);
     vector_free(parentQueryVectorPtr);
-    free(queries);
+    TM_FREE(queries);
 
     long numRecord = adtreePtr->numRecord;
     float penalty = (float)(-0.5 * (double)numTotalParent * log((double)numRecord));

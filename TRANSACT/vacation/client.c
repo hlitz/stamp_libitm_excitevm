@@ -76,7 +76,7 @@
 #include "reservation.h"
 #include "thread.h"
 #include "types.h"
-
+#include "tm.h"
 
 /* =============================================================================
  * client_alloc
@@ -93,7 +93,7 @@ client_alloc (long id,
 {
     client_t* clientPtr;
 
-    clientPtr = (client_t*)malloc(sizeof(client_t));
+    clientPtr = (client_t*)SEQ_MALLOC(sizeof(client_t));
     if (clientPtr == NULL) {
         return NULL;
     }
@@ -122,7 +122,7 @@ client_alloc (long id,
 void
 client_free (client_t* clientPtr)
 {
-    free(clientPtr);
+    SEQ_FREE(clientPtr);
 }
 
 
@@ -155,9 +155,11 @@ selectAction (long r, long percentUser)
 void
 client_run (void* argPtr)
 {
+    TM_THREAD_ENTER();
+    
+   
     long myId = thread_getId();
     client_t* clientPtr = ((client_t**)argPtr)[myId];
-
     manager_t* managerPtr = clientPtr->managerPtr;
     random_t*  randomPtr  = clientPtr->randomPtr;
 
@@ -170,15 +172,16 @@ client_run (void* argPtr)
     long* ids    = (long*)malloc(numQueryPerTransaction * sizeof(long));
     long* ops    = (long*)malloc(numQueryPerTransaction * sizeof(long));
     long* prices = (long*)malloc(numQueryPerTransaction * sizeof(long));
-
+    
     long i;
 
     for (i = 0; i < numOperation; i++) {
 
         long r = random_generate(randomPtr) % 100;
         action_t action = selectAction(r, percentUser);
-
+	
         switch (action) {
+
             case ACTION_MAKE_RESERVATION: {
                 long maxPrices[NUM_RESERVATION_TYPE] = { -1, -1, -1 };
                 long maxIds[NUM_RESERVATION_TYPE] = { -1, -1, -1 };
@@ -194,54 +197,54 @@ client_run (void* argPtr)
                 //[wer210] I modified here to remove _ITM_abortTransaction().
                 while (1) {
                   __transaction_atomic {
-                    for (n = 0; n < numQuery; n++) {
-                      long t = types[n];
-                      long id = ids[n];
-                      long price = -1;
-                      switch (t) {
-                       case RESERVATION_CAR:
-                        if (MANAGER_QUERY_CAR(managerPtr, id) >= 0) {
-                          price = MANAGER_QUERY_CAR_PRICE(managerPtr, id);
-                        }
-                        break;
-                       case RESERVATION_FLIGHT:
-                        if (MANAGER_QUERY_FLIGHT(managerPtr, id) >= 0) {
-                          price = MANAGER_QUERY_FLIGHT_PRICE(managerPtr, id);
-                        }
-                        break;
-                       case RESERVATION_ROOM:
-                        if (MANAGER_QUERY_ROOM(managerPtr, id) >= 0) {
-                          price = MANAGER_QUERY_ROOM_PRICE(managerPtr, id);
-                        }
-                        break;
-                       default:
-                        assert(0);
-                      }
+                for (n = 0; n < numQuery; n++) {
+                    long t = types[n];
+                    long id = ids[n];
+                    long price = -1;
+                    switch (t) {
+                        case RESERVATION_CAR:
+                            if (MANAGER_QUERY_CAR(managerPtr, id) >= 0) {
+                                price = MANAGER_QUERY_CAR_PRICE(managerPtr, id);
+                            }
+                            break;
+                        case RESERVATION_FLIGHT:
+                            if (MANAGER_QUERY_FLIGHT(managerPtr, id) >= 0) {
+                                price = MANAGER_QUERY_FLIGHT_PRICE(managerPtr, id);
+                            }
+                            break;
+                        case RESERVATION_ROOM:
+                            if (MANAGER_QUERY_ROOM(managerPtr, id) >= 0) {
+                                price = MANAGER_QUERY_ROOM_PRICE(managerPtr, id);
+                            }
+                            break;
+                        default:
+                            assert(0);
+                    }
                       //[wer210] read-only above
-                      if (price > maxPrices[t]) {
+                    if (price > maxPrices[t]) {
                         maxPrices[t] = price;
                         maxIds[t] = id;
                         isFound = TRUE;
-                      }
-                    } /* for n */
+                    }
+                } /* for n */
 
-                    if (isFound) {
+                if (isFound) {
                       done = done && MANAGER_ADD_CUSTOMER(managerPtr, customerId);
-                    }
+                }
 
-                    if (maxIds[RESERVATION_CAR] > 0) {
+                if (maxIds[RESERVATION_CAR] > 0) {
                       done = done && MANAGER_RESERVE_CAR(managerPtr,
-                                                  customerId, maxIds[RESERVATION_CAR]);
-                    }
+                                        customerId, maxIds[RESERVATION_CAR]);
+                }
 
-                    if (maxIds[RESERVATION_FLIGHT] > 0) {
+                if (maxIds[RESERVATION_FLIGHT] > 0) {
                       done = done && MANAGER_RESERVE_FLIGHT(managerPtr,
-                                                     customerId, maxIds[RESERVATION_FLIGHT]);
-                    }
-                    if (maxIds[RESERVATION_ROOM] > 0) {
+                                           customerId, maxIds[RESERVATION_FLIGHT]);
+                }
+                if (maxIds[RESERVATION_ROOM] > 0) {
                       done = done && MANAGER_RESERVE_ROOM(managerPtr,
-                                                   customerId, maxIds[RESERVATION_ROOM]);
-                    }
+                                         customerId, maxIds[RESERVATION_ROOM]);
+                }
                     if (done) break;
                     else __transaction_cancel;
                   } // TM_END
@@ -255,8 +258,8 @@ client_run (void* argPtr)
                 bool_t done = TRUE;
                 while (1) {
                   __transaction_atomic {
-                    long bill = MANAGER_QUERY_CUSTOMER_BILL(managerPtr, customerId);
-                    if (bill >= 0) {
+                long bill = MANAGER_QUERY_CUSTOMER_BILL(managerPtr, customerId);
+                if (bill >= 0) {
                       done = done && MANAGER_DELETE_CUSTOMER(managerPtr, customerId);
                     }
                     if(done) break;
@@ -266,8 +269,9 @@ client_run (void* argPtr)
                 break;
             }
 
-            case ACTION_UPDATE_TABLES: {
-                long numUpdate = random_generate(randomPtr) % numQueryPerTransaction + 1;
+	    case ACTION_UPDATE_TABLES: {
+	    long numUpdate = random_generate(randomPtr) % numQueryPerTransaction + 1;
+
                 long n;
                 for (n = 0; n < numUpdate; n++) {
                     types[n] = random_generate(randomPtr) % NUM_RESERVATION_TYPE;
@@ -280,41 +284,41 @@ client_run (void* argPtr)
                 bool_t done = TRUE;
                 while (1) {
                   __transaction_atomic {
-                    for (n = 0; n < numUpdate; n++) {
-                      long t = types[n];
-                      long id = ids[n];
-                      long doAdd = ops[n];
-                      if (doAdd) {
+                for (n = 0; n < numUpdate; n++) {
+                    long t = types[n];
+                    long id = ids[n];
+                    long doAdd = ops[n];
+                    if (doAdd) {
                         long newPrice = prices[n];
                         switch (t) {
-                         case RESERVATION_CAR:
+                            case RESERVATION_CAR:
                           done = done && MANAGER_ADD_CAR(managerPtr, id, 100, newPrice);
-                          break;
-                         case RESERVATION_FLIGHT:
+                                break;
+                            case RESERVATION_FLIGHT:
                           done = done && MANAGER_ADD_FLIGHT(managerPtr, id, 100, newPrice);
-                          break;
-                         case RESERVATION_ROOM:
+                                break;
+                            case RESERVATION_ROOM:
                           done = done && MANAGER_ADD_ROOM(managerPtr, id, 100, newPrice);
-                          break;
-                         default:
-                          assert(0);
+                                break;
+                            default:
+                                assert(0);
                         }
-                      } else { /* do delete */
+                    } else { /* do delete */
                         switch (t) {
-                         case RESERVATION_CAR:
+                            case RESERVATION_CAR:
                           done = done && MANAGER_DELETE_CAR(managerPtr, id, 100);
-                          break;
-                         case RESERVATION_FLIGHT:
+                                break;
+                            case RESERVATION_FLIGHT:
                           done = done && MANAGER_DELETE_FLIGHT(managerPtr, id);
-                          break;
-                         case RESERVATION_ROOM:
+                                break;
+                            case RESERVATION_ROOM:
                           done = done && MANAGER_DELETE_ROOM(managerPtr, id, 100);
-                          break;
-                         default:
-                          assert(0);
+                                break;
+                            default:
+                                assert(0);
                         }
-                      }
                     }
+                }
                   if (done) break;
                   else __transaction_cancel;
                   } // TM_END

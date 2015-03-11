@@ -95,18 +95,18 @@ segments_alloc (long length, long minNum)
     long i;
     char* string;
 
-    segmentsPtr = (segments_t*)malloc(sizeof(segments_t));
+    segmentsPtr = (segments_t*)SEQ_MALLOC(sizeof(segments_t));
     if (segmentsPtr == NULL) {
         return NULL;
     }
 
     /* Preallocate for the min number of segments we will need */
-    segmentsPtr->strings = (char**)malloc(minNum * sizeof(char*));
+    segmentsPtr->strings = (char**)SEQ_MALLOC(minNum * sizeof(char*));
     if (segmentsPtr->strings == NULL) {
         return NULL;
     }
 
-    string = (char*)malloc(minNum * (length+1) * sizeof(char));
+    string = (char*)SEQ_MALLOC(minNum * (length+1) * sizeof(char));
     if (string == NULL) {
         return NULL;
     }
@@ -172,7 +172,7 @@ segments_create (segments_t* segmentsPtr, gene_t* genePtr, random_t* randomPtr)
     /* Make sure segment covers start */
     i = 0;
     if (!bitmap_isSet(startBitmapPtr, i)) {
-        char* string = (char*)malloc((segmentLength+1) * sizeof(char));
+        char* string = (char*)SEQ_MALLOC((segmentLength+1) * sizeof(char));
         string[segmentLength] = '\0';
         memcpy(string, &(geneString[i]), segmentLength * sizeof(char));
         bool_t status = vector_pushBack(segmentsContentsPtr, (void*)string);
@@ -192,7 +192,7 @@ segments_create (segments_t* segmentsPtr, gene_t* genePtr, random_t* randomPtr)
         }
         if (i == i_stop) {
             /* Found big enough hole */
-            char* string = (char*)malloc((segmentLength+1) * sizeof(char));
+            char* string = (char*)SEQ_MALLOC((segmentLength+1) * sizeof(char));
             string[segmentLength] = '\0';
             i = i - 1;
             memcpy(string, &(geneString[i]), segmentLength * sizeof(char));
@@ -212,10 +212,10 @@ segments_create (segments_t* segmentsPtr, gene_t* genePtr, random_t* randomPtr)
 void
 segments_free (segments_t* segmentsPtr)
 {
-    free(vector_at(segmentsPtr->contentsPtr, 0));
+    SEQ_FREE(vector_at(segmentsPtr->contentsPtr, 0));
     vector_free(segmentsPtr->contentsPtr);
-    free(segmentsPtr->strings);
-    free(segmentsPtr);
+    SEQ_FREE(segmentsPtr->strings);
+    SEQ_FREE(segmentsPtr);
 }
 
 

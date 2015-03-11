@@ -201,7 +201,7 @@ parseArgs (long argc, char* const argv[])
  * =============================================================================
  */
 static bool_t
-addCustomer (manager_t* managerPtr, long id)
+addCustomer (manager_t* managerPtr, long id, long a, long b)
 {
     return manager_addCustomer(managerPtr, id);
 }
@@ -234,11 +234,12 @@ initializeManager ()
     randomPtr = random_alloc();
     assert(randomPtr != NULL);
 
-    managerPtr = manager_alloc();
+    numRelation = (long)global_params[PARAM_RELATIONS];
+    ids = (long*)SEQ_MALLOC(numRelation * sizeof(long));
+
+    managerPtr = manager_alloc(numRelation);
     assert(managerPtr != NULL);
 
-    numRelation = (long)global_params[PARAM_RELATIONS];
-    ids = (long*)malloc(numRelation * sizeof(long));
     for (i = 0; i < numRelation; i++) {
         ids[i] = i + 1;
     }
@@ -253,7 +254,6 @@ initializeManager ()
             ids[x] = ids[y];
             ids[y] = tmp;
         }
-
         /* Populate table */
         for (i = 0; i < numRelation; i++) {
             bool_t status;
@@ -270,8 +270,7 @@ initializeManager ()
     fflush(stdout);
 
     random_free(randomPtr);
-    free(ids);
-
+    SEQ_FREE(ids);
     return managerPtr;
 }
 
@@ -301,7 +300,8 @@ initializeClients (manager_t* managerPtr)
     randomPtr = random_alloc();
     assert(randomPtr != NULL);
 
-    clients = (client_t**)malloc(numClient * sizeof(client_t*));
+    clients = (client_t**)SEQ_MALLOC(numClient * sizeof(client_t*));
+
     assert(clients != NULL);
     numTransactionPerClient = (long)((double)numTransaction / (double)numClient + 0.5);
     queryRange = (long)((double)percentQuery / 100.0 * (double)numRelation + 0.5);
@@ -414,6 +414,9 @@ freeClients (client_t** clients)
  */
 int main (int argc, char** argv)
 {
+  TM_STARTUP();
+  TM_THREAD_ENTER();
+
     manager_t* managerPtr;
     client_t** clients;
     TIMER_T start;
@@ -421,22 +424,28 @@ int main (int argc, char** argv)
 
     /* Initialization */
     parseArgs(argc, (char** const)argv);
+    //    SIM_GET_NUM_CPU(global_params[PARAM_CLIENTS]);
+
+    long numThread = global_params[PARAM_CLIENTS];
+    TM_STARTUP(numThread);
+    //P_MEMORY_STARTUP(numThread);
+    TM_THREAD_ENTER();
     managerPtr = initializeManager();
     assert(managerPtr != NULL);
     clients = initializeClients(managerPtr);
     assert(clients != NULL);
-    long numThread = global_params[PARAM_CLIENTS];
+    //long numThread = global_params[PARAM_CLIENTS];
     thread_startup(numThread);
 
+    /* Run transactions */
+    printf("Running clients... ");
+    fflush(stdout);
     /* Run transactions */
     printf("Running clients... ");
     fflush(stdout);
     TIMER_READ(start);
 #ifdef OTM
 #pragma omp parallel
-    {
-        client_run(clients);
-    }
 #else
     thread_start(client_run, (void*)clients);
 #endif
@@ -463,8 +472,11 @@ int main (int argc, char** argv)
     puts("done.");
     fflush(stdout);
 
-    thread_shutdown();
+    //P_MEMORY_SHUTDOWN();
 
+    thread_shutdown();
+    TM_SHUTDOWN();
+    
     return 0;
 }
 
