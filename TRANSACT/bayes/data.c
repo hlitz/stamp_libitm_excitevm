@@ -79,7 +79,7 @@
 #include "sort.h"
 #include "types.h"
 #include "vector.h"
-#include "sitevm/sitevm.h"
+#include "tm.h"
 
 enum data_config {
     DATA_PRECISION = 100,
@@ -316,7 +316,7 @@ data_copy (data_t* dstPtr, data_t* srcPtr)
     long numSrcDatum = srcPtr->numVar * srcPtr->numRecord;
     if (numDstDatum != numSrcDatum) {
         SEQ_FREE(dstPtr->records);
-        dstPtr->records = (char*)sitevm::scalloc(numSrcDatum, sizeof(char));
+        dstPtr->records = (char*)TM_CALLOC(numSrcDatum, sizeof(char));
         if (dstPtr->records == NULL) {
             return FALSE;
         }

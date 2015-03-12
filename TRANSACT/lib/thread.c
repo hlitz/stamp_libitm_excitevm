@@ -74,7 +74,7 @@
 #include "tm.h"
 #include "thread.h"
 #include "types.h"
-#include "sitevm/sitevm.h"
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -440,7 +440,7 @@ thread_getNumThread()
 void
 thread_barrier_wait()
 {
-  sitevm::sitevm_sync();
+  TM_SYNC();
     THREAD_BARRIER(global_barrierPtr, threadId);
 }
 

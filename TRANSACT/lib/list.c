@@ -345,7 +345,7 @@ list_insert (list_t* listPtr, void* dataPtr)
     if ((currPtr != NULL) &&
         listPtr->compare(currPtr->dataPtr, dataPtr) == 0) {
       //dump_stack();
-      assert(0);
+      //assert(0);
         return FALSE;
     }
 #endif

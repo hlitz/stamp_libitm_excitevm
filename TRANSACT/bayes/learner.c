@@ -576,12 +576,17 @@ createTaskList (void* argPtr)
                                                 - localBaseLogLikelihoods[v]);
 
 	    float score = penalty + logLikelihood;
-            learner_task_t* taskPtr = &tasks[v];
+	    /*            learner_task_t* taskPtr = &tasks[v];
             taskPtr->op = OPERATION_INSERT;
             taskPtr->fromId = bestLocalIndex;
             taskPtr->toId = v;
-            taskPtr->score = score;
+            taskPtr->score = score;*/
             __transaction_atomic {
+	      learner_task_t* taskPtr = &tasks[v];
+	      taskPtr->op = OPERATION_INSERT;
+	      taskPtr->fromId = bestLocalIndex;
+	      taskPtr->toId = v;
+	      taskPtr->score = score;
               status = TMLIST_INSERT(taskListPtr, (void*)taskPtr);
             }
             assert(status);

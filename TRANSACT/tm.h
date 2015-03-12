@@ -19,25 +19,34 @@
 #define TM_LOCAL_WRITE_P(var, val)    var = val
 #define TM_LOCAL_WRITE_F(var, val)    var = val
 
+#ifdef EXCITE_VM
 #define SEQ_MALLOC(s) sitevm::smalloc(s)
 #define TM_MALLOC(s) sitevm::smalloc(s)
 #define SEQ_FREE(p) sitevm::sfree(p)
 #define TM_FREE(p) sitevm::sfree(p)
-
-//#define SEQ_MALLOC(s) malloc(s)
-//#define TM_MALLOC(s) malloc(s)
-//#define SEQ_FREE(p) free(p)
-//#define TM_FREE(p) free(p)
-
-//#define malloc(s) sitevm::smalloc(s)
-
-//#define free(p) sitevm::sfree(p)
-
-
-
 #define TM_THREAD_ENTER() sitevm::sitevm_enter()
 #define TM_STARTUP(x) sitevm::sitevm_init()
 #define TM_SHUTDOWN() sitevm::sitevm_shutdown()
+#define TM_SYNC() sitevm::sitevm_sync()
+#define TM_CALLOC(n, s) sitevm::scalloc(n, s)
+//#define malloc(s) sitevm::smalloc(s)
+//#define calloc(n, s) sitevm::scalloc(n, s)
+//#define free(p) sitevm::sfree(p)
+
+#else
+#define SEQ_MALLOC(s) malloc(s)
+#define TM_MALLOC(s) malloc(s)
+#define SEQ_FREE(p) free(p)
+#define TM_FREE(p) free(p)
+#define TM_THREAD_ENTER() 
+#define TM_STARTUP(x) 
+#define TM_SHUTDOWN() 
+#define TM_SYNC() 
+#define TM_CALLOC(n, s) calloc(n, s)
+#endif
+
+
+
 
 /* Indirect function call management */
 /* In STAMP applications, it is safe to use transaction_pure */

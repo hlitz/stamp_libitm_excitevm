@@ -1,3 +1,15 @@
+# EXCITE-VM
+
+This is a port of Lehigh's STAMP suite for libitm.
+
+To compile for Excitevm set the -DEXCITE_VM flag in Makefile.common,
+otherwise STAMP is compiled for the default ITM methods.
+
+Dependencies:
+set LIBITM_HOME to the libitm path. 
+(Should be sth like: /home/hlitz/tm-persistence/min-gcc/x86_64-unknown-linux-gnu/libitm)
+
+
 # STAMP
 
 This repository stores a version of STAMP that has been updated to comply
