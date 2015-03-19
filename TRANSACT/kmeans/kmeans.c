@@ -356,7 +356,7 @@ int main (int argc, char** argv)
     }
 #endif /* OUTPUT_TO_FILE */
 
-#ifdef OUTPUT_TO_STDOUT
+    //#ifdef OUTPUT_TO_STDOUT
     {
         /* Output: the coordinates of the cluster centres */
         for (i = 0; i < best_nclusters; i++) {
@@ -367,7 +367,7 @@ int main (int argc, char** argv)
             printf("\n");
         }
     }
-#endif /* OUTPUT_TO_STDOUT */
+    //#endif /* OUTPUT_TO_STDOUT */
 
     printf("Time = %lg\n", global_time);
 
