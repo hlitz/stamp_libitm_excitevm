@@ -77,12 +77,11 @@
 #include "tm.h"
 #include "utility.h"
 
-static LONGINT_T global_maxWeight          = 0;
+static LONGINT_T* global_maxWeight;//          = 0;
 static long*     global_i_edgeStartCounter = NULL;
 static long*     global_i_edgeEndCounter   = NULL;
 static edge*     global_maxIntWtList       = NULL;
 static edge*     global_soughtStrWtList    = NULL;
-
 
 /* =============================================================================
  * getStartLists
@@ -104,6 +103,11 @@ getStartLists (void* argPtr)
      * Find Max Wt on each thread
      */
 
+    if(myId==0){
+      global_maxWeight = (LONGINT_T*)malloc(sizeof(LONGINT_T));
+      *global_maxWeight = 0;
+    }
+    thread_barrier_wait();
     LONGINT_T maxWeight = 0;
 
     long i;
@@ -122,13 +126,13 @@ getStartLists (void* argPtr)
       //if (maxWeight > tmp_maxWeight)
       // TM_SHARED_WRITE(global_maxWeight, maxWeight);
 
-      if (maxWeight > global_maxWeight)
-        global_maxWeight = maxWeight;
+      if (maxWeight > *global_maxWeight)
+        *global_maxWeight = maxWeight;
     }
 
     thread_barrier_wait();
 
-    maxWeight = global_maxWeight;
+    maxWeight = *global_maxWeight;
 
     /*
      * Create partial lists

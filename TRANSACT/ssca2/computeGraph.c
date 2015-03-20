@@ -76,8 +76,8 @@
 #include "tm.h"
 
 static ULONGINT_T*  global_p                 = NULL;
-static ULONGINT_T   global_maxNumVertices    = 0;
-static ULONGINT_T   global_outVertexListSize = 0;
+static ULONGINT_T*   global_maxNumVertices;//    = 0;
+static ULONGINT_T*   global_outVertexListSize;// = 0;
 static ULONGINT_T*  global_impliedEdgeList   = NULL;
 static ULONGINT_T** global_auxArr            = NULL;
 
@@ -172,6 +172,13 @@ computeGraph (void* argPtr)
     long i;
     long i_start;
     long i_stop;
+    if(myId==0){
+      global_maxNumVertices = (ULONGINT_T*)malloc(sizeof(ULONGINT_T));
+      global_outVertexListSize = (ULONGINT_T*)TM_MALLOC(sizeof(ULONGINT_T));
+      *global_maxNumVertices = 0;
+      *global_outVertexListSize = 0;
+    }
+    thread_barrier_wait();
     createPartition(0, numEdgesPlaced, myId, numThread, &i_start, &i_stop);
 
     for (i = i_start; i < i_stop; i++) {
@@ -184,13 +191,13 @@ computeGraph (void* argPtr)
       //long tmp_maxNumVertices = (long)TM_SHARED_READ(global_maxNumVertices);
       //long new_maxNumVertices = MAX(tmp_maxNumVertices, maxNumVertices + 1);
       //TM_SHARED_WRITE(global_maxNumVertices, (unsigned long)new_maxNumVertices);
-      if (global_maxNumVertices < maxNumVertices + 1)
-        global_maxNumVertices = maxNumVertices + 1;
+      if (*global_maxNumVertices < maxNumVertices + 1)
+        *global_maxNumVertices = maxNumVertices + 1;
     }
-
+    
     thread_barrier_wait();
 
-    maxNumVertices = global_maxNumVertices;
+    maxNumVertices = *global_maxNumVertices;
 
     if (myId == 0) {
 
@@ -209,6 +216,7 @@ computeGraph (void* argPtr)
 
         GPtr->outDegree =
             (LONGINT_T*)malloc((GPtr->numVertices) * sizeof(LONGINT_T));
+	
         assert(GPtr->outDegree);
 
         GPtr->outVertexIndex =
@@ -300,15 +308,15 @@ computeGraph (void* argPtr)
     thread_barrier_wait();
 
     __transaction_atomic {
-      TM_SHARED_WRITE( global_outVertexListSize,
-                       ((long)TM_SHARED_READ(global_outVertexListSize) + outVertexListSize));
-
-      global_outVertexListSize += outVertexListSize;
+      TM_SHARED_WRITE( *global_outVertexListSize,
+                       ((long)TM_SHARED_READ(*global_outVertexListSize) + outVertexListSize));
+      //XXX Heiner: twice the same operation ?
+      //*global_outVertexListSize += outVertexListSize;
     }
 
     thread_barrier_wait();
 
-    outVertexListSize = global_outVertexListSize;
+    outVertexListSize = *global_outVertexListSize;
 
     if (myId == 0) {
         GPtr->numDirectedEdges = outVertexListSize;
@@ -451,7 +459,7 @@ computeGraph (void* argPtr)
         assert(auxArr);
         global_auxArr = auxArr;
     }
-
+    
     thread_barrier_wait();
 
     auxArr = global_auxArr;
@@ -475,26 +483,29 @@ computeGraph (void* argPtr)
                 }
             }
             if (k == GPtr->outVertexIndex[v]+GPtr->outDegree[v]) {
-              __transaction_atomic {
+              
+	      __transaction_atomic {
                 /* Add i to the impliedEdgeList of v */
 
                 long inDegree = (long)TM_SHARED_READ(GPtr->inDegree[v]);
+		
                 TM_SHARED_WRITE(GPtr->inDegree[v], (inDegree + 1));
-
                 if (inDegree < MAX_CLUSTER_SIZE) {
                   TM_SHARED_WRITE(impliedEdgeList[v*MAX_CLUSTER_SIZE+inDegree],
                                   (unsigned long)i);
-                } else {
+                }
+		else {
                   /* Use auxiliary array to store the implied edge */
                   /* Create an array if it's not present already */
                   ULONGINT_T* a = NULL;
+		
                   if ((inDegree % MAX_CLUSTER_SIZE) == 0) {
                     a = (ULONGINT_T*)malloc(MAX_CLUSTER_SIZE * sizeof(ULONGINT_T));
                     assert(a);
                     TM_SHARED_WRITE_P(auxArr[v], a);
-                  } else {
+		  } else {
                     a = auxArr[v];
-                  }
+		  }
                   TM_SHARED_WRITE(a[inDegree % MAX_CLUSTER_SIZE], (unsigned long)i);
                 }
               } // TM_END

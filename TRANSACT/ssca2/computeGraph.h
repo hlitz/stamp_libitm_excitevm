@@ -84,7 +84,6 @@ typedef struct computeGragh_arg {
 void
 computeGraph (void* argPtr);
 
-
 #endif /* COMPUTEGRAPH_H */
 
 

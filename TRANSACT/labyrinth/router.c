@@ -424,11 +424,15 @@ router_solve (void* argPtr)
         }
 
 #endif
+	//TM_SYNC();
         //[wer210] change the control flow
         while (TRUE) {
           success = FALSE;
           // get a snapshot of the grid... may be inconsistent, but that's OK
-          grid_copy(myGridPtr, gridPtr);
+	  TM_SYNC();
+	  grid_copy(myGridPtr, gridPtr);
+	    
+	  //
           /* ok if not most up-to-date */
           // see if there is a valid path we can use
           if (PdoExpansion(routerPtr, myGridPtr, myExpansionQueuePtr, srcPtr, dstPtr)) {
@@ -470,9 +474,11 @@ router_solve (void* argPtr)
         }
         //////// end of change
         if (success) {
+	  __transaction_atomic {
             bool_t status = PVECTOR_PUSHBACK(myPathVectorPtr,
                                              (void*)pointVectorPtr);
-            assert(status);
+	    assert(status);
+	  }          
         }
 
     }

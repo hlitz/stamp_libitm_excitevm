@@ -214,6 +214,7 @@ int main (int argc, char** argv)
      */
     router_solve_arg_t routerArg = {routerPtr, mazePtr, pathVectorListPtr};
     TIMER_T startTime;
+    TM_SYNC();
     TIMER_READ(startTime);
 #ifdef OTM
 #pragma omp parallel

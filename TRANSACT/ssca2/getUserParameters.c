@@ -194,10 +194,10 @@ getUserParameters (long argc, char* const argv[])
                                            /* picked from randomly selected entry */
                                            /* in genScalData.c                    */
 
-
+    
 
     MAX_CLUSTER_SIZE    = MAX_CLIQUE_SIZE; /* Kernel 4: Clustering search box size */
-
+    
 }
 
 

@@ -24,7 +24,7 @@
 #define TM_MALLOC(s) sitevm::smalloc(s)
 #define SEQ_FREE(p) sitevm::sfree(p)
 #define TM_FREE(p) sitevm::sfree(p)
-#define TM_THREAD_ENTER() sitevm::sitevm_enter()
+#define TM_THREAD_ENTER()sitevm::sitevm_enter();  TM_SYNC(); 
 #define TM_STARTUP(x) sitevm::sitevm_init()
 #define TM_SHUTDOWN() sitevm::sitevm_shutdown()
 #define TM_SYNC() sitevm::sitevm_sync()
@@ -45,6 +45,17 @@
 #define TM_CALLOC(n, s) calloc(n, s)
 #endif
 
+#include <stdio.h>      /* printf */
+#include <stdarg.h>
+__attribute__((transaction_pure))
+inline void Assert(bool expression, const char *fmt, ...) {
+  if (expression) return;
+
+  va_list list;
+  va_start(list, fmt);
+  vfprintf (stderr, fmt, list);
+  va_end(list);
+}
 
 
 

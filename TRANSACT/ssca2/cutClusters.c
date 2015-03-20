@@ -87,9 +87,9 @@ static ULONGINT_T* global_edgeStartCounter     = NULL;
 static ULONGINT_T* global_edgeEndCounter       = NULL;
 static edge*       global_cutSet               = NULL;
 
-static long       global_iter;
-static ULONGINT_T global_cliqueSize = 0;
-static ULONGINT_T global_cutSetIndex = 0;
+static long*       global_iter;
+static ULONGINT_T* global_cliqueSize;// = 0;
+static ULONGINT_T* global_cutSetIndex;// = 0;
 
 
 /* =============================================================================
@@ -484,7 +484,8 @@ cutClusters (void* argPtr)
         } /* if i != -1 */
 
         if (myId == 0) {
-            global_cliqueSize = 0;
+	  global_cliqueSize = (ULONGINT_T*)malloc(sizeof(ULONGINT_T));
+          *global_cliqueSize = 0;
         }
 
         thread_barrier_wait();
@@ -524,19 +525,20 @@ cutClusters (void* argPtr)
 
         if (myId == 0) {
             iter++;
-            global_iter = iter;
+	    global_iter = (long*)malloc(sizeof(long));
+            *global_iter = iter;
         }
 
         __transaction_atomic {
-          long tmp_cliqueSize = (long)TM_SHARED_READ(global_cliqueSize);
-          TM_SHARED_WRITE(global_cliqueSize, (tmp_cliqueSize + cliqueSize));
+          long tmp_cliqueSize = (long)TM_SHARED_READ(*global_cliqueSize);
+          TM_SHARED_WRITE(*global_cliqueSize, (tmp_cliqueSize + cliqueSize));
           //global_cliqueSize += cliqueSize;
         }
 
         thread_barrier_wait();
 
-        iter = global_iter;
-        verticesVisited += global_cliqueSize;
+        iter = *global_iter;
+        verticesVisited += *global_cliqueSize;
 
         if ((verticesVisited >= 0.95*GPtr->numVertices) ||
             (iter > GPtr->numVertices/2))
@@ -598,17 +600,19 @@ cutClusters (void* argPtr)
             edgeEndCounter[t] = edgeEndCounter[t-1] + edgeEndCounter[t];
             edgeStartCounter[t] = edgeEndCounter[t-1];
         }
+	global_cutSetIndex = (ULONGINT_T*)malloc(sizeof(ULONGINT_T));
+	*global_cutSetIndex = 0;
     }
 
     __transaction_atomic {
       //long tmp_cutSetIndex = (long)TM_SHARED_READ(global_cutSetIndex);
       //TM_SHARED_WRITE(global_cutSetIndex, (tmp_cutSetIndex + cutSetIndex));
-      global_cutSetIndex += cutSetIndex;
+      *global_cutSetIndex += cutSetIndex;
     }
 
     thread_barrier_wait();
 
-    cutSetIndex = global_cutSetIndex;
+    cutSetIndex = *global_cutSetIndex;
     ULONGINT_T cutSetCounter = cutSetIndex;
 
     /* Data struct. for storing edgeCut */

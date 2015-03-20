@@ -80,13 +80,13 @@
 
 static ULONGINT_T* global_permV              = NULL;
 static long*       global_cliqueSizes        = NULL;
-static long        global_totCliques         = 0;
+static long*        global_totCliques;//         = 0;
 static ULONGINT_T* global_firstVsInCliques   = NULL;
 static ULONGINT_T* global_lastVsInCliques    = NULL;
 static ULONGINT_T* global_i_edgeStartCounter = NULL;
 static ULONGINT_T* global_i_edgeEndCounter   = NULL;
-static long        global_edgeNum            = 0;
-static ULONGINT_T  global_numStrWtEdges      = 0;
+static long*        global_edgeNum;//            = 0;
+static ULONGINT_T*  global_numStrWtEdges;//      = 0;
 static ULONGINT_T* global_startVertex        = NULL;
 static ULONGINT_T* global_endVertex          = NULL;
 static ULONGINT_T* global_tempIndex          = NULL;
@@ -878,8 +878,8 @@ genScalData (void* argPtr)
             }
         }
         totCliques = i + 1;
-
-        global_totCliques = totCliques;
+	global_totCliques = (long*)malloc(sizeof(long));
+        *global_totCliques = totCliques;
 
         /*
          * Fix the size of the last clique
@@ -896,7 +896,7 @@ genScalData (void* argPtr)
 
     lastVsInCliques  = global_lastVsInCliques;
     firstVsInCliques = global_firstVsInCliques;
-    totCliques = global_totCliques;
+    totCliques = *global_totCliques;
 
     /* Compute start Vertices in cliques. */
     createPartition(1, totCliques, myId, numThread, &i_start, &i_stop);
@@ -1093,17 +1093,21 @@ genScalData (void* argPtr)
             i_edgeEndCounter[i] = i_edgeEndCounter[i-1] + i_edgeEndCounter[i];
             i_edgeStartCounter[i] = i_edgeEndCounter[i-1];
         }
-    }
+	global_edgeNum = (long*)malloc(sizeof(long));
+	global_numStrWtEdges = (ULONGINT_T*)malloc(sizeof(ULONGINT_T));
+	*global_edgeNum = 0;
+	*global_numStrWtEdges = 0;
+  }
 
     __transaction_atomic {
       //TM_SHARED_WRITE(global_edgeNum,
       //                ((long)TM_SHARED_READ(global_edgeNum) + i_edgePtr));
-      global_edgeNum += i_edgePtr;
+      *global_edgeNum += i_edgePtr;
     }
 
     thread_barrier_wait();
 
-    long edgeNum = global_edgeNum;
+    long edgeNum = *global_edgeNum;
 
     /*
      * Initialize edge list arrays
@@ -1302,7 +1306,7 @@ genScalData (void* argPtr)
     i_edgeStartCounter[myId] = 0;
 
     if (myId == 0) {
-        global_edgeNum = 0;
+        *global_edgeNum = 0;
     }
 
     thread_barrier_wait();
@@ -1316,13 +1320,13 @@ genScalData (void* argPtr)
     __transaction_atomic {
       //TM_SHARED_WRITE(global_edgeNum,
       //                ((long)TM_SHARED_READ(global_edgeNum) + i_edgePtr));
-      global_edgeNum += i_edgePtr;
+      *global_edgeNum += i_edgePtr;
     }
 
     thread_barrier_wait();
 
-    edgeNum = global_edgeNum;
-    ULONGINT_T numEdgesPlacedOutside = global_edgeNum;
+    edgeNum = *global_edgeNum;
+    ULONGINT_T numEdgesPlacedOutside = *global_edgeNum;
 
     for (i = i_edgeStartCounter[myId]; i < i_edgeEndCounter[myId]; i++) {
         startVertex[i+numEdgesPlacedInCliques] = startV[i-i_edgeStartCounter[myId]];
@@ -1397,12 +1401,12 @@ genScalData (void* argPtr)
     __transaction_atomic {
       //TM_SHARED_WRITE(global_numStrWtEdges,
       //                ((long)TM_SHARED_READ(global_numStrWtEdges) + numStrWtEdges));
-      global_numStrWtEdges += numStrWtEdges;
+      *global_numStrWtEdges += numStrWtEdges;
     }
 
     thread_barrier_wait();
 
-    numStrWtEdges = global_numStrWtEdges;
+    numStrWtEdges = *global_numStrWtEdges;
 
     if (myId == 0) {
         SDGdataPtr->strWeight =

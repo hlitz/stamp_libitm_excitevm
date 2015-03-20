@@ -108,8 +108,8 @@ typedef struct args {
     float** new_centers;
 } args_t;
 
-float global_delta;
-long global_i; /* index into task queue */
+float* global_delta;
+long* global_i; /* index into task queue */
 
 #define CHUNK 3
 
@@ -139,7 +139,6 @@ work (void* argPtr)
     int myId;
 
     myId = thread_getId();
-
     start = myId * CHUNK;
 
     while (start < npoints) {
@@ -176,8 +175,8 @@ work (void* argPtr)
         /* Update task queue */
         if (start + CHUNK < npoints) {
           __transaction_atomic {
-            start = (int)TM_SHARED_READ(global_i);
-            TM_SHARED_WRITE(global_i, (long)(start + CHUNK));
+            start = (int)TM_SHARED_READ(*global_i);
+            TM_SHARED_WRITE(*global_i, (long)(start + CHUNK));
           }
         } else {
             break;
@@ -185,7 +184,7 @@ work (void* argPtr)
     }
 
     __transaction_atomic {
-      TM_SHARED_WRITE_F(global_delta, TM_SHARED_READ_F(global_delta) + delta);
+      TM_SHARED_WRITE_F(*global_delta, TM_SHARED_READ_F(*global_delta) + delta);
     }
 
 
@@ -259,6 +258,12 @@ normal_exec (int       nthreads,
         }
     }
 
+    if(thread_getId()==0){
+      global_delta = (float*)malloc(sizeof(float));
+      global_i = (long*)malloc(sizeof(long)); /* index into task queue */
+    }
+    //    thread_barrier_wait();
+
     TIMER_READ(start);
 
     do {
@@ -273,8 +278,8 @@ normal_exec (int       nthreads,
         args.new_centers_len = new_centers_len;
         args.new_centers     = new_centers;
 
-        global_i = nthreads * CHUNK;
-        global_delta = delta;
+        *global_i = nthreads * CHUNK;
+        *global_delta = delta;
 
 #ifdef OTM
 #pragma omp parallel
@@ -285,7 +290,7 @@ normal_exec (int       nthreads,
         thread_start(work, &args);
 #endif
 
-        delta = global_delta;
+        delta = *global_delta;
 
         /* Replace old cluster centers with new_centers */
         for (i = 0; i < nclusters; i++) {

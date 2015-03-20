@@ -160,7 +160,7 @@ int main (int argc, char** argv)
      */
 
     printf("\nScalable Data Generator - genScalData() beginning execution...\n");
-
+    //genScalDataAlloc();
     SDGdata = (graphSDG*)malloc(sizeof(graphSDG));
     assert(SDGdata);
 
@@ -201,15 +201,15 @@ int main (int argc, char** argv)
 
     printf("\nKernel 1 - computeGraph() beginning execution...\n");
 
-    G = (graph*)malloc(sizeof(graph));
-    assert(G);
+     G = (graph*)malloc(sizeof(graph));
+     assert(G);
 
-    computeGraph_arg_t computeGraphArgs;
-    computeGraphArgs.GPtr       = G;
-    computeGraphArgs.SDGdataPtr = SDGdata;
-
-    TIMER_READ(start);
-
+     computeGraph_arg_t computeGraphArgs;
+     computeGraphArgs.GPtr       = G;
+     computeGraphArgs.SDGdataPtr = SDGdata;
+     //computeGraphAlloc((void*)&computeGraphArgs);
+     TIMER_READ(start);
+     
 #ifdef OTM
 #pragma omp parallel
     {
@@ -250,7 +250,7 @@ int main (int argc, char** argv)
     getStartListsArg.maxIntWtListSize    = &maxIntWtListSize;
     getStartListsArg.soughtStrWtListPtr  = &soughtStrWtList;
     getStartListsArg.soughtStrWtListSize = &soughtStrWtListSize;
-
+    //getStartListsAlloc();
     TIMER_READ(start);
 
 #ifdef OTM
