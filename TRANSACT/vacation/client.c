@@ -168,10 +168,10 @@ client_run (void* argPtr)
     long queryRange             = clientPtr->queryRange;
     long percentUser            = clientPtr->percentUser;
 
-    long* types  = (long*)malloc(numQueryPerTransaction * sizeof(long));
-    long* ids    = (long*)malloc(numQueryPerTransaction * sizeof(long));
-    long* ops    = (long*)malloc(numQueryPerTransaction * sizeof(long));
-    long* prices = (long*)malloc(numQueryPerTransaction * sizeof(long));
+    long* types  = (long*)TM_MALLOC(numQueryPerTransaction * sizeof(long));
+    long* ids    = (long*)TM_MALLOC(numQueryPerTransaction * sizeof(long));
+    long* ops    = (long*)TM_MALLOC(numQueryPerTransaction * sizeof(long));
+    long* prices = (long*)TM_MALLOC(numQueryPerTransaction * sizeof(long));
     
     long i;
 

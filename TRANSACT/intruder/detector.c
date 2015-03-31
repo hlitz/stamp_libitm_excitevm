@@ -176,8 +176,10 @@ detector_process (detector_t* detectorPtr, char* str)
     /*
      * Apply preprocessors
      */
-
-    vector_t* preprocessorVectorPtr = detectorPtr->preprocessorVectorPtr;
+  vector_t* preprocessorVectorPtr;
+    __transaction_atomic {
+    preprocessorVectorPtr = detectorPtr->preprocessorVectorPtr;
+  }
     long p;
     long numPreprocessor = vector_getSize(preprocessorVectorPtr);
     for (p = 0; p < numPreprocessor; p++) {
@@ -189,8 +191,11 @@ detector_process (detector_t* detectorPtr, char* str)
     /*
      * Check against signatures of known attacks
      */
-
-    char* signature = dictionary_match(detectorPtr->dictionaryPtr, str);
+    dictionary_t* detptr;
+    __transaction_atomic {
+      detptr = detectorPtr->dictionaryPtr;
+    }
+    char* signature = dictionary_match(detptr, str);
     if (signature) {
         return ERROR_SIGNATURE;
     }

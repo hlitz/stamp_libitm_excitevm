@@ -120,10 +120,12 @@ void
 preprocessor_toLower (char* str)
 {
     char* src = str;
+    __transaction_atomic {
 
     while (*src != '\0') {
         *src = (char)tolower((int)*src);
         src++;
+    }
     }
 }
 

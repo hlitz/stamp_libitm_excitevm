@@ -19,6 +19,9 @@
 #define TM_LOCAL_WRITE_P(var, val)    var = val
 #define TM_LOCAL_WRITE_F(var, val)    var = val
 
+
+
+
 #ifdef EXCITE_VM
 #define SEQ_MALLOC(s) sitevm::smalloc(s)
 #define TM_MALLOC(s) sitevm::smalloc(s)
@@ -29,9 +32,13 @@
 #define TM_SHUTDOWN() sitevm::sitevm_shutdown()
 #define TM_SYNC() sitevm::sitevm_sync()
 #define TM_CALLOC(n, s) sitevm::scalloc(n, s)
-#define malloc(s) sitevm::smalloc(s)
-#define calloc(n, s) sitevm::scalloc(n, s)
-#define free(p) sitevm::sfree(p)
+//#define malloc(s) sitevm::smalloc(s)
+//#define calloc(n, s) sitevm::scalloc(n, s)
+//#define free(p) sitevm::sfree(p)
+//#define malloc(s) sitevm::smalloc(s); sitevm::TMprint_addr()
+//#define calloc(n, s) sitevm::scalloc(n, s); sitevm::TMprint_addr()
+//#define free(p) sitevm::sfree(p); sitevm::TMprint_addr()
+
 
 #else
 #define SEQ_MALLOC(s) malloc(s)

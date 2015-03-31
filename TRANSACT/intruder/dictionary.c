@@ -262,7 +262,7 @@ dictionary_match (dictionary_t* dictionaryPtr, char* str)
             return sig;
         }
     }
-
+    printf("blugb\n");
     return NULL;
 }
 

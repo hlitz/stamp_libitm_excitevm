@@ -189,6 +189,7 @@ static void
 processPackets (void* argPtr)
 {
 
+  thread_barrier_wait();
     long threadId = thread_getId();
 
     stream_t*   streamPtr    = ((arg_t*)argPtr)->streamPtr;

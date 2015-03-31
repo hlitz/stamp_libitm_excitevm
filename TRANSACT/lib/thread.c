@@ -185,7 +185,6 @@ thread_startup (long numThread)
 void
 thread_start (void (*funcPtr)(void*), void* argPtr)
 {
-  printf("thread start\n");
     global_funcPtr = funcPtr;
     global_argPtr = argPtr;
 

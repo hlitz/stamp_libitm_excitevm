@@ -18,6 +18,7 @@ CFLAGS   += -O2 -DEXCITE_VM
 LD	:= gcc
 LDFLAGS  += -rdynamic -L$(SITEVM_HOME)/bin -ltbb -lsitevm -ldune -lstdc++
 LDFLAGS  += -lpthread
+LDFLAGS += -lprocps
 #LDFLAGS  += -litm
 
 LIBDEPS  += 

@@ -277,10 +277,10 @@ normal_exec (int       nthreads,
         args.clusters        = clusters;
         args.new_centers_len = new_centers_len;
         args.new_centers     = new_centers;
-
+__transaction_atomic {
         *global_i = nthreads * CHUNK;
         *global_delta = delta;
-
+ }
 #ifdef OTM
 #pragma omp parallel
         {
@@ -289,22 +289,22 @@ normal_exec (int       nthreads,
 #else
         thread_start(work, &args);
 #endif
-
-        delta = *global_delta;
-
-        /* Replace old cluster centers with new_centers */
-        for (i = 0; i < nclusters; i++) {
+	__transaction_atomic {
+	  delta = *global_delta;
+ 
+	  /* Replace old cluster centers with new_centers */
+	  for (i = 0; i < nclusters; i++) {
             for (j = 0; j < nfeatures; j++) {
-                if (new_centers_len[i] != NULL && *new_centers_len[i] > 0) {
-                    clusters[i][j] = new_centers[i][j] / *new_centers_len[i];
-                }
-                new_centers[i][j] = 0.0;   /* set back to 0 */
+	      if (new_centers_len[i] != NULL && *new_centers_len[i] > 0) {
+		clusters[i][j] = new_centers[i][j] / *new_centers_len[i];
+	      }
+	      new_centers[i][j] = 0.0;   /* set back to 0 */
             }
             *new_centers_len[i] = 0;   /* set back to 0 */
-        }
+	  }
 
-        delta /= npoints;
-
+	  delta /= npoints;
+	}
     } while ((delta > threshold) && (loop++ < 500));
 
     TIMER_READ(stop);
