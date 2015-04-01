@@ -95,6 +95,7 @@ typedef struct client {
  * =============================================================================
  */
 client_t*
+TM_SAFE
 client_alloc (long id,
               manager_t* managerPtr,
               long numOperation,

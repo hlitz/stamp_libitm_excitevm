@@ -88,6 +88,7 @@ table_alloc (long numBucket, long (*compare)(const void*, const void*))
     table_t* tablePtr;
     long i;
 
+        INIT_TXN_BEGIN()
     tablePtr = (table_t*)SEQ_MALLOC(sizeof(table_t));
     if (tablePtr == NULL) {
         return NULL;
@@ -97,15 +98,20 @@ table_alloc (long numBucket, long (*compare)(const void*, const void*))
     if (tablePtr->buckets == NULL) {
         return NULL;
     }
+    INIT_TXN_END()
 
     for (i = 0; i < numBucket; i++) {
+        INIT_TXN_BEGIN()
         tablePtr->buckets[i] = list_alloc(compare);
         if (tablePtr->buckets[i] == NULL) {
             return NULL;
         }
+        INIT_TXN_END()
     }
 
+    INIT_TXN_BEGIN()
     tablePtr->numBucket = numBucket;
+    INIT_TXN_END()
 
     return tablePtr;
 }

@@ -136,7 +136,7 @@ maze_free (maze_t* mazePtr)
  * =============================================================================
  */
 static void
-addToGrid (grid_t* gridPtr, vector_t* vectorPtr, char* type)
+addToGrid (grid_t* gridPtr, vector_t* vectorPtr, const char* type)
 {
     long i;
     long n = vector_getSize(vectorPtr);

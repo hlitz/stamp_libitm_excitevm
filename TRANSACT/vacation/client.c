@@ -159,14 +159,26 @@ client_run (void* argPtr)
     
    
     long myId = thread_getId();
-    client_t* clientPtr = ((client_t**)argPtr)[myId];
-    manager_t* managerPtr = clientPtr->managerPtr;
-    random_t*  randomPtr  = clientPtr->randomPtr;
+    client_t* clientPtr;
 
-    long numOperation           = clientPtr->numOperation;
-    long numQueryPerTransaction = clientPtr->numQueryPerTransaction;
-    long queryRange             = clientPtr->queryRange;
-    long percentUser            = clientPtr->percentUser;
+    manager_t* managerPtr;
+    random_t*  randomPtr;
+
+    long numOperation;
+    long numQueryPerTransaction;
+    long queryRange;
+    long percentUser;
+    __transaction_atomic {
+        clientPtr = ((client_t**)argPtr)[myId];
+
+        managerPtr = clientPtr->managerPtr;
+        randomPtr  = clientPtr->randomPtr;
+
+        numOperation           = clientPtr->numOperation;
+        numQueryPerTransaction = clientPtr->numQueryPerTransaction;
+        queryRange             = clientPtr->queryRange;
+        percentUser            = clientPtr->percentUser;
+    }
 
     long* types  = (long*)malloc(numQueryPerTransaction * sizeof(long));
     long* ids    = (long*)malloc(numQueryPerTransaction * sizeof(long));

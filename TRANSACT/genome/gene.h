@@ -92,6 +92,7 @@ typedef struct gene {
  * =============================================================================
  */
 gene_t*
+TM_SAFE
 gene_alloc (long length);
 
 
@@ -101,6 +102,7 @@ gene_alloc (long length);
  * =============================================================================
  */
 void
+TM_SAFE
 gene_create (gene_t* genePtr, random_t* randomPtr);
 
 
@@ -109,6 +111,7 @@ gene_create (gene_t* genePtr, random_t* randomPtr);
  * =============================================================================
  */
 void
+TM_SAFE
 gene_free (gene_t* genePtr);
 
 

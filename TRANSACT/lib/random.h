@@ -97,6 +97,7 @@ typedef struct random {
  * =============================================================================
  */
 random_t*
+__attribute__((transaction_pure))
 random_alloc ();
 
 /* =============================================================================
@@ -104,6 +105,7 @@ random_alloc ();
  * =============================================================================
  */
 void
+__attribute__((transaction_pure))
 random_free (random_t* randomPtr);
 
 /* =============================================================================
@@ -111,6 +113,7 @@ random_free (random_t* randomPtr);
  * =============================================================================
  */
 void
+__attribute__((transaction_pure))
 random_seed (random_t* randomPtr, unsigned long seed);
 
 /* =============================================================================
@@ -118,6 +121,7 @@ random_seed (random_t* randomPtr, unsigned long seed);
  * =============================================================================
  */
 unsigned long
+__attribute__((transaction_pure))
 random_generate (random_t* randomPtr);
 
 

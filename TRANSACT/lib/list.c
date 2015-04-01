@@ -352,6 +352,7 @@ list_insert (list_t* listPtr, void* dataPtr)
 
     nodePtr = allocNode(dataPtr);
     if (nodePtr == NULL) {
+        assert(0);
       return FALSE;
     }
 

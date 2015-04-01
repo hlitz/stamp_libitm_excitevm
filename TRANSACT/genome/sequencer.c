@@ -221,13 +221,20 @@ sequencer_alloc (long geneLength, long segmentLength, segments_t* segmentsPtr)
     long maxNumUniqueSegment = geneLength - segmentLength + 1;
     long i;
 
+    INIT_TXN_BEGIN()
+    
     sequencerPtr = (sequencer_t*)SEQ_MALLOC(sizeof(sequencer_t));
     if (sequencerPtr == NULL) {
         return NULL;
     }
+    
+    INIT_TXN_END()
 
-    sequencerPtr->uniqueSegmentsPtr =
-        TMhashtable_alloc(geneLength, &hashSegment, &compareSegment, -1, -1);
+    {
+    auto tmpPtr = TMhashtable_alloc(geneLength, &hashSegment, &compareSegment, -1, -1);
+
+    INIT_TXN_BEGIN()
+    sequencerPtr->uniqueSegmentsPtr = tmpPtr;
     if (sequencerPtr->uniqueSegmentsPtr == NULL) {
         return NULL;
     }
@@ -245,13 +252,20 @@ sequencer_alloc (long geneLength, long segmentLength, segments_t* segmentsPtr)
     if (sequencerPtr->startHashToConstructEntryTables == NULL) {
         return NULL;
     }
+    INIT_TXN_END()
+    }
+
     for (i = 1; i < segmentLength; i++) { /* 0 is dummy entry */
-        sequencerPtr->startHashToConstructEntryTables[i] =
-            table_alloc(geneLength, NULL);
+        auto tmpPtr = table_alloc(geneLength, NULL);
+
+    INIT_TXN_BEGIN()
+        sequencerPtr->startHashToConstructEntryTables[i] = tmpPtr;
+    INIT_TXN_END()
         if (sequencerPtr->startHashToConstructEntryTables[i] == NULL) {
             return NULL;
         }
     }
+    INIT_TXN_BEGIN()
     sequencerPtr->segmentLength = segmentLength;
 
     /* For constructing sequence */
@@ -260,6 +274,8 @@ sequencer_alloc (long geneLength, long segmentLength, segments_t* segmentsPtr)
     if (sequencerPtr->constructEntries == NULL) {
         return NULL;
     }
+
+
     for (i= 0; i < maxNumUniqueSegment; i++) {
         constructEntry_t* constructEntryPtr = &sequencerPtr->constructEntries[i];
         constructEntryPtr->isStart = TRUE;
@@ -271,12 +287,19 @@ sequencer_alloc (long geneLength, long segmentLength, segments_t* segmentsPtr)
         constructEntryPtr->overlap = 0;
         constructEntryPtr->length = segmentLength;
     }
-    sequencerPtr->hashToConstructEntryTable = table_alloc(geneLength, NULL);
+    INIT_TXN_END()
+
+    auto tmpPtr = table_alloc(geneLength, NULL);
+
+    INIT_TXN_BEGIN()
+    sequencerPtr->hashToConstructEntryTable = tmpPtr; 
     if (sequencerPtr->hashToConstructEntryTable == NULL) {
         return NULL;
     }
 
     sequencerPtr->segmentsPtr = segmentsPtr;
+
+    INIT_TXN_END()
 
     return sequencerPtr;
 }
@@ -299,19 +322,27 @@ sequencer_run (void* argPtr)
     table_t**         startHashToConstructEntryTables;
     constructEntry_t* constructEntries;
     table_t*          hashToConstructEntryTable;
+    
+    printf("Thread: %zd\n", threadId);
+    /*
+    if (threadId == 0){
+        while(1){}
+    }
+    */
+    printf("In here\n");
 
     uniqueSegmentsPtr               = sequencerPtr->uniqueSegmentsPtr;
     endInfoEntries                  = sequencerPtr->endInfoEntries;
     startHashToConstructEntryTables = sequencerPtr->startHashToConstructEntryTables;
     constructEntries                = sequencerPtr->constructEntries;
     hashToConstructEntryTable       = sequencerPtr->hashToConstructEntryTable;
-
+    
     segments_t* segmentsPtr         = sequencerPtr->segmentsPtr;
     assert(segmentsPtr);
     vector_t*   segmentsContentsPtr = segmentsPtr->contentsPtr;
     long        numSegment          = vector_getSize(segmentsContentsPtr);
     long        segmentLength       = segmentsPtr->length;
-
+    
     long i;
     long j;
     long i_start;
@@ -319,6 +350,8 @@ sequencer_run (void* argPtr)
     long numUniqueSegment;
     long substringLength;
     long entryIndex;
+
+    printf("Step 1\n");
 
     /*
      * Step 1: Remove duplicate segments
@@ -334,7 +367,8 @@ sequencer_run (void* argPtr)
             i_stop = i_start + partitionSize;
         }
     }
-
+    
+    #if 1
     for (i = i_start; i < i_stop; i+=CHUNK_STEP1) {
       __transaction_atomic {
         {
@@ -342,12 +376,25 @@ sequencer_run (void* argPtr)
           long ii_stop = MIN(i_stop, (i+CHUNK_STEP1));
           for (ii = i; ii < ii_stop; ii++) {
             void* segment = vector_at(segmentsContentsPtr, ii);
+            assert(segment);
             TMHASHTABLE_INSERT(uniqueSegmentsPtr, segment, segment);
           } /* ii */
         }
       }
     }
+    #else
+    for (i = i_start; i < i_stop; i++) {
+      __transaction_atomic {
+          void* segment = vector_at(segmentsContentsPtr, i);
+          TMHASHTABLE_INSERT(uniqueSegmentsPtr, segment, segment);
+      }
+    }
+    #endif
+
     thread_barrier_wait();
+    //assert(0);
+
+    printf("Step 2a\n");
 
     /*
      * Step 2a: Iterate over unique segments and compute hashes.
@@ -426,13 +473,20 @@ sequencer_run (void* argPtr)
              * and compute all of them here.
              */
             /* constructEntryPtr is local now */
-            constructEntryPtr->endHash = (ulong_t)hashString(&segment[1]);
+            __transaction_atomic {
+                constructEntryPtr->endHash = (ulong_t)hashString(&segment[1]);
+            }
 
             startHash = 0;
             for (j = 1; j < segmentLength; j++) {
                 startHash = (ulong_t)segment[j-1] +
                             (startHash << 6) + (startHash << 16) - startHash;
                 __transaction_atomic {
+                  //Force a conflict 
+#ifdef DRAFT_EXCITE_VM
+//                  conflictor[0]++;
+#endif
+                  assert(startHashToConstructEntryTables[j]);
                   status = TMTABLE_INSERT(startHashToConstructEntryTables[j],
                                           (ulong_t)startHash,
                                           (void*)constructEntryPtr );
@@ -455,6 +509,8 @@ sequencer_run (void* argPtr)
     }
 
     thread_barrier_wait();
+
+    printf("Step 2b\n");
 
     /*
      * Step 2b: Match ends to starts by using hash-based string comparison.
@@ -572,29 +628,31 @@ sequencer_run (void* argPtr)
 
         if (threadId == 0) {
             if (substringLength > 1) {
-                long index = segmentLength - substringLength + 1;
-                /* initialization if j and i: with i being the next end after j=0 */
-                for (i = 1; !endInfoEntries[i].isEnd; i+=endInfoEntries[i].jumpToNext) {
-                    /* find first non-null */
-                }
-                /* entry 0 is handled seperately from the loop below */
-                endInfoEntries[0].jumpToNext = i;
-                if (endInfoEntries[0].isEnd) {
-                    constructEntry_t* constructEntryPtr = &constructEntries[0];
-                    char* segment = constructEntryPtr->segment;
-                    constructEntryPtr->endHash = (ulong_t)hashString(&segment[index]);
-                }
-                /* Continue scanning (do not reset i) */
-                for (j = 0; i < numUniqueSegment; i+=endInfoEntries[i].jumpToNext) {
-                    if (endInfoEntries[i].isEnd) {
-                        constructEntry_t* constructEntryPtr = &constructEntries[i];
+                __transaction_atomic{
+                    long index = segmentLength - substringLength + 1;
+                    /* initialization if j and i: with i being the next end after j=0 */
+                    for (i = 1; !endInfoEntries[i].isEnd; i+=endInfoEntries[i].jumpToNext) {
+                        /* find first non-null */
+                    }
+                    /* entry 0 is handled seperately from the loop below */
+                    endInfoEntries[0].jumpToNext = i;
+                    if (endInfoEntries[0].isEnd) {
+                        constructEntry_t* constructEntryPtr = &constructEntries[0];
                         char* segment = constructEntryPtr->segment;
                         constructEntryPtr->endHash = (ulong_t)hashString(&segment[index]);
-                        endInfoEntries[j].jumpToNext = MAX(1, (i - j));
-                        j = i;
                     }
+                    /* Continue scanning (do not reset i) */
+                    for (j = 0; i < numUniqueSegment; i+=endInfoEntries[i].jumpToNext) {
+                        if (endInfoEntries[i].isEnd) {
+                            constructEntry_t* constructEntryPtr = &constructEntries[i];
+                            char* segment = constructEntryPtr->segment;
+                            constructEntryPtr->endHash = (ulong_t)hashString(&segment[index]);
+                            endInfoEntries[j].jumpToNext = MAX(1, (i - j));
+                            j = i;
+                        }
+                    }
+                    endInfoEntries[j].jumpToNext = i - j;
                 }
-                endInfoEntries[j].jumpToNext = i - j;
             }
         }
 
@@ -603,6 +661,8 @@ sequencer_run (void* argPtr)
     } /* for (substringLength > 0) */
 
     thread_barrier_wait();
+
+    printf("Step 3\n");
 
     /*
      * Step 3: Build sequence string
@@ -618,7 +678,9 @@ sequencer_run (void* argPtr)
             }
         }
 
-        sequencerPtr->sequence = (char*)SEQ_MALLOC((totalLength+1) * sizeof(char));
+        __transaction_atomic {
+            sequencerPtr->sequence = (char*)SEQ_MALLOC((totalLength+1) * sizeof(char));
+        }
         char* sequence = sequencerPtr->sequence;
         assert(sequence);
 
@@ -633,6 +695,7 @@ sequencer_run (void* argPtr)
                 assert( newSequenceLength <= totalLength );
                 copyPtr = sequence + sequenceLength;
                 sequenceLength = newSequenceLength;
+                __transaction_atomic {
                 do {
                     long numChar = segmentLength - constructEntryPtr->overlap;
                     if ((copyPtr + numChar) > (sequence + newSequenceLength)) {
@@ -644,12 +707,15 @@ sequencer_run (void* argPtr)
                            (numChar * sizeof(char)));
                     copyPtr += numChar;
                 } while ((constructEntryPtr = constructEntryPtr->nextPtr) != NULL);
+                }
                 assert(copyPtr <= (sequence + sequenceLength));
             }
         }
 
         assert(sequence != NULL);
+        __transaction_atomic {
         sequence[sequenceLength] = '\0';
+        }
     }
 
 }

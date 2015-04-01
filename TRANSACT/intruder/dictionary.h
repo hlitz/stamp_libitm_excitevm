@@ -80,7 +80,7 @@
 typedef vector_t dictionary_t;
 
 
-extern char* global_defaultSignatures[];
+extern const char* global_defaultSignatures[];
 extern const long global_numDefaultSignature;
 
 
@@ -121,14 +121,14 @@ Pdictionary_free (dictionary_t* dictionaryPtr);
  * =============================================================================
  */
 bool_t
-dictionary_add (dictionary_t* dictionaryPtr, char* str);
+dictionary_add (dictionary_t* dictionaryPtr, const char* str);
 
 
 /* =============================================================================
  * dictionary_get
  * =============================================================================
  */
-char*
+const char*
 dictionary_get (dictionary_t* dictionaryPtr, long i);
 
 
@@ -136,8 +136,8 @@ dictionary_get (dictionary_t* dictionaryPtr, long i);
  * dictionary_match
  * =============================================================================
  */
-char*
-dictionary_match (dictionary_t* dictionaryPtr, char* str);
+const char*
+dictionary_match (dictionary_t* dictionaryPtr, const char* str);
 
 
 #define PDICTIONARY_ALLOC()             Pdictionary_alloc()

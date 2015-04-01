@@ -78,7 +78,7 @@
 #include "vector.h"
 
 
-char* global_defaultSignatures[] = {
+const char* global_defaultSignatures[] = {
     "about",
     "after",
     "all",
@@ -168,7 +168,7 @@ dictionary_alloc ()
     if (dictionaryPtr) {
         long s;
         for (s = 0; s < global_numDefaultSignature; s++) {
-            char* sig = global_defaultSignatures[s];
+            const char* sig = global_defaultSignatures[s];
             bool_t status = vector_pushBack(dictionaryPtr,
                                             (void*)sig);
             assert(status);
@@ -191,7 +191,7 @@ Pdictionary_alloc ()
     if (dictionaryPtr) {
         long s;
         for (s = 0; s < global_numDefaultSignature; s++) {
-            char* sig = global_defaultSignatures[s];
+            const char* sig = global_defaultSignatures[s];
             bool_t status = PVECTOR_PUSHBACK(dictionaryPtr,
                                              (void*)sig);
             assert(status);
@@ -229,7 +229,7 @@ Pdictionary_free (dictionary_t* dictionaryPtr)
  * =============================================================================
  */
 bool_t
-dictionary_add (dictionary_t* dictionaryPtr, char* str)
+dictionary_add (dictionary_t* dictionaryPtr, const char* str)
 {
     return vector_pushBack(dictionaryPtr, (void*)str);
 }
@@ -239,10 +239,10 @@ dictionary_add (dictionary_t* dictionaryPtr, char* str)
  * dictionary_get
  * =============================================================================
  */
-char*
+const char*
 dictionary_get (dictionary_t* dictionaryPtr, long i)
 {
-    return (char*)vector_at(dictionaryPtr, i);
+    return (const char*)vector_at(dictionaryPtr, i);
 }
 
 
@@ -250,14 +250,14 @@ dictionary_get (dictionary_t* dictionaryPtr, long i)
  * dictionary_match
  * =============================================================================
  */
-char*
-dictionary_match (dictionary_t* dictionaryPtr, char* str)
+const char*
+dictionary_match (dictionary_t* dictionaryPtr, const char* str)
 {
     long s;
     long numSignature = vector_getSize(dictionaryPtr);
 
     for (s = 0; s < numSignature; s++) {
-        char* sig = (char*)vector_at(dictionaryPtr, s);
+        const char* sig = (const char*)vector_at(dictionaryPtr, s);
         if (strstr(str, sig) != NULL) {
             return sig;
         }
@@ -289,7 +289,7 @@ main ()
     assert(dictionaryPtr);
 
     assert(dictionary_add(dictionaryPtr, "test1"));
-    char* sig = dictionary_match(dictionaryPtr, "test1");
+    const char* sig = dictionary_match(dictionaryPtr, "test1");
     assert(strcmp(sig, "test1") == 0);
     sig = dictionary_match(dictionaryPtr, "test1s");
     assert(strcmp(sig, "test1") == 0);
@@ -297,7 +297,7 @@ main ()
 
     long s;
     for (s = 0; s < global_numDefaultSignature; s++) {
-        char* sig = dictionary_match(dictionaryPtr, global_defaultSignatures[s]);
+        const char* sig = dictionary_match(dictionaryPtr, global_defaultSignatures[s]);
         assert(strcmp(sig, global_defaultSignatures[s]) == 0);
     }
 

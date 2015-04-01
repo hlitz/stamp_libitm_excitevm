@@ -151,7 +151,7 @@ stream_free (stream_t* streamPtr)
  * =============================================================================
  */
 static void
-splitIntoPackets (char* str,
+splitIntoPackets (const char* str,
                   long flowId,
                   random_t* randomPtr,
                   vector_t* allocVectorPtr,
@@ -228,21 +228,23 @@ stream_generate (stream_t* streamPtr,
 
     long f;
     for (f = 1; f <= numFlow; f++) {
-        char* str;
+        //const char* str;
         //[wer210] added cast to long
+        const char* str_to_split;
         if ((long)(random_generate(randomPtr) % 100) < percentAttack) {
             long s = random_generate(randomPtr) % global_numDefaultSignature;
-            str = dictionary_get(dictionaryPtr, s);
+            const char* str = dictionary_get(dictionaryPtr, s);
             bool_t status =
                 MAP_INSERT(attackMapPtr, (void*)f, (void*)str);
             assert(status);
             numAttack++;
+            str_to_split = str;
         } else {
             /*
              * Create random string
              */
             long length = (random_generate(randomPtr) % maxLength) + 1;
-            str = (char*)TM_MALLOC((length + 1) * sizeof(char));
+            char* str = (char*)TM_MALLOC((length + 1) * sizeof(char));
             bool_t status = vector_pushBack(allocVectorPtr, (void*)str);
             assert(status);
             long l;
@@ -262,8 +264,9 @@ stream_generate (stream_t* streamPtr,
                 numAttack++;
             }
             TM_FREE(str2);
+            str_to_split = str;
         }
-        splitIntoPackets(str, f, randomPtr, allocVectorPtr, packetQueuePtr);
+        splitIntoPackets(str_to_split, f, randomPtr, allocVectorPtr, packetQueuePtr);
     }
 
     queue_shuffle(packetQueuePtr, randomPtr);

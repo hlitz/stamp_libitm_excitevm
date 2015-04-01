@@ -94,6 +94,7 @@ bitmap_alloc (long numBit)
     bitmap_t* bitmapPtr;
 
     bitmapPtr = (bitmap_t*)malloc(sizeof(bitmap_t));
+
     if (bitmapPtr == NULL) {
         return NULL;
     }
@@ -103,6 +104,7 @@ bitmap_alloc (long numBit)
     bitmapPtr->numWord = numWord;
 
     bitmapPtr->bits = (ulong_t*)malloc(numWord * sizeof(ulong_t));
+
     if (bitmapPtr->bits == NULL) {
         free(bitmapPtr);
         return NULL;

@@ -91,6 +91,7 @@ typedef struct manager {
  * =============================================================================
  */
 manager_t*
+TM_SAFE
 manager_alloc (long numRelations);
 
 

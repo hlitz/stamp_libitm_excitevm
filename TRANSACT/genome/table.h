@@ -90,6 +90,7 @@ typedef struct table {
  * =============================================================================
  */
 table_t*
+TM_SAFE
 table_alloc (long numBucket, long (*compare)(const void*, const void*));
 
 
@@ -109,6 +110,7 @@ table_insert (table_t* tablePtr, ulong_t hash, void* dataPtr);
  * =============================================================================
  */
 bool_t
+TM_SAFE
 table_remove (table_t* tablePtr, ulong_t hash, void* dataPtr);
 
 
@@ -117,6 +119,7 @@ table_remove (table_t* tablePtr, ulong_t hash, void* dataPtr);
  * =============================================================================
  */
 void
+TM_SAFE
 table_free (table_t* tablePtr);
 
 

@@ -148,6 +148,8 @@ segments_create (segments_t* segmentsPtr, gene_t* genePtr, random_t* randomPtr)
     assert(segmentsPtr != NULL);
     assert(genePtr != NULL);
     assert(randomPtr != NULL);
+    
+    INIT_TXN_BEGIN()
 
     segmentsContentsPtr = segmentsPtr->contentsPtr;
     strings = segmentsPtr->strings;
@@ -158,19 +160,24 @@ segments_create (segments_t* segmentsPtr, gene_t* genePtr, random_t* randomPtr)
     geneLength = genePtr->length;
     startBitmapPtr = genePtr->startBitmapPtr;
     numStart = geneLength - segmentLength + 1;
+    
+    INIT_TXN_END()
 
     /* Pick some random segments to start */
     for (i = 0; i < minNumSegment; i++) {
+    INIT_TXN_BEGIN()
         long j = (long)(random_generate(randomPtr) % numStart);
         bool_t status = bitmap_set(startBitmapPtr, j);
         assert(status);
         memcpy(strings[i], &(geneString[j]), segmentLength * sizeof(char));
         status = vector_pushBack(segmentsContentsPtr, (void*)strings[i]);
         assert(status);
+    INIT_TXN_END()
     }
 
     /* Make sure segment covers start */
     i = 0;
+    INIT_TXN_BEGIN()
     if (!bitmap_isSet(startBitmapPtr, i)) {
         char* string = (char*)SEQ_MALLOC((segmentLength+1) * sizeof(char));
         string[segmentLength] = '\0';
@@ -180,7 +187,9 @@ segments_create (segments_t* segmentsPtr, gene_t* genePtr, random_t* randomPtr)
         status = bitmap_set(startBitmapPtr, i);
         assert(status);
     }
+    INIT_TXN_END()
 
+    INIT_TXN_BEGIN()
     /* Add extra segments to fill holes and ensure overlap */
     maxZeroRunLength = segmentLength - 1;
     for (i = 0; i < numStart; i++) {
@@ -202,6 +211,8 @@ segments_create (segments_t* segmentsPtr, gene_t* genePtr, random_t* randomPtr)
             assert(status);
         }
     }
+    INIT_TXN_END()
+    
 }
 
 

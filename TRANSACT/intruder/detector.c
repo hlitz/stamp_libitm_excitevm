@@ -190,7 +190,7 @@ detector_process (detector_t* detectorPtr, char* str)
      * Check against signatures of known attacks
      */
 
-    char* signature = dictionary_match(detectorPtr->dictionaryPtr, str);
+    const char* signature = dictionary_match(detectorPtr->dictionaryPtr, str);
     if (signature) {
         return ERROR_SIGNATURE;
     }

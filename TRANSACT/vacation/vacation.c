@@ -235,33 +235,51 @@ initializeManager ()
     assert(randomPtr != NULL);
 
     numRelation = (long)global_params[PARAM_RELATIONS];
-    ids = (long*)SEQ_MALLOC(numRelation * sizeof(long));
 
-    managerPtr = manager_alloc(numRelation);
-    assert(managerPtr != NULL);
+    __transaction_atomic {
+        ids = (long*)SEQ_MALLOC(numRelation * sizeof(long));
 
-    for (i = 0; i < numRelation; i++) {
-        ids[i] = i + 1;
+        managerPtr = manager_alloc(numRelation);
+
+        assert(managerPtr != NULL);
+
+        for (i = 0; i < numRelation; i++) {
+            ids[i] = i + 1;
+        }
     }
 
     for (t = 0; t < numTable; t++) {
 
-        /* Shuffle ids */
-        for (i = 0; i < numRelation; i++) {
-            long x = random_generate(randomPtr) % numRelation;
-            long y = random_generate(randomPtr) % numRelation;
-            long tmp = ids[x];
-            ids[x] = ids[y];
-            ids[y] = tmp;
+        __transaction_atomic {
+            /* Shuffle ids */
+            for (i = 0; i < numRelation; i++) {
+                long x = random_generate(randomPtr) % numRelation;
+                long y = random_generate(randomPtr) % numRelation;
+                long tmp = ids[x];
+                ids[x] = ids[y];
+                ids[y] = tmp;
+            }
         }
         /* Populate table */
-        for (i = 0; i < numRelation; i++) {
+        for (i = 0; i < numRelation;){ 
             bool_t status;
-            long id = ids[i];
-            long num = ((random_generate(randomPtr) % 5) + 1) * 100;
-            long price = ((random_generate(randomPtr) % 5) * 10) + 50;
-            status = manager_add[t](managerPtr, id, num, price);
-            assert(status);
+            __transaction_atomic {
+            for(size_t j = 0; j < 1000; j++, i++){
+                long id = ids[i];
+                long num = ((random_generate(randomPtr) % 5) + 1) * 100;
+                long price = ((random_generate(randomPtr) % 5) * 10) + 50;
+
+                switch(t){
+                    case 0: status = manager_addCar(managerPtr, id, num, price); break;
+                    case 1: status = manager_addFlight(managerPtr, id, num, price); break;
+                    case 2: status = manager_addRoom(managerPtr, id, num, price); break;
+                    case 3: status = addCustomer(managerPtr, id, num, price); break;
+                    default: assert(0);
+                }
+                //status = manager_add[t](managerPtr, id, num, price);
+                assert(status);
+            }
+            }
         }
 
     } /* for t */
@@ -269,8 +287,11 @@ initializeManager ()
     puts("done.");
     fflush(stdout);
 
+    __transaction_atomic {
+        SEQ_FREE(ids);
+    }
+    
     random_free(randomPtr);
-    SEQ_FREE(ids);
     return managerPtr;
 }
 
@@ -300,6 +321,7 @@ initializeClients (manager_t* managerPtr)
     randomPtr = random_alloc();
     assert(randomPtr != NULL);
 
+    __transaction_atomic {
     clients = (client_t**)SEQ_MALLOC(numClient * sizeof(client_t*));
 
     assert(clients != NULL);
@@ -314,6 +336,7 @@ initializeClients (manager_t* managerPtr)
                                   queryRange,
                                   percentUser);
         assert(clients[i]  != NULL);
+    }
     }
 
     puts("done.");
@@ -462,6 +485,7 @@ int main (int argc, char** argv)
     //checkTables(managerPtr);
 
     /* Clean up */
+    #if 0
     printf("Deallocating memory... ");
     fflush(stdout);
     freeClients(clients);
@@ -473,9 +497,11 @@ int main (int argc, char** argv)
     fflush(stdout);
 
     //P_MEMORY_SHUTDOWN();
+    #endif
 
     thread_shutdown();
     TM_SHUTDOWN();
+
     
     return 0;
 }

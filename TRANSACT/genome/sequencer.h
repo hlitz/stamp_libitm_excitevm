@@ -124,6 +124,7 @@ typedef struct sequencer_run_arg {
  * =============================================================================
  */
 sequencer_t*
+TM_SAFE
 sequencer_alloc (long geneLength, long segmentLength, segments_t* segmentsPtr);
 
 
@@ -141,6 +142,7 @@ sequencer_run (void* argPtr);
  * =============================================================================
  */
 void
+TM_SAFE
 sequencer_free (sequencer_t* sequencerPtr);
 
 

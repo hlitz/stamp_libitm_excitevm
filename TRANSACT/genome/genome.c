@@ -206,18 +206,28 @@ int main (int argc, char** argv)
     random_seed(randomPtr, 0);
 
     printf("g alloc\n");
-    gene_t* genePtr = gene_alloc(geneLength);
+    gene_t* genePtr;
+    char* gene;
+    segments_t* segmentsPtr;
+    sequencer_t* sequencerPtr;
+
+    INIT_TXN_BEGIN()
+
+    genePtr = gene_alloc(geneLength);
     assert( genePtr != NULL);
     gene_create(genePtr, randomPtr);
-    char* gene = genePtr->contents;
+    gene = genePtr->contents;
     printf("seg alloc %lx\n", minNumSegment);
 
-    segments_t* segmentsPtr = segments_alloc(segmentLength, minNumSegment);
+    segmentsPtr = segments_alloc(segmentLength, minNumSegment);
+    
+    INIT_TXN_END()
+
     assert(segmentsPtr != NULL);
     segments_create(segmentsPtr, genePtr, randomPtr);
     printf("ptr alloc\n");
-
-    sequencer_t* sequencerPtr = sequencer_alloc(geneLength, segmentLength, segmentsPtr);
+    
+    sequencerPtr = sequencer_alloc(geneLength, segmentLength, segmentsPtr);
     assert(sequencerPtr != NULL);
 
     puts("done.");
@@ -225,6 +235,8 @@ int main (int argc, char** argv)
     printf("Segment length  = %li\n", segmentsPtr->length);
     printf("Number segments = %li\n", vector_getSize(segmentsPtr->contentsPtr));
     fflush(stdout);
+    
+    //MySTM::flush_logs();
 
     /* Benchmark */
     printf("Sequencing gene... ");
@@ -256,6 +268,7 @@ int main (int argc, char** argv)
         assert(strlen(sequence) >= strlen(gene));
     }
 
+#if 0
     /* Clean up */
     printf("Deallocating memory... ");
     fflush(stdout);
@@ -265,6 +278,7 @@ int main (int argc, char** argv)
     random_free(randomPtr);
     puts("done.");
     fflush(stdout);
+#endif
 
     thread_shutdown();
     return result;

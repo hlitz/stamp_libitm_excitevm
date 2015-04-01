@@ -76,6 +76,8 @@
 #include "types.h"
 
 
+int* conflictor;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -163,8 +165,21 @@ thread_startup (long numThread)
     /* Set up pool */
     THREAD_ATTR_INIT(global_threadAttr);
     for (i = 1; i < numThread; i++) {
+        static THREAD_ATTR_T     attr;
+        THREAD_ATTR_INIT(attr);
+        //Pin to core
+        cpu_set_t cpuset;
+        CPU_ZERO(&cpuset); 
+        CPU_SET(i, &cpuset); 
+        int attr_status = pthread_attr_setaffinity_np(&attr, 
+                sizeof(cpu_set_t), &cpuset); 
+        if (attr_status){ 
+            //TODO better error handling 
+            printf("Error pinning pthread attr to core\n"); 
+            exit(1); 
+        } 
         THREAD_CREATE(global_threads[i],
-                      global_threadAttr,
+                      attr,
                       &threadWait,
                       &global_threadIds[i]);
     }
@@ -270,6 +285,7 @@ void thread_spinbarrier_init(thread_spinbarrier_t *b, int n) {
 void thread_spinbarrier(thread_spinbarrier_t *b) {
   thread_spinlock_acquire(&b->mutex);
   //    pthread_mutex_lock(&b->mutex);
+  //  printf("Enterin spinbarrier\n");
 /* One more thread through */
     b->crossing++;
     /* If not all here, wait */
@@ -287,6 +303,7 @@ void thread_spinbarrier(thread_spinbarrier_t *b) {
       b->crossing = 0;
     }
     thread_spinlock_release(&b->mutex);
+    //printf("Exiting spinbarrier\n");
     //    pthread_mutex_unlock(&b->mutex);
 
     //   if (b->crossing < b->count) {

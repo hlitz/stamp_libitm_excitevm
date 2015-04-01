@@ -10,12 +10,24 @@ CC	:= g++
 #CPPFLAGS += -DNDEBUG
 CPPFLAGS += -I../lib -I../
 CFLAGS   += -std=c++11 -pthread -I./
-CFLAGS   += -Wall -Wextra -g
+CFLAGS   += -Wall -g
+CFLAGS   += -Wextra -Wno-unused-parameter
 CFLAGS   += -fgnu-tm -mno-red-zone 
-CFLAGS   += -O2 -DBARRIER_SPINNING -DEXCITE_VM
+#CFLAGS   += -O2 
+CFLAGS   += -O0 
+CFLAGS   += -DBARRIER_SPINNING \
+
+#CFLAGS   += -DEXCITE_VM
+#CFLAGS   += -DDRAFT_EXCITE_VM
+CFLAGS 	 += -I$(TESTSTM_HOME)
 
 LD	:= gcc
-LDFLAGS  += -rdynamic -L$(SITEVM_HOME)/bin -ltbb -lsitevm -ldune -lstdc++
+LDFLAGS  += -rdynamic -L$(SITEVM_HOME)/bin -lsitevm 
+LDFLAGS  += -L$(DUNE_HOME) -ldune 
+LDFLAGS  += -L$(TESTSTM_HOME) -lteststm 
+LDFLAGS  += -lddtrace
+LDFLAGS  += -lstdc++
+#LDFLAGS  += -ltbb
 LDFLAGS  += -lpthread
 #LDFLAGS  += -litm
 
@@ -38,7 +50,7 @@ clean:
 	$(RM) $(_OBJS) $(_PROG)
 
 $(_PROG): $(_OBJS) $(LIBDEPS)
-	$(LD) $^ $(LIBITM_HOME)/libitm.a $(LDFLAGS) -o $(_PROG)
+	$(LD) $^ $(LIBITM_HOME)/../x86_64-unknown-linux-gnu/libitm/libitm.a $(LDFLAGS) -o $(_PROG)
 
 $(OBJDIR)/%.o: %.c *.h ../lib/*.h
 	@mkdir -p $(@D)

@@ -166,6 +166,29 @@ TMhashtable_iter_next (
 }
 
 
+/* =============================================================================
+ * TMallocBucket
+ * =============================================================================
+ */
+__attribute__ ((noinline))
+void
+TMallocBucket ( list_t** buckets,
+                long i, long (*comparePairs)(const pair_t*, const pair_t*))
+{
+    INIT_TXN_BEGIN()
+        list_t* chainPtr =
+            TMLIST_ALLOC((long (*)(const void*, const void*))comparePairs);
+        if (chainPtr == NULL) {
+            assert(0);
+            /*
+            while (--i >= 0) {
+                TMLIST_FREE(buckets[i]);
+            }
+            */
+        }
+        buckets[i] = chainPtr;
+    INIT_TXN_END()
+}
 
 /* =============================================================================
  * TMallocBuckets
@@ -181,12 +204,16 @@ TMallocBuckets (
     list_t** buckets;
 
     /* Allocate bucket: extra bucket is dummy for easier iterator code */
+    INIT_TXN_BEGIN()
     buckets = (list_t**)TM_MALLOC((numBucket + 1) * sizeof(list_t*));
     if (buckets == NULL) {
         return NULL;
     }
+    INIT_TXN_END()
 
     for (i = 0; i < (numBucket + 1); i++) {
+    /*
+    INIT_TXN_BEGIN()
         list_t* chainPtr =
             TMLIST_ALLOC((long (*)(const void*, const void*))comparePairs);
         if (chainPtr == NULL) {
@@ -196,6 +223,9 @@ TMallocBuckets (
             return NULL;
         }
         buckets[i] = chainPtr;
+    INIT_TXN_END()
+    */
+        TMallocBucket(buckets, i, comparePairs);
     }
 
     return buckets;
@@ -219,12 +249,17 @@ TMhashtable_alloc (long initNumBucket,
 {
     hashtable_t* hashtablePtr;
 
+    INIT_TXN_BEGIN()
     hashtablePtr = (hashtable_t*)TM_MALLOC(sizeof(hashtable_t));
     if (hashtablePtr == NULL) {
         return NULL;
     }
+    INIT_TXN_END()
 
-    hashtablePtr->buckets = TMallocBuckets(  initNumBucket, comparePairs);
+    auto tmpPtr = TMallocBuckets(  initNumBucket, comparePairs);
+
+    INIT_TXN_BEGIN()
+    hashtablePtr->buckets = tmpPtr; 
     if (hashtablePtr->buckets == NULL) {
         TM_FREE(hashtablePtr);
         return NULL;
@@ -240,6 +275,7 @@ TMhashtable_alloc (long initNumBucket,
                                   HASHTABLE_DEFAULT_RESIZE_RATIO : resizeRatio);
     hashtablePtr->growthFactor = ((growthFactor < 0) ?
                                   HASHTABLE_DEFAULT_GROWTH_FACTOR : growthFactor);
+    INIT_TXN_END()
 
     return hashtablePtr;
 }

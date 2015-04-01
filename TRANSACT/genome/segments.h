@@ -97,6 +97,7 @@ typedef struct segments {
  * =============================================================================
  */
 segments_t*
+TM_SAFE
 segments_alloc (long length, long minNum)  __attribute__ ((__target__ ("no-mmx,no-sse,no-sse2,no-sse3,no-sse4,no-sse4.2,no-sse4.1")));
 
 
@@ -106,6 +107,7 @@ segments_alloc (long length, long minNum)  __attribute__ ((__target__ ("no-mmx,n
  * =============================================================================
  */
 void
+//TM_SAFE
 segments_create (segments_t* segmentsPtr, gene_t* genePtr, random_t* randomPtr);
 
 
@@ -114,6 +116,7 @@ segments_create (segments_t* segmentsPtr, gene_t* genePtr, random_t* randomPtr);
  * =============================================================================
  */
 void
+TM_SAFE
 segments_free (segments_t* segmentsPtr);
 
 
