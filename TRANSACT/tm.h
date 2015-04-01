@@ -37,7 +37,7 @@
 //#define free(p) sitevm::sfree(p)
 //#define malloc(s) sitevm::smalloc(s); sitevm::TMprint_addr()
 //#define calloc(n, s) sitevm::scalloc(n, s); sitevm::TMprint_addr()
-//#define free(p) sitevm::sfree(p); sitevm::TMprint_addr()
+#define free(p) sitevm::TMprintf(); free(p)
 
 
 #else
