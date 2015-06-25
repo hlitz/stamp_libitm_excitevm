@@ -240,7 +240,7 @@ processPackets (void* argPtr)
         //TMprint("3.\n");
         if (data) {
             intruder_error_t error = PDETECTOR_PROCESS(detectorPtr, data);
-            TM_FREE(data);
+            free(data);
             if (error) {
                 bool_t status = PVECTOR_PUSHBACK(errorVectorPtr,
                                                  (void*)decodedFlowId);

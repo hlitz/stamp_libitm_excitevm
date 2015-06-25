@@ -128,7 +128,7 @@ queue_clear (queue_t* queuePtr);
  */
 //[wer210] has to be TM_PURE, use random_generate(), only called once
 //         outside tx in yada, yada.c: initializeWork().
-TM_PURE
+TM_SAFE
 void
 queue_shuffle (queue_t* queuePtr, random_t* randomPtr);
 

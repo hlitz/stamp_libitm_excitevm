@@ -119,6 +119,7 @@ random_seed (random_t* randomPtr, unsigned long seed)
  * random_generate
  * =============================================================================
  */
+TM_PURE
 unsigned long
 random_generate (random_t* randomPtr)
 {

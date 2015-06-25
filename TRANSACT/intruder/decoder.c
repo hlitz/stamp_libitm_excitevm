@@ -106,11 +106,11 @@ decoder_alloc ()
 {
     decoder_t* decoderPtr;
 
-    decoderPtr = (decoder_t*)TM_MALLOC(sizeof(decoder_t));
+    decoderPtr = (decoder_t*)malloc(sizeof(decoder_t));
     if (decoderPtr) {
-        decoderPtr->fragmentedMapPtr = MAP_ALLOC(NULL, NULL);
+      decoderPtr->fragmentedMapPtr = __transaction_atomic(MAP_ALLOC(NULL, NULL));
         assert(decoderPtr->fragmentedMapPtr);
-        decoderPtr->decodedQueuePtr = queue_alloc(1024);
+        decoderPtr->decodedQueuePtr = __transaction_atomic(queue_alloc(1024));
         assert(decoderPtr->decodedQueuePtr);
     }
 
@@ -126,8 +126,8 @@ void
 decoder_free (decoder_t* decoderPtr)
 {
     queue_free(decoderPtr->decodedQueuePtr);
-    MAP_FREE(decoderPtr->fragmentedMapPtr);
-    TM_FREE(decoderPtr);
+    __transaction_atomic{MAP_FREE(decoderPtr->fragmentedMapPtr);}
+    free(decoderPtr);
 }
 
 
@@ -253,7 +253,7 @@ TMdecoder_process (  decoder_t* decoderPtr, char* bytes, long numByte)
             i++;
           }
 
-          char* data = (char*)TM_MALLOC(numByte + 1);
+          char* data = (char*)malloc(numByte + 1);
           assert(data);
           data[numByte] = '\0';
           char* dst = data;
@@ -277,7 +277,7 @@ TMdecoder_process (  decoder_t* decoderPtr, char* bytes, long numByte)
           }
           assert(dst == data + numByte);
 
-          decoded_t* decodedPtr = (decoded_t*)TM_MALLOC(sizeof(decoded_t));
+          decoded_t* decodedPtr = (decoded_t*)malloc(sizeof(decoded_t));
           assert(decodedPtr);
           decodedPtr->flowId = flowId;
           decodedPtr->data = data;
@@ -301,7 +301,7 @@ TMdecoder_process (  decoder_t* decoderPtr, char* bytes, long numByte)
           return ERROR_FRAGMENTID;
         }
 
-        char* data = (char*)TM_MALLOC(length + 1);
+        char* data = (char*)malloc(length + 1);
         assert(data);
         data[length] = '\0';
         //memcpy(data, packetPtr->data, length);
@@ -310,7 +310,7 @@ TMdecoder_process (  decoder_t* decoderPtr, char* bytes, long numByte)
 	  data[i] = packetPtr->data[i];
 	}
   
-        decoded_t* decodedPtr = (decoded_t*)TM_MALLOC(sizeof(decoded_t));
+        decoded_t* decodedPtr = (decoded_t*)malloc(sizeof(decoded_t));
         assert(decodedPtr);
         decodedPtr->flowId = flowId;
         decodedPtr->data = data;
@@ -340,7 +340,7 @@ TMdecoder_getComplete (  decoder_t* decoderPtr, long* decodedFlowIdPtr)
     if (decodedPtr) {
         *decodedFlowIdPtr = decodedPtr->flowId;
         data = decodedPtr->data;
-        TM_FREE(decodedPtr);
+        free(decodedPtr);
     } else {
         *decodedFlowIdPtr = -1;
         data = NULL;
@@ -372,7 +372,7 @@ main ()
     long numDataByte = 3;
     long numPacketByte = PACKET_HEADER_LENGTH + numDataByte;
 
-    char* abcBytes = (char*)TM_MALLOC(numPacketByte);
+    char* abcBytes = (char*)malloc(numPacketByte);
     assert(abcBytes);
     packet_t* abcPacketPtr;
     abcPacketPtr = (packet_t*)abcBytes;
@@ -384,7 +384,7 @@ main ()
     abcPacketPtr->data[1] = 'b';
     abcPacketPtr->data[2] = 'c';
 
-    char* defBytes = (char*)TM_MALLOC(numPacketByte);
+    char* defBytes = (char*)malloc(numPacketByte);
     assert(defBytes);
     packet_t* defPacketPtr;
     defPacketPtr = (packet_t*)defBytes;
@@ -433,14 +433,14 @@ main ()
     assert(TMdecoder_process(decoderPtr, abcBytes, numPacketByte) == ERROR_NONE);
     char* str = TMdecoder_getComplete(decoderPtr, &flowId);
     assert(strcmp(str, "abcdef") == 0);
-    TM_FREE(str);
+    free(str);
     assert(flowId == 1);
 
     abcPacketPtr->numFragment = 1;
     assert(TMdecoder_process(decoderPtr, abcBytes, numPacketByte) == ERROR_NONE);
     str = TMdecoder_getComplete(decoderPtr, &flowId);
     assert(strcmp(str, "abc") == 0);
-    TM_FREE(str);
+    free(str);
     abcPacketPtr->numFragment = 2;
     assert(flowId == 1);
 
@@ -450,8 +450,8 @@ main ()
 
     decoder_free(decoderPtr);
 
-    TM_FREE(abcBytes);
-    TM_FREE(defBytes);
+    free(abcBytes);
+    free(defBytes);
 
     puts("All tests passed.");
 

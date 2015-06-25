@@ -94,7 +94,7 @@ detector_alloc ()
 {
     detector_t* detectorPtr;
 
-    detectorPtr = (detector_t*)TM_MALLOC(sizeof(detector_t));
+    detectorPtr = (detector_t*)malloc(sizeof(detector_t));
     if (detectorPtr) {
         detectorPtr->dictionaryPtr = dictionary_alloc();
         assert(detectorPtr->dictionaryPtr);
@@ -115,7 +115,7 @@ Pdetector_alloc ()
 {
     detector_t* detectorPtr;
 
-    detectorPtr = (detector_t*)TM_MALLOC(sizeof(detector_t));
+    detectorPtr = (detector_t*)malloc(sizeof(detector_t));
     if (detectorPtr) {
         detectorPtr->dictionaryPtr = PDICTIONARY_ALLOC();
         assert(detectorPtr->dictionaryPtr);
@@ -136,7 +136,7 @@ detector_free (detector_t* detectorPtr)
 {
     dictionary_free(detectorPtr->dictionaryPtr);
     vector_free(detectorPtr->preprocessorVectorPtr);
-    TM_FREE(detectorPtr);
+    free(detectorPtr);
 }
 
 
@@ -149,7 +149,7 @@ Pdetector_free (detector_t* detectorPtr)
 {
     PDICTIONARY_FREE(detectorPtr->dictionaryPtr);
     PVECTOR_FREE(detectorPtr->preprocessorVectorPtr);
-    TM_FREE(detectorPtr);
+    free(detectorPtr);
 }
 
 

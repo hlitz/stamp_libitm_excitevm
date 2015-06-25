@@ -102,7 +102,7 @@ stream_alloc (long percentAttack)
 {
     stream_t* streamPtr;
 
-    streamPtr = (stream_t*)TM_MALLOC(sizeof(stream_t));
+    streamPtr = (stream_t*)malloc(sizeof(stream_t));
     if (streamPtr) {
         assert(percentAttack >= 0 && percentAttack <= 100);
         streamPtr->percentAttack = percentAttack;
@@ -110,9 +110,9 @@ stream_alloc (long percentAttack)
         assert(streamPtr->randomPtr);
         streamPtr->allocVectorPtr = vector_alloc(1);
         assert(streamPtr->allocVectorPtr);
-        streamPtr->packetQueuePtr = queue_alloc(-1);
+        streamPtr->packetQueuePtr = __transaction_atomic(queue_alloc(-1));
         assert(streamPtr->packetQueuePtr);
-        streamPtr->attackMapPtr = MAP_ALLOC(NULL, NULL);
+        streamPtr->attackMapPtr = __transaction_atomic(MAP_ALLOC(NULL, NULL));
         assert(streamPtr->attackMapPtr);
     }
 
@@ -133,14 +133,16 @@ stream_free (stream_t* streamPtr)
 
     for (a = 0; a < numAlloc; a++) {
         char* str = (char*)vector_at(allocVectorPtr, a);
-        TM_FREE(str);
+        free(str);
     }
 
-    MAP_FREE(streamPtr->attackMapPtr);
+    __transaction_atomic{
+      MAP_FREE(streamPtr->attackMapPtr);
+    }
     queue_free(streamPtr->packetQueuePtr);
     vector_free(streamPtr->allocVectorPtr);
     random_free(streamPtr->randomPtr);
-    TM_FREE(streamPtr);
+    free(streamPtr);
 }
 
 
@@ -165,7 +167,7 @@ splitIntoPackets (char* str,
     long p;
     for (p = 0; p < (numPacket - 1); p++) {
         bool_t status;
-        char* bytes = (char*)TM_MALLOC(PACKET_HEADER_LENGTH + numDataByte);
+        char* bytes = (char*)malloc(PACKET_HEADER_LENGTH + numDataByte);
         assert(bytes);
         status = vector_pushBack(allocVectorPtr, (void*)bytes);
         assert(status);
@@ -175,13 +177,13 @@ splitIntoPackets (char* str,
         packetPtr->numFragment = numPacket;
         packetPtr->length      = numDataByte;
         memcpy(packetPtr->data, (str + p * numDataByte), numDataByte);
-        status = queue_push(packetQueuePtr, (void*)packetPtr);
+        status = __transaction_atomic(queue_push(packetQueuePtr, (void*)packetPtr));
         assert(status);
     }
 
     bool_t status;
     long lastNumDataByte = numDataByte + numByte % numPacket;
-    char* bytes = (char*)TM_MALLOC(PACKET_HEADER_LENGTH + lastNumDataByte);
+    char* bytes = (char*)malloc(PACKET_HEADER_LENGTH + lastNumDataByte);
     assert(bytes);
     status = vector_pushBack(allocVectorPtr, (void*)bytes);
     assert(status);
@@ -191,7 +193,7 @@ splitIntoPackets (char* str,
     packetPtr->numFragment = numPacket;
     packetPtr->length      = lastNumDataByte;
     memcpy(packetPtr->data, (str + p * numDataByte), lastNumDataByte);
-    status = queue_push(packetQueuePtr, (void*)packetPtr);
+    status = __transaction_atomic(queue_push(packetQueuePtr, (void*)packetPtr));
     assert(status);
 }
 
@@ -221,7 +223,9 @@ stream_generate (stream_t* streamPtr,
     detector_addPreprocessor(detectorPtr, &preprocessor_toLower);
 
     random_seed(randomPtr, seed);
-    queue_clear(packetQueuePtr);
+    __transaction_atomic{
+      queue_clear(packetQueuePtr);
+    }
 
     long range = '~' - ' ' + 1;
     assert(range > 0);
@@ -234,7 +238,7 @@ stream_generate (stream_t* streamPtr,
             long s = random_generate(randomPtr) % global_numDefaultSignature;
             str = dictionary_get(dictionaryPtr, s);
             bool_t status =
-                MAP_INSERT(attackMapPtr, (void*)f, (void*)str);
+	      __transaction_atomic(MAP_INSERT(attackMapPtr, (void*)f, (void*)str));
             assert(status);
             numAttack++;
         } else {
@@ -242,7 +246,7 @@ stream_generate (stream_t* streamPtr,
              * Create random string
              */
             long length = (random_generate(randomPtr) % maxLength) + 1;
-            str = (char*)TM_MALLOC((length + 1) * sizeof(char));
+            str = (char*)malloc((length + 1) * sizeof(char));
             bool_t status = vector_pushBack(allocVectorPtr, (void*)str);
             assert(status);
             long l;
@@ -250,23 +254,25 @@ stream_generate (stream_t* streamPtr,
                 str[l] = ' ' + (char)(random_generate(randomPtr) % range);
             }
             str[l] = '\0';
-            char* str2 = (char*)TM_MALLOC((length + 1) * sizeof(char));
+            char* str2 = (char*)malloc((length + 1) * sizeof(char));
             assert(str2);
             strcpy(str2, str);
             intruder_error_t error = detector_process(detectorPtr, str2); /* updates in-place */
             if (error == ERROR_SIGNATURE) {
-                bool_t status = MAP_INSERT(attackMapPtr,
+	      bool_t status = __transaction_atomic(MAP_INSERT(attackMapPtr,
                                            (void*)f,
-                                           (void*)str);
+							      (void*)str));
                 assert(status);
                 numAttack++;
             }
-            TM_FREE(str2);
+            free(str2);
         }
         splitIntoPackets(str, f, randomPtr, allocVectorPtr, packetQueuePtr);
     }
 
-    queue_shuffle(packetQueuePtr, randomPtr);
+    __transaction_atomic{
+      queue_shuffle(packetQueuePtr, randomPtr);
+    }
 
     detector_free(detectorPtr);
 
@@ -295,7 +301,7 @@ stream_getPacket (stream_t* streamPtr)
 bool_t
 stream_isAttack (stream_t* streamPtr, long flowId)
 {
-    return MAP_CONTAINS(streamPtr->attackMapPtr, (void*)flowId);
+  return __transaction_atomic(MAP_CONTAINS(streamPtr->attackMapPtr, (void*)flowId));
 }
 
 
