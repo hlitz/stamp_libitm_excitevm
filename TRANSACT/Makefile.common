@@ -1,4 +1,4 @@
-# obj folder
+ # obj folder
 TMBUILD ?= obj
 
 #LIBITM_HOME=/home/jinglei/Projects/gcc/x86_64-unknown-linux-gnu/libitm
@@ -13,6 +13,7 @@ CFLAGS   += -std=c++11 -pthread -I./
 CFLAGS   += -Wall -g
 CFLAGS   += -Wextra -Wno-unused-parameter
 CFLAGS   += -fgnu-tm -mno-red-zone 
+<<<<<<< Updated upstream
 #CFLAGS   += -O2 
 CFLAGS   += -O0 
 CFLAGS   += -DBARRIER_SPINNING \
@@ -20,6 +21,11 @@ CFLAGS   += -DBARRIER_SPINNING \
 #CFLAGS   += -DEXCITE_VM
 #CFLAGS   += -DDRAFT_EXCITE_VM
 CFLAGS 	 += -I$(TESTSTM_HOME)
+=======
+CFLAGS   += -O2
+# -DEXCITE_VM
+#CFLAGS   += -DBARRIER_SPINNING
+>>>>>>> Stashed changes
 
 LD	:= gcc
 LDFLAGS  += -rdynamic -L$(SITEVM_HOME)/bin -lsitevm 
