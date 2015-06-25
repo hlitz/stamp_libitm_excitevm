@@ -173,10 +173,12 @@ computeGraph (void* argPtr)
     long i_start;
     long i_stop;
     if(myId==0){
-      global_maxNumVertices = (ULONGINT_T*)malloc(sizeof(ULONGINT_T));
+      __transaction_atomic{
+      global_maxNumVertices = (ULONGINT_T*)TM_MALLOC(sizeof(ULONGINT_T));
       global_outVertexListSize = (ULONGINT_T*)TM_MALLOC(sizeof(ULONGINT_T));
       *global_maxNumVertices = 0;
       *global_outVertexListSize = 0;
+      }
     }
     thread_barrier_wait();
     createPartition(0, numEdgesPlaced, myId, numThread, &i_start, &i_stop);
@@ -197,7 +199,7 @@ computeGraph (void* argPtr)
     
     thread_barrier_wait();
 
-    maxNumVertices = *global_maxNumVertices;
+    maxNumVertices = __transaction_atomic(*global_maxNumVertices);
 
     if (myId == 0) {
 
@@ -316,7 +318,7 @@ computeGraph (void* argPtr)
 
     thread_barrier_wait();
 
-    outVertexListSize = *global_outVertexListSize;
+    outVertexListSize =  __transaction_atomic(*global_outVertexListSize);
 
     if (myId == 0) {
         GPtr->numDirectedEdges = outVertexListSize;
@@ -427,15 +429,17 @@ computeGraph (void* argPtr)
     /* A temp. array to store the inplied edges */
     ULONGINT_T* impliedEdgeList;
     if (myId == 0) {
+      __transaction_atomic{
         impliedEdgeList = (ULONGINT_T*)malloc(GPtr->numVertices
                                                 * MAX_CLUSTER_SIZE
                                                 * sizeof(ULONGINT_T));
-        global_impliedEdgeList = impliedEdgeList;
+	global_impliedEdgeList = impliedEdgeList;
+	}
     }
 
     thread_barrier_wait();
 
-    impliedEdgeList = global_impliedEdgeList;
+    impliedEdgeList =  __transaction_atomic(global_impliedEdgeList);
 
     createPartition(0,
                     (GPtr->numVertices * MAX_CLUSTER_SIZE),
@@ -455,14 +459,16 @@ computeGraph (void* argPtr)
 
     ULONGINT_T** auxArr;
     if (myId == 0) {
-        auxArr = (ULONGINT_T**)malloc(GPtr->numVertices * sizeof(ULONGINT_T*));
+      __transaction_atomic{
+        auxArr = (ULONGINT_T**)TM_MALLOC(GPtr->numVertices * sizeof(ULONGINT_T*));
         assert(auxArr);
         global_auxArr = auxArr;
+      }
     }
     
     thread_barrier_wait();
 
-    auxArr = global_auxArr;
+    auxArr =  __transaction_atomic(global_auxArr);
 
     createPartition(0, GPtr->numVertices, myId, numThread, &i_start, &i_stop);
 
