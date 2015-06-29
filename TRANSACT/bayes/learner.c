@@ -284,7 +284,7 @@ learner_alloc (data_t* dataPtr, adtree_t* adtreePtr)
         assert(learnerPtr->localBaseLogLikelihoods);
         learnerPtr->baseLogLikelihood = 0.0F;
         learnerPtr->tasks =
-            (learner_task_t*)TM_MALLOC(dataPtr->numVar * sizeof(learner_task_t));
+            (learner_task_t*)malloc(dataPtr->numVar * sizeof(learner_task_t));
         assert(learnerPtr->tasks);
         learnerPtr->taskListPtr = list_alloc(&compareTask);
 	printf("learn ptr %p\n", learnerPtr->taskListPtr);
@@ -1256,7 +1256,7 @@ learnStructure (void* argPtr)
     assert(workQueuePtr);
 
     long numVar = adtreePtr->numVar;
-    query_t* queries = (query_t*)TM_MALLOC(numVar * sizeof(query_t));
+    query_t* queries = (query_t*)malloc(numVar * sizeof(query_t));
     assert(queries);
     long v;
     for (v = 0; v < numVar; v++) {
@@ -1613,7 +1613,7 @@ learner_score (learner_t* learnerPtr)
     assert(parentQueryVectorPtr);
 
     long numVar = adtreePtr->numVar;
-    query_t* queries = (query_t*)TM_MALLOC(numVar * sizeof(query_t));
+    query_t* queries = (query_t*)malloc(numVar * sizeof(query_t));
     assert(queries);
     long v;
     for (v = 0; v < numVar; v++) {

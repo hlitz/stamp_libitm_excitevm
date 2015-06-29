@@ -101,7 +101,7 @@ allocNode (long index)
 {
     adtree_node_t* nodePtr;
 
-    nodePtr = (adtree_node_t*)TM_MALLOC(sizeof(adtree_node_t));
+    nodePtr = (adtree_node_t*)malloc(sizeof(adtree_node_t));
     if (nodePtr) {
         nodePtr->varyVectorPtr = vector_alloc(1);
         if (nodePtr->varyVectorPtr == NULL) {
@@ -138,7 +138,7 @@ allocVary (long index)
 {
     adtree_vary_t* varyPtr;
 
-    varyPtr = (adtree_vary_t*)TM_MALLOC(sizeof(adtree_vary_t));
+    varyPtr = (adtree_vary_t*)malloc(sizeof(adtree_vary_t));
     if (varyPtr) {
         varyPtr->index = index;
         varyPtr->mostCommonValue = -1;
@@ -170,7 +170,7 @@ adtree_alloc ()
 {
     adtree_t* adtreePtr;
 
-    adtreePtr = (adtree_t*)TM_MALLOC(sizeof(adtree_t));
+    adtreePtr = (adtree_t*)malloc(sizeof(adtree_t));
     if (adtreePtr) {
         adtreePtr->numVar = -1L;
         adtreePtr->numRecord = -1L;

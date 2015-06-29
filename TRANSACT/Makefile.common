@@ -12,7 +12,9 @@ CPPFLAGS += -I../lib -I../
 CFLAGS   += -std=c++11 -pthread -I./
 CFLAGS   += -Wall -Wextra -g
 CFLAGS   += -fgnu-tm -mno-red-zone 
-CFLAGS   += -O2 -DEXCITE_VM
+CFLAGS   += -O2 -DEXCITE_VM 
+#-flto
+#
 #CFLAGS   += -DBARRIER_SPINNING
 
 LD	:= gcc

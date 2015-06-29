@@ -96,10 +96,10 @@ data_alloc (long numVar, long numRecord, random_t* randomPtr)
 {
     data_t* dataPtr;
 
-    dataPtr = (data_t*)TM_MALLOC(sizeof(data_t));
+    dataPtr = (data_t*)malloc(sizeof(data_t));
     if (dataPtr) {
         long numDatum = numVar * numRecord;
-        dataPtr->records = (char*)TM_MALLOC(numDatum * sizeof(char));
+        dataPtr->records = (char*)malloc(numDatum * sizeof(char));
         if (dataPtr->records == NULL) {
             TM_FREE(dataPtr);
             return NULL;
@@ -155,13 +155,13 @@ data_generate (data_t* dataPtr, long seed, long maxNumParent, long percentParent
      * value instances
      */
 
-    long** thresholdsTable = (long**)TM_MALLOC(numVar * sizeof(long*));
+    long** thresholdsTable = (long**)malloc(numVar * sizeof(long*));
     assert(thresholdsTable);
     long v;
     for (v = 0; v < numVar; v++) {
         list_t* parentIdListPtr = net_getParentIdListPtr(netPtr, v);
         long numThreshold = 1 << list_getSize(parentIdListPtr);
-        long* thresholds = (long*)TM_MALLOC(numThreshold * sizeof(long));
+        long* thresholds = (long*)malloc(numThreshold * sizeof(long));
         assert(thresholds);
         long t;
         for (t = 0; t < numThreshold; t++) {
@@ -175,7 +175,7 @@ data_generate (data_t* dataPtr, long seed, long maxNumParent, long percentParent
      * Create variable dependency ordering for record generation
      */
 
-    long* order = (long*)TM_MALLOC(numVar * sizeof(long));
+    long* order = (long*)malloc(numVar * sizeof(long));
     assert(order);
     long numOrder = 0;
 

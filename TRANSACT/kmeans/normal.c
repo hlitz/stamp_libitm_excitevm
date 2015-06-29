@@ -248,19 +248,23 @@ normal_exec (int       nthreads,
         /* ??? Cacheline size set to 64 bytes long to be safe with x86_64). */
         const int cacheLineSize = 64;
         cluster_size += (cacheLineSize-1) - ((cluster_size-1) % cacheLineSize);
-        alloc_memory = calloc(nclusters, cluster_size);
-        new_centers_len = (long**) malloc(nclusters * sizeof(long*));
-        new_centers = (float**) malloc(nclusters * sizeof(float*));
-        assert(alloc_memory && new_centers && new_centers_len);
+	__transaction_atomic{        
+	  alloc_memory = TM_CALLOC(nclusters, cluster_size);
+        
+	  new_centers_len = (long**) TM_MALLOC(nclusters * sizeof(long*));
+	  new_centers = (float**) TM_MALLOC(nclusters * sizeof(float*));
+	  assert(alloc_memory && new_centers && new_centers_len);
+	
         for (i = 0; i < nclusters; i++) {
             new_centers_len[i] = (long*)((char*)alloc_memory + cluster_size * i);
             new_centers[i] = (float*)((char*)alloc_memory + cluster_size * i + sizeof(long));
         }
+	}
     }
 
     if(thread_getId()==0){
-      global_delta = (float*)malloc(sizeof(float));
-      global_i = (long*)malloc(sizeof(long)); /* index into task queue */
+      global_delta = (float*)TM_MALLOC(sizeof(float));
+      global_i = (long*)TM_MALLOC(sizeof(long)); /* index into task queue */
     }
     //    thread_barrier_wait();
 
@@ -275,8 +279,8 @@ normal_exec (int       nthreads,
         args.nclusters       = nclusters;
         args.membership      = membership;
         args.clusters        = clusters;
-        args.new_centers_len = new_centers_len;
-        args.new_centers     = new_centers;
+        args.new_centers_len = __transaction_atomic(new_centers_len);
+        args.new_centers     = __transaction_atomic(new_centers);
 __transaction_atomic {
         *global_i = nthreads * CHUNK;
         *global_delta = delta;
@@ -309,11 +313,11 @@ __transaction_atomic {
 
     TIMER_READ(stop);
     global_time += TIMER_DIFF_SECONDS(start, stop);
-
+    /*
     free(alloc_memory);
     free(new_centers);
     free(new_centers_len);
-
+    */
     return clusters;
 }
 

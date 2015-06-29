@@ -135,7 +135,7 @@ allocNode (long id)
 {
     net_node_t* nodePtr;
 
-    nodePtr = (net_node_t*)TM_MALLOC(sizeof(net_node_t));
+    nodePtr = (net_node_t*)malloc(sizeof(net_node_t));
     if (nodePtr) {
         nodePtr->parentIdListPtr = list_alloc(&compareId);
         if (nodePtr->parentIdListPtr == NULL) {
@@ -177,7 +177,7 @@ net_alloc (long numNode)
 {
     net_t* netPtr;
 
-    netPtr = (net_t*)TM_MALLOC(sizeof(net_t));
+    netPtr = (net_t*)malloc(sizeof(net_t));
     if (netPtr) {
         vector_t* nodeVectorPtr = vector_alloc(numNode);
         if (nodeVectorPtr == NULL) {

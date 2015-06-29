@@ -115,12 +115,13 @@ prefix_sums (ULONGINT_T* result, LONGINT_T* input, ULONGINT_T arraySize)
 
     //ULONGINT_T j;
     long j;
+    __transaction_atomic{
     for (j = start; j < end; j++) {
         result[j] = input[j-1] + result[j-1];
     }
 
     p[NOSHARE(myId)] = result[end-1];
-
+    }
     thread_barrier_wait();
 
     if (myId == 0) {
@@ -313,7 +314,7 @@ computeGraph (void* argPtr)
       TM_SHARED_WRITE( *global_outVertexListSize,
                        ((long)TM_SHARED_READ(*global_outVertexListSize) + outVertexListSize));
       //XXX Heiner: twice the same operation ?
-      //*global_outVertexListSize += outVertexListSize;
+      *global_outVertexListSize += outVertexListSize;
     }
 
     thread_barrier_wait();
@@ -412,7 +413,7 @@ computeGraph (void* argPtr)
         free(SDGdataPtr->startVertex);
         free(SDGdataPtr->endVertex);
         GPtr->inDegree =
-            (LONGINT_T*)malloc(GPtr->numVertices * sizeof(LONGINT_T));
+            (LONGINT_T*)TM_MALLOC(GPtr->numVertices * sizeof(LONGINT_T));
         assert(GPtr->inDegree);
         GPtr->inVertexIndex =
             (ULONGINT_T*)malloc(GPtr->numVertices * sizeof(ULONGINT_T));
@@ -430,7 +431,7 @@ computeGraph (void* argPtr)
     ULONGINT_T* impliedEdgeList;
     if (myId == 0) {
       __transaction_atomic{
-        impliedEdgeList = (ULONGINT_T*)malloc(GPtr->numVertices
+        impliedEdgeList = (ULONGINT_T*)TM_MALLOC(GPtr->numVertices
                                                 * MAX_CLUSTER_SIZE
                                                 * sizeof(ULONGINT_T));
 	global_impliedEdgeList = impliedEdgeList;
@@ -506,7 +507,7 @@ computeGraph (void* argPtr)
                   ULONGINT_T* a = NULL;
 		
                   if ((inDegree % MAX_CLUSTER_SIZE) == 0) {
-                    a = (ULONGINT_T*)malloc(MAX_CLUSTER_SIZE * sizeof(ULONGINT_T));
+                    a = (ULONGINT_T*)TM_MALLOC(MAX_CLUSTER_SIZE * sizeof(ULONGINT_T));
                     assert(a);
                     TM_SHARED_WRITE_P(auxArr[v], a);
 		  } else {
@@ -554,19 +555,19 @@ computeGraph (void* argPtr)
     thread_barrier_wait();
 
     if (myId == 0) {
-        free(impliedEdgeList);
+        TM_FREE(impliedEdgeList);
     }
 
     for (i = i_start; i < i_stop; i++) {
         if (GPtr->inDegree[i] > MAX_CLUSTER_SIZE) {
-            free(auxArr[i]);
+            TM_FREE(auxArr[i]);
         }
     }
 
     thread_barrier_wait();
 
     if (myId == 0) {
-        free(auxArr);
+        TM_FREE(auxArr);
     }
 
 }
