@@ -475,6 +475,7 @@ computeGraph (void* argPtr)
 
     for (i = i_start; i < i_stop; i++) {
         /* Inspect adjacency list of vertex i */
+      __transaction_atomic {
         for (j = GPtr->outVertexIndex[i];
              j < (GPtr->outVertexIndex[i] + GPtr->outDegree[i]);
              j++)
@@ -491,7 +492,7 @@ computeGraph (void* argPtr)
             }
             if (k == GPtr->outVertexIndex[v]+GPtr->outDegree[v]) {
               
-	      __transaction_atomic {
+	      //heiner   __transaction_atomic {
                 /* Add i to the impliedEdgeList of v */
 
                 long inDegree = (long)TM_SHARED_READ(GPtr->inDegree[v]);

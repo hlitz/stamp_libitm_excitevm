@@ -6,18 +6,23 @@ TMBUILD ?= obj
 
 
 # ======== Defines ========
-CC	:= g++
+#CC	:= g++
+#CC	:= /usr/bin/gcc-5
+CC	:= /usr/bin/g++-4.9
 #CPPFLAGS += -DNDEBUG
 CPPFLAGS += -I../lib -I../
 CFLAGS   += -std=c++11 -pthread -I./
 CFLAGS   += -Wall -Wextra -g
 CFLAGS   += -fgnu-tm -mno-red-zone 
-CFLAGS   += -O2 -DEXCITE_VM 
+CFLAGS   += -O2 -DEXCITE_VM
+# -flto 
 #-flto
 #
 #CFLAGS   += -DBARRIER_SPINNING
 
-LD	:= gcc
+#LD	:= gcc
+LD	:= /usr/bin/g++-4.9
+
 LDFLAGS  += -rdynamic -L$(SITEVM_HOME)/bin -ltbb -lsitevm -ldune -lstdc++
 LDFLAGS  += -lpthread
 LDFLAGS += -lprocps
