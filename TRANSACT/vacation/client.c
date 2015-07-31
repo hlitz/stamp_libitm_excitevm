@@ -155,17 +155,47 @@ analysis_thread_run(void* argPtr){
   client_t* clientPtr = ((client_t**)argPtr)[myId];
   manager_t* managerPtr = clientPtr->managerPtr;
   long price;
-  long runs=0;
+  unsigned long runs=0;
+  unsigned long NUM_M= 100000;
+  unsigned long sum = 0;
+  unsigned long max = 0;
+  unsigned long* measurements = (unsigned long*)malloc(NUM_M*sizeof(unsigned long));
+
   printf("run %lx\n", __transaction_atomic(managerPtr->clients_running));
   while(!done_analysis){//__transaction_atomic(managerPtr->clients_running)){
-    unsigned long maxId = 1000;
+    unsigned long maxId = 10000;
+    int random = rand()%4;
+    unsigned long begin = rdtsc();
+    unsigned long ptemp = price;
     __transaction_atomic{
-      price = rangeScanPrice(managerPtr->carTablePtr, maxId);    
+      switch (random){
+      case 0: price += rangeScanPrice(managerPtr->carTablePtr, maxId); break;    
+      case 1: price += rangeScanPrice(managerPtr->roomTablePtr, maxId); break;
+      case 2: price += rangeScanPrice(managerPtr->flightTablePtr, maxId); break;
+      case 3: price += rangeScanPrice(managerPtr->customerTablePtr, maxId); break;
+      }
     }
-    runs++;
-
+    //    printf("price %lx\n", ptemp, price);
+    unsigned long end = rdtsc()-begin;
+    end = end>>6;
+    if(end>max)
+      max=end;
+    if(runs<10000){
+      measurements[runs] = end;
+      sum+=end;
+      runs++;
+    }
+    //    usleep(end/4096);
+    
   }
-  printf("price %lx\n", runs);
+  double mean = (double)sum/(double)runs;
+  double var = 0;
+  for(int e=0;e<runs;e++){
+    var += ((measurements[e]-mean)*(measurements[e]-mean))/(double)runs;
+    //printf("mes %li runs %lx\n", measurements[e], runs);
+  }
+  printf("price %lx\n\n\n%lx\n", runs, price);
+  printf("mean %f std av %f dev %f runs %li max %li\n", mean, var, sqrt(var), runs, max);
   //TM_THREAD_EXIT();
 }
 
@@ -196,12 +226,11 @@ client_run (void* argPtr)
     long* prices = (long*)malloc(numQueryPerTransaction * sizeof(long));
     
     long i;
-    if(myId==99){
+    if(myId==1){
       analysis_thread_run(argPtr);
     }
     else{
     for (i = 0; i < numOperation; i++) {
-
         long r = random_generate(randomPtr) % 100;
         action_t action = selectAction(r, percentUser);
 	

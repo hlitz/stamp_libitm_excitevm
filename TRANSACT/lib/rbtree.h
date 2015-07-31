@@ -168,6 +168,15 @@ TM_SAFE
 long
 rbtree_contains (  rbtree_t* r, void* key);
 
+TM_SAFE
+void*
+rbtree_next(rbtree_t* s, void* x);
+
+TM_SAFE
+void* 
+rbtree_get_first(rbtree_t* s, void* x);
+
+#define TMMAP_NEXT(r, v) rbtree_next(r, (void*)v)
 
 #define TMRBTREE_ALLOC()          rbtree_alloc()
 #define TMRBTREE_FREE(r)          rbtree_free(r)

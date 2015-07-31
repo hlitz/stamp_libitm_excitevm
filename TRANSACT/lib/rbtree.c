@@ -129,7 +129,6 @@ struct rbtree {
  * DECLARATION OF TM_SAFE FUNCTIONS
  * =============================================================================
  */
-
  TM_SAFE
 node_t*
 lookup (rbtree_t* s, void* k);
@@ -203,6 +202,23 @@ TMdelete (rbtree_t* s, node_t* p);
  * even with locks, use of a nil sentil can result in considerable
  * cache coherency traffic on traditional SMPs.
  */
+
+TM_PURE
+void printNode(node_t* a, node_t* b){
+  printf("a %p, b %p\n",a,b);
+} 
+
+/* next*/
+TM_SAFE
+void*
+rbtree_next(rbtree_t* s, void* x){
+  node_t* parent = TMparentOf((node_t*)x);
+  // printNode((node_t*)x, parent);
+  if(parent)
+    return (void*)TMrightOf(parent);
+  return NULL;
+}
+
 
 
 /* =============================================================================
@@ -1186,6 +1202,22 @@ rbtree_get (rbtree_t* r, void* key) {
         return val;
     }
     return NULL;
+}
+/* =============================================================================
+ * rbtree_get
+ * =============================================================================
+ */
+TM_SAFE
+void*
+rbtree_get_first (rbtree_t* r, void* key) {
+  node_t* p = LDNODE(r, root);
+  node_t* ret = p;
+  while(p){
+    ret = p;
+    p = TMleftOf(p);
+
+  }    
+  return (void*)ret;
 }
 
 /* =============================================================================

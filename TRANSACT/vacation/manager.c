@@ -813,16 +813,17 @@ manager_cancelFlight (manager_t* managerPtr, long customerId, long flightId)
 long
  rangeScanPrice (  MAP_T* tablePtr, unsigned long maxID)
 {
-    long price = 0;
-    reservation_t* reservationPtr;
 
-    for(int i=0; i<maxID; i++){
-      reservationPtr = (reservation_t*)TMMAP_FIND(tablePtr, i);
+    reservation_t* reservationPtr;
+    reservationPtr = (reservation_t*)rbtree_get_first(tablePtr, 0);
+
+    for(unsigned int i=0; i<maxID; i++){
       if (reservationPtr != NULL) {
-        price += (long)TM_SHARED_READ(reservationPtr->price);
+	//        price += (long)TM_SHARED_READ(reservationPtr->price);
+	reservationPtr = (reservation_t*)rbtree_next(tablePtr, (void*)reservationPtr);
       }
     }
-    return price;
+    return (long)reservationPtr;
 }
 
 
