@@ -203,7 +203,9 @@ parseArgs (long argc, char* const argv[])
 static bool_t
 addCustomer (manager_t* managerPtr, long id, long a, long b)
 {
+  __transaction_atomic{
     return manager_addCustomer(managerPtr, id);
+}
 }
 
 
@@ -235,7 +237,7 @@ initializeManager ()
     assert(randomPtr != NULL);
 
     numRelation = (long)global_params[PARAM_RELATIONS];
-    ids = (long*)SEQ_MALLOC(numRelation * sizeof(long));
+    ids = (long*)/*SEQ_MALLOC*/malloc(numRelation * sizeof(long));
 
     managerPtr = manager_alloc(numRelation);
     assert(managerPtr != NULL);
@@ -270,7 +272,8 @@ initializeManager ()
     fflush(stdout);
 
     random_free(randomPtr);
-    SEQ_FREE(ids);
+    //SEQ_FREE(ids);
+    free(ids);
     return managerPtr;
 }
 
@@ -300,7 +303,7 @@ initializeClients (manager_t* managerPtr)
     randomPtr = random_alloc();
     assert(randomPtr != NULL);
 
-    clients = (client_t**)SEQ_MALLOC(numClient * sizeof(client_t*));
+    clients = (client_t**)/*SEQ_MALLOC*/malloc(numClient * sizeof(client_t*));
 
     assert(clients != NULL);
     numTransactionPerClient = (long)((double)numTransaction / (double)numClient + 0.5);
@@ -432,6 +435,8 @@ int main (int argc, char** argv)
     TM_THREAD_ENTER();
     managerPtr = initializeManager();
     assert(managerPtr != NULL);
+    managerPtr->clients_running = true;
+    __sync_synchronize();
     clients = initializeClients(managerPtr);
     assert(clients != NULL);
     //long numThread = global_params[PARAM_CLIENTS];
@@ -460,15 +465,15 @@ int main (int argc, char** argv)
     //         However it does not affect total running time of transactions, so just
     //         comment it for now.
     //checkTables(managerPtr);
-
+ 
     /* Clean up */
     printf("Deallocating memory... ");
     fflush(stdout);
-    freeClients(clients);
+    //freeClients(clients);
     /*
      * TODO: The contents of the manager's table need to be deallocated.
      */
-    manager_free(managerPtr);
+    //manager_free(managerPtr);
     puts("done.");
     fflush(stdout);
 

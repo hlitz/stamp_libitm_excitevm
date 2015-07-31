@@ -92,8 +92,8 @@ client_alloc (long id,
               long percentUser)
 {
     client_t* clientPtr;
-
-    clientPtr = (client_t*)SEQ_MALLOC(sizeof(client_t));
+  printf("alloc run %lx\n", __transaction_atomic(managerPtr->clients_running));
+    clientPtr = (client_t*)/*SEQ_MALLOC*/malloc(sizeof(client_t));
     if (clientPtr == NULL) {
         return NULL;
     }
@@ -122,7 +122,7 @@ client_alloc (long id,
 void
 client_free (client_t* clientPtr)
 {
-    SEQ_FREE(clientPtr);
+  /*SEQ_FREE*/free(clientPtr);
 }
 
 
@@ -146,6 +146,28 @@ selectAction (long r, long percentUser)
     return action;
 }
 
+static volatile  bool done_analysis = false;
+
+void
+analysis_thread_run(void* argPtr){
+  //TM_THREAD_ENTER();
+  long myId = thread_getId();
+  client_t* clientPtr = ((client_t**)argPtr)[myId];
+  manager_t* managerPtr = clientPtr->managerPtr;
+  long price;
+  long runs=0;
+  printf("run %lx\n", __transaction_atomic(managerPtr->clients_running));
+  while(!done_analysis){//__transaction_atomic(managerPtr->clients_running)){
+    unsigned long maxId = 1000;
+    __transaction_atomic{
+      price = rangeScanPrice(managerPtr->carTablePtr, maxId);    
+    }
+    runs++;
+
+  }
+  printf("price %lx\n", runs);
+  //TM_THREAD_EXIT();
+}
 
 /* =============================================================================
  * client_run
@@ -156,7 +178,7 @@ void
 client_run (void* argPtr)
 {
     TM_THREAD_ENTER();
-    thread_barrier_wait();
+    //thread_barrier_wait();
    
     long myId = thread_getId();
     client_t* clientPtr = ((client_t**)argPtr)[myId];
@@ -174,7 +196,10 @@ client_run (void* argPtr)
     long* prices = (long*)malloc(numQueryPerTransaction * sizeof(long));
     
     long i;
-
+    if(myId==99){
+      analysis_thread_run(argPtr);
+    }
+    else{
     for (i = 0; i < numOperation; i++) {
 
         long r = random_generate(randomPtr) % 100;
@@ -333,6 +358,12 @@ client_run (void* argPtr)
 
     } /* for i */
 
+    }
+    printf("exit clientr unning false |n");
+    managerPtr->clients_running = false;
+    done_analysis = true;
+    __sync_synchronize();
+    TM_THREAD_EXIT();
 }
 
 

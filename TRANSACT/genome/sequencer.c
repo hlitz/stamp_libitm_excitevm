@@ -220,7 +220,7 @@ sequencer_alloc (long geneLength, long segmentLength, segments_t* segmentsPtr)
     sequencer_t* sequencerPtr;
     long maxNumUniqueSegment = geneLength - segmentLength + 1;
     long i;
-
+    __transaction_atomic{
     sequencerPtr = (sequencer_t*)SEQ_MALLOC(sizeof(sequencer_t));
     if (sequencerPtr == NULL) {
         return NULL;
@@ -277,7 +277,7 @@ sequencer_alloc (long geneLength, long segmentLength, segments_t* segmentsPtr)
     }
 
     sequencerPtr->segmentsPtr = segmentsPtr;
-
+    }
     return sequencerPtr;
 }
 

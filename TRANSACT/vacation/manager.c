@@ -130,11 +130,13 @@ manager_alloc (long numRelation)
 
     managerPtr = (manager_t*)SEQ_MALLOC(sizeof(manager_t));
     assert(managerPtr != NULL);
-
+    __transaction_atomic{
     managerPtr->carTablePtr = tableAlloc(numRelation);
     managerPtr->roomTablePtr = tableAlloc(numRelation);
     managerPtr->flightTablePtr = tableAlloc(numRelation);
     managerPtr->customerTablePtr = tableAlloc(numRelation);
+    managerPtr->clients_running = true;
+    }
     assert(managerPtr->carTablePtr != NULL);
     assert(managerPtr->roomTablePtr != NULL);
     assert(managerPtr->flightTablePtr != NULL);
@@ -190,6 +192,7 @@ TM_SAFE
 bool_t
 addReservation (MAP_T* tablePtr, long id, long num, long price)
 {
+  __transaction_atomic{
     reservation_t* reservationPtr;
     reservationPtr = (reservation_t*)TMMAP_FIND(tablePtr, id);
 
@@ -234,6 +237,7 @@ addReservation (MAP_T* tablePtr, long id, long num, long price)
 
     return TRUE;
 }
+}
 
 
 /* =============================================================================
@@ -247,7 +251,9 @@ addReservation (MAP_T* tablePtr, long id, long num, long price)
 TM_SAFE bool_t
 manager_addCar (manager_t* managerPtr, long carId, long numCars, long price)
 {
+  __transaction_atomic{
     return addReservation(  managerPtr->carTablePtr, carId, numCars, price);
+  }
 }
 
 
@@ -264,7 +270,9 @@ TM_SAFE bool_t
 manager_deleteCar (  manager_t* managerPtr, long carId, long numCar)
 {
     /* -1 keeps old price */
+  __transaction_atomic{
     return addReservation(  managerPtr->carTablePtr, carId, -numCar, -1);
+}
 }
 
 
@@ -278,7 +286,9 @@ manager_deleteCar (  manager_t* managerPtr, long carId, long numCar)
 TM_SAFE bool_t
 manager_addRoom (manager_t* managerPtr, long roomId, long numRoom, long price)
 {
-    return addReservation(  managerPtr->roomTablePtr, roomId, numRoom, price);
+ __transaction_atomic{
+   return addReservation(  managerPtr->roomTablePtr, roomId, numRoom, price);
+}
 }
 
 
@@ -789,6 +799,35 @@ manager_cancelFlight (manager_t* managerPtr, long customerId, long flightId)
                   RESERVATION_FLIGHT);
 }
 
+/*
+ * ANALYSIS ROUTINES
+ */
+
+
+/* =============================================================================
+ * queryPrice
+ * -- Return price of a reservation, -1 if failure
+ * =============================================================================
+ */
+ TM_SAFE
+long
+ rangeScanPrice (  MAP_T* tablePtr, unsigned long maxID)
+{
+    long price = 0;
+    reservation_t* reservationPtr;
+
+    for(int i=0; i<maxID; i++){
+      reservationPtr = (reservation_t*)TMMAP_FIND(tablePtr, i);
+      if (reservationPtr != NULL) {
+        price += (long)TM_SHARED_READ(reservationPtr->price);
+      }
+    }
+    return price;
+}
+
+
+
+
 
 /* =============================================================================
  * TEST_MANAGER
@@ -1002,3 +1041,4 @@ main ()
  *
  * =============================================================================
  */
+

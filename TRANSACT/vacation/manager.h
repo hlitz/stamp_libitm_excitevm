@@ -83,8 +83,12 @@ typedef struct manager {
     MAP_T* roomTablePtr;
     MAP_T* flightTablePtr;
     MAP_T* customerTablePtr;
+  bool clients_running;
 } manager_t;
 
+ TM_SAFE
+long
+ rangeScanPrice (  MAP_T* tablePtr, unsigned long maxID);
 
 /* =============================================================================
  * manager_alloc

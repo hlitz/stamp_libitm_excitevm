@@ -28,6 +28,7 @@
 #define SEQ_FREE(p) sitevm::sfree(p)
 #define TM_FREE(p) sitevm::sfree(p)
 #define TM_THREAD_ENTER()sitevm::sitevm_enter();  TM_SYNC(); 
+#define TM_THREAD_EXIT()sitevm::sitevm_exit();  
 #define TM_STARTUP(x) sitevm::sitevm_init()
 #define TM_SHUTDOWN() sitevm::sitevm_shutdown()
 #define TM_SYNC() 
@@ -46,7 +47,8 @@
 #define TM_MALLOC(s) malloc(s)
 #define SEQ_FREE(p) free(p)
 #define TM_FREE(p) free(p)
-#define TM_THREAD_ENTER() 
+#define TM_THREAD_ENTER()
+#define TM_THREAD_EXIT()
 #define TM_STARTUP(x) 
 #define TM_SHUTDOWN() 
 #define TM_SYNC() 

@@ -82,6 +82,7 @@
  * -- Returns NULL on failure
  * =============================================================================
  */
+TM_SAFE
 table_t*
 table_alloc (long numBucket, long (*compare)(const void*, const void*))
 {
@@ -106,6 +107,7 @@ table_alloc (long numBucket, long (*compare)(const void*, const void*))
     }
 
     tablePtr->numBucket = numBucket;
+
 
     return tablePtr;
 }

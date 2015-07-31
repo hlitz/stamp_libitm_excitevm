@@ -110,6 +110,7 @@ segments_alloc (long length, long minNum)
     if (string == NULL) {
         return NULL;
     }
+    __transaction_atomic{
     for (i = 0; i < minNum; i++) {
         segmentsPtr->strings[i] = &string[i * (length+1)];
         segmentsPtr->strings[i][length] = '\0';
@@ -121,7 +122,7 @@ segments_alloc (long length, long minNum)
     if (segmentsPtr->contentsPtr == NULL) {
         return NULL;
     }
-
+    }
     return segmentsPtr;
 }
 

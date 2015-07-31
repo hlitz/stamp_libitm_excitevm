@@ -97,6 +97,7 @@ gene_alloc (long length)
     }
 
     genePtr->contents = (char*)SEQ_MALLOC((length + 1) * sizeof(char));
+    __transaction_atomic{
     if (genePtr->contents == NULL) {
         return NULL;
     }
@@ -107,7 +108,7 @@ gene_alloc (long length)
     if (genePtr->startBitmapPtr == NULL) {
         return NULL;
     }
-
+    }
     return genePtr;
 }
 
@@ -135,11 +136,12 @@ gene_create (gene_t* genePtr, random_t* randomPtr)
 
     length = genePtr->length;
     contents = genePtr->contents;
-
+__transaction_atomic{
     for (i = 0; i < length; i++) {
         contents[i] =
             nucleotides[(random_generate(randomPtr)% NUCLEOTIDE_NUM_TYPE)];
     }
+ }
 }
 
 
